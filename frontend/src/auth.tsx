@@ -21,23 +21,6 @@ export function saveOnboardingProfile(p: OnboardingProfile) {
   try { localStorage.setItem(ONBOARD_KEY, JSON.stringify(p)) } catch {}
 }
 export function resetOnboarding() { try { localStorage.removeItem(ONBOARD_KEY) } catch {} }
-
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react'
-
-import {
-  type User,
-  type AuthError,
-  type PostgrestError,
-} from '@supabase/supabase-js'
-
-import { supabase } from './supabase'
-
 // ── Auth context ──────────────────────────────────────────────────────────────
 
 interface AuthCtx {
