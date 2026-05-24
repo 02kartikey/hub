@@ -1,0 +1,104 @@
+[
+  {
+    "id": "hallucination-investigator",
+    "title": "The Hallucination Investigator",
+    "tagline": "Catch AI in the act of making things up",
+    "concept": "AI Hallucinations",
+    "type": "investigation",
+    "ageGroups": ["high-school", "college"],
+    "classTime": "35 minutes",
+    "groupSize": "Individual or pairs",
+    "materials": ["Access to any AI chatbot (Claude, ChatGPT, Gemini)", "Fact-checking websites (Wikipedia, official sources)", "Recording sheet"],
+    "objective": "Students discover firsthand that AI systems generate false information confidently. They develop a personal framework for verifying AI outputs.",
+    "overview": "Students interrogate AI about topics they know well, document contradictions and false claims, then develop a personal AI fact-checking protocol.",
+    "steps": [
+      { "duration": "3 min", "instruction": "Ask students: raise your hand if you have ever caught AI saying something wrong. What happened? Did you notice it, or did someone else point it out?" },
+      { "duration": "12 min", "instruction": "Students choose a topic they know well (their hometown, a hobby, a book they read, a historical event from their syllabus). They ask AI 5 detailed questions about it and document every answer.", "facilitatorNote": "Tell students to pick something where they personally have ground truth. This is not about testing AI on obscure facts — it is about testing it on things the student can verify." },
+      { "duration": "10 min", "instruction": "Students fact-check every AI answer against reliable sources. They mark each answer: Correct / Partially correct / Completely wrong / Plausible but unverifiable. Count the score." },
+      { "duration": "10 min", "instruction": "Class shares results. What error rate did you find? What types of errors appeared (wrong dates, invented names, wrong statistics)? Was there any pattern to what AI got wrong?" }
+    ],
+    "discussionQuestions": [
+      "What surprised you most about your AI's errors?",
+      "Were the errors obvious, or did they sound convincing?",
+      "Why do you think AI sounds confident even when it is wrong?",
+      "What would you check before using an AI answer in an assignment?",
+      "Are there questions where you would trust AI output without checking? Why?"
+    ],
+    "teacherNotes": "This works best when students pick topics they genuinely know. History students often find date and name errors. Geography students find population and location errors. The more the student knows, the more errors they find — which itself is a lesson: expert users catch more errors.",
+    "coreConcept": "AI language models generate statistically likely text, not verified facts. When asked something the model does not know, it generates plausible-sounding text rather than admitting uncertainty.",
+    "implications": [
+      "AI errors are often in areas where the student would not think to check",
+      "Confident tone does not indicate accuracy",
+      "AI is better used as a starting point than a final source",
+      "Domain experts catch more AI errors than novices"
+    ],
+    "realWorldCases": [
+      { "title": "US Lawyer Cites Fake Cases", "description": "A New York attorney submitted a legal brief with six AI-generated case citations — none of which existed. The cases had realistic names, dates, and judges, but were entirely fabricated.", "source": "Reuters, May 2023", "lesson": "Plausibility is not accuracy. AI can generate realistic-sounding citations for things that do not exist." },
+      { "title": "Wikipedia Edits AI Confabulation", "description": "Wikipedia editors documented AI chatbots confidently citing Wikipedia articles that did not exist, then creating those articles based on the AI's invented content — a feedback loop of invented facts.", "source": "MIT Technology Review, 2023", "lesson": "AI hallucinations can propagate into real information sources if unchecked." }
+    ],
+    "misconceptions": [
+      { "myth": "AI makes things up because it is 'stupid' or low quality", "reality": "Hallucination is an inherent property of how language models work, not a bug in a particular model. Even the most advanced models hallucinate." },
+      { "myth": "Better AI models do not hallucinate", "reality": "More capable models hallucinate less frequently but still hallucinate. No current language model has solved this problem." }
+    ],
+    "perspectives": [
+      { "viewpoint": "AI researchers", "stance": "Hallucination is a fundamental limitation of current architectures. Solving it requires either retrieval-augmented generation, or different model designs entirely.", "nuance": "Some argue hallucination is actually a feature for creative tasks, not just a bug." },
+      { "viewpoint": "Educators", "stance": "Hallucination makes uncritical AI use in academic settings dangerous. Students need verification skills as a prerequisite for AI use.", "nuance": "The same critical thinking AI demands has always been needed — AI just makes the stakes more visible." }
+    ],
+    "whatChanged": [
+      "Search engines return existing pages — they do not generate new text that could be wrong in new ways",
+      "Textbooks go through editorial review — AI output does not",
+      "The confident tone of AI makes it harder to notice errors than traditional uncertainty signals"
+    ]
+  },
+  {
+    "id": "bias-mirror",
+    "title": "The Bias Mirror",
+    "tagline": "Ask AI to describe the world. See whose world it describes.",
+    "concept": "AI Bias and Training Data",
+    "type": "audit",
+    "ageGroups": ["middle-school", "high-school"],
+    "classTime": "30 minutes",
+    "groupSize": "Groups of 3",
+    "materials": ["Access to AI text generator", "Access to AI image generator (Bing Image Creator — free)", "Recording sheet"],
+    "objective": "Students surface demographic, cultural, and geographic bias in AI outputs and understand its source in training data.",
+    "overview": "Groups systematically test AI with culturally varied prompts, document the defaults AI assumes, and compare these against actual global demographics.",
+    "steps": [
+      { "duration": "3 min", "instruction": "Introduce: AI systems were trained on internet data. Internet data reflects who has internet access, who creates online content, and what languages those creators use. This is not a neutral global sample." },
+      { "duration": "15 min", "instruction": "Groups test AI image generator with these prompts and record what they see (apparent gender, age, ethnicity, clothing, setting):\n1. A doctor\n2. A wedding ceremony\n3. A school classroom\n4. A family having dinner\n5. A scientist\n6. A teacher\nAlso test the AI text generator: 'Describe a typical doctor's day'", "facilitatorNote": "Use Bing Image Creator (free, no account needed). If image AI is not available, use text AI and ask it to describe each scenario in detail." },
+      { "duration": "8 min", "instruction": "Groups compare their findings to actual global demographics. India has more doctors per population than most Western countries. Most weddings globally do not look like Western weddings. What explains the gap between AI defaults and global reality?" },
+      { "duration": "4 min", "instruction": "Class discussion: where does this bias come from? What harm can it cause? Who is responsible for fixing it?" }
+    ],
+    "discussionQuestions": [
+      "What defaults did AI assume? Were you the default, or were you excluded?",
+      "How do those defaults compare to actual global diversity?",
+      "Can you think of a context where this bias would cause real harm?",
+      "Who should be responsible for reducing AI bias — companies, governments, or users?",
+      "If you were designing the training data for an AI, how would you make it less biased?"
+    ],
+    "teacherNotes": "This exercise is particularly powerful in India and other non-Western contexts where the Western defaults are visibly wrong. Students often feel personally affected when they see their own culture absent from AI's default world — that emotional response drives genuine learning.",
+    "coreConcept": "AI systems learn from training data. If training data over-represents certain demographics, geographies, or cultures, the model will reproduce those biases as defaults.",
+    "implications": [
+      "AI bias is not intentional — it is statistical",
+      "More training data does not automatically mean less bias if the new data has the same skews",
+      "AI bias can reinforce and amplify existing social inequalities",
+      "Users who match AI defaults often do not notice bias at all"
+    ],
+    "realWorldCases": [
+      { "title": "Facial Recognition Fails on Darker Skin", "description": "MIT Media Lab research found that commercial facial recognition systems had error rates of up to 34.7% for dark-skinned women, vs under 1% for light-skinned men. The systems were trained on majority-white datasets.", "source": "Buolamwini & Gebru, 2018", "lesson": "Biased training data produces biased outcomes. The harm falls on whoever is underrepresented." },
+      { "title": "Amazon Hiring Algorithm Discriminated Against Women", "description": "Amazon scrapped an AI recruiting tool after finding it consistently downgraded resumes containing the word 'women's' (as in women's chess club). The model was trained on 10 years of male-dominated tech hiring data.", "source": "Reuters, 2018", "lesson": "AI learns what humans did in the past, not what is fair for the future." }
+    ],
+    "misconceptions": [
+      { "myth": "AI is objective because it uses data, not opinions", "reality": "Data reflects the choices of who created it, what was recorded, and what was not. Data is never neutral — it is a record of the past, with all its inequalities." },
+      { "myth": "You can fix bias by adding a diversity disclaimer", "reality": "Meaningful bias reduction requires diverse training data, diverse development teams, and ongoing auditing. Disclaimers are not technical solutions." }
+    ],
+    "perspectives": [
+      { "viewpoint": "AI developers", "stance": "Bias is hard to eliminate because useful AI requires training data, and all data reflects historical patterns. The goal is reduction and transparency, not perfection.", "nuance": "There is active research into debiasing techniques, though none fully solves the problem." },
+      { "viewpoint": "Affected communities", "stance": "The burden of AI bias falls disproportionately on already-marginalised groups. The people building AI are often not the people experiencing its harms.", "nuance": "Some argue the solution is not debiasing but fundamentally rethinking who builds AI and for whom." }
+    ],
+    "whatChanged": [
+      "Traditional tools (calculators, search engines) did not have cultural defaults — they computed or retrieved, not generated",
+      "AI generation introduces a new category of error: the system produces a world that looks like the majority of its training data, invisibly excluding others",
+      "The scale of AI deployment means biased defaults reach millions of people simultaneously"
+    ]
+  }
+]

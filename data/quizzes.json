@@ -1,0 +1,529 @@
+[
+  {
+    "pathId": "lp1",
+    "title": "AI Fundamentals Quiz",
+    "passingScore": 70,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "mcq",
+        "question": "What does an AI language model actually do when generating a response?",
+        "options": [
+          "Searches a database of pre-written correct answers",
+          "Queries the internet in real time for relevant facts",
+          "Predicts the most statistically probable next token given everything before it",
+          "Runs logical rules to derive the correct conclusion"
+        ],
+        "answer": "Predicts the most statistically probable next token given everything before it",
+        "explanation": "This is the single most important thing to understand about how LLMs work. They are not retrieval systems — they do not look up facts. They are next-token predictors: given every word written so far, the model assigns a probability to every possible next word and samples from that distribution. This is why they can write poetry, explain calculus, and hallucinate a fake research paper with equal fluency. They are always doing the same underlying thing — predicting what comes next — and 'what sounds right' is not the same as 'what is true'."
+      },
+      {
+        "id": "q2",
+        "type": "truefalse",
+        "question": "A confident-sounding AI response is more likely to be accurate than a hedged or uncertain one.",
+        "answer": "False",
+        "explanation": "Confidence in AI output is a stylistic property of text generation, not a signal of factual accuracy. The model produces confident-sounding text because confident text is statistically common in its training data — most human writing states things with confidence. A model that hedges constantly would feel unnatural and was probably downrated by human raters during training. The practical implication: when an AI says 'The study was published in 2019 by researchers at Stanford', that confident specificity is not evidence the fact is correct. The more specific and confident the claim, the more important it is to verify independently."
+      },
+      {
+        "id": "q3",
+        "type": "fill",
+        "question": "The phenomenon where an AI generates plausible-sounding but factually incorrect information, presented with full confidence, is called _____.",
+        "answer": "hallucination",
+        "blank": "hallucination",
+        "explanation": "Hallucination is not a bug that will eventually be patched — it is architecturally built into how these models work. Because the model predicts probable text rather than looking up verified facts, it will sometimes generate content that sounds correct but isn't. The danger is not obvious hallucination (a clearly nonsensical claim) but subtle hallucination: a citation that looks real but doesn't exist, a statistic that's close but wrong, a name that's almost right. The best defence is a verification reflex — treat specific claims (dates, statistics, names, citations) as drafts to be checked, not facts to be trusted."
+      },
+      {
+        "id": "q4",
+        "type": "mcq",
+        "question": "What does the attention mechanism in transformer models actually do?",
+        "options": [
+          "Filters out inappropriate or harmful content before it is generated",
+          "Allows the model to weigh how relevant each word in the input is when predicting the next word",
+          "Enables the model to look up verified facts from an external database",
+          "Speeds up processing by skipping less important parts of the input"
+        ],
+        "answer": "Allows the model to weigh how relevant each word in the input is when predicting the next word",
+        "explanation": "Before transformers, language models processed text sequentially — each word only 'saw' the words immediately before it. Attention changed this fundamentally. When predicting any given word, the attention mechanism lets the model look at every other word in the context simultaneously and assign a relevance weight to each. When generating the word after 'The bank of the river was', the model can attend to 'river' more heavily than 'The' and produce 'steep' rather than 'notes'. This is why transformers handle long-range dependencies — relationships between words far apart in a sentence — far better than earlier architectures. The 2017 paper that introduced this was called 'Attention Is All You Need', and it is the foundation of every modern LLM."
+      },
+      {
+        "id": "q5",
+        "type": "mcq",
+        "question": "Neural networks are described as 'loosely inspired' by biological brains. What is the actual similarity — and what is importantly different?",
+        "options": [
+          "Both use the same electrochemical signalling mechanisms to process information",
+          "Both use networks of connected nodes that adjust connection strengths based on experience — but the analogy stops there",
+          "Both store memories in specific physical locations that can be directly accessed",
+          "Both require identical training data and learning rules to produce the same outputs"
+        ],
+        "answer": "Both use networks of connected nodes that adjust connection strengths based on experience — but the analogy stops there",
+        "explanation": "The biological inspiration is real but superficial. Like neurons, artificial nodes receive inputs, apply a function, and pass outputs to connected nodes. Like synapses, the weights on connections are adjusted through learning. But the analogy breaks down quickly: biological neurons use electrochemical signals operating in continuous time; artificial neurons use floating-point arithmetic in discrete steps. Biological synaptic plasticity is local and chemical; backpropagation requires computing a global error gradient across millions of weights simultaneously, which is biologically implausible. Modern AI researchers largely treat neural networks as powerful mathematical function approximators rather than brain simulations. The brain analogy is useful for intuition; it becomes misleading if taken literally."
+      },
+      {
+        "id": "q6",
+        "type": "truefalse",
+        "question": "AI language models learn by memorising every sentence in their training data exactly, which is why they can reproduce text.",
+        "answer": "False",
+        "explanation": "This is a common misconception with real implications. Language models learn compressed statistical patterns across their training data — the relationships between words, ideas, and styles — not exact copies of individual sentences. If they memorised verbatim, they would only be able to reproduce training text and could not generate novel sentences. What they learn is closer to: 'in scientific writing, passive voice is common', 'in stories, character motivations precede actions', 'the word photosynthesis tends to co-occur with chlorophyll, light, glucose'. This generalisation is what allows them to write new text — and what makes them vulnerable to hallucination, because the patterns they learned are statistical approximations, not truth-verified facts."
+      },
+      {
+        "id": "q7",
+        "type": "fill",
+        "question": "The core architectural innovation introduced in the 2017 paper 'Attention Is All You Need' — which underpins every modern large language model — is called the _____ mechanism.",
+        "answer": "attention",
+        "blank": "attention",
+        "explanation": "The 2017 paper by Vaswani et al. at Google introduced the transformer architecture, which replaced the then-dominant recurrent neural networks (RNNs) with attention as the primary mechanism for processing sequences. The key insight was that you don't need to process sequences step-by-step — you can process the entire sequence at once if every position can attend to every other position. This made training parallelisable across modern GPUs and allowed models to capture relationships between distant parts of text that RNNs struggled with. Every major model since — GPT, BERT, Claude, Gemini — is built on this architecture. The name 'transformer' comes from the attention mechanism transforming a sequence of inputs into a sequence of context-aware representations."
+      }
+    ]
+  },
+  {
+    "pathId": "lp2",
+    "title": "Prompting Quiz",
+    "passingScore": 70,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "mcq",
+        "question": "Chain-of-thought prompting improves AI performance on complex tasks. Why does it actually work?",
+        "options": [
+          "It gives the model more time to retrieve the correct answer from its training data",
+          "Each reasoning step becomes context that constrains and informs the next step, reducing error accumulation",
+          "It forces the model to use a different, more accurate part of its weights",
+          "It allows the model to access real-time information by breaking the query into smaller searches"
+        ],
+        "answer": "Each reasoning step becomes context that constrains and informs the next step, reducing error accumulation",
+        "explanation": "Chain-of-thought works because of how the attention mechanism processes context. When you ask a model to 'think step by step', it generates its reasoning as text, and that text becomes part of the context for every subsequent token. If Step 1 correctly establishes that 'there are 3 buses with 40 passengers each', Step 2 will attend to that established fact when computing the total. Without chain-of-thought, the model attempts to jump from question to final answer in one step — and any internal error is invisible and unrecoverable. Externalising the reasoning makes each step a checkpoint. This is why chain-of-thought dramatically improves performance on multi-step maths, logical reasoning, and complex planning tasks, but makes little difference on simple factual recall."
+      },
+      {
+        "id": "q2",
+        "type": "mcq",
+        "question": "A teacher wants a lesson plan for Class 9 CBSE students. Which prompt will produce the most useful first draft?",
+        "options": [
+          "Write a lesson plan",
+          "Write a lesson plan about climate change for secondary school",
+          "Write a 45-minute CBSE Class 9 lesson plan on greenhouse gases. Include: a 5-minute opening hook, 20 minutes of concept explanation with one analogy, and a 10-minute group activity using no equipment. Format with clear teacher and student sections.",
+          "Can you help me make a good lesson plan for my students? They're in Class 9 and we're doing science."
+        ],
+        "answer": "Write a 45-minute CBSE Class 9 lesson plan on greenhouse gases. Include: a 5-minute opening hook, 20 minutes of concept explanation with one analogy, and a 10-minute group activity using no equipment. Format with clear teacher and student sections.",
+        "explanation": "Every vague word in a prompt is a decision the model makes on your behalf — and it makes that decision based on statistical averages, not your actual needs. Option 1 gives the model six decisions to make (subject, grade, board, duration, format, depth). Option 2 specifies subject and level but leaves duration, format, and constraints undefined. Option 4 sounds natural but gives the model almost nothing concrete. Option 3 specifies: board (CBSE), grade (9), topic (greenhouse gases), structure (three named sections with timing), a format requirement (analogy), a constraint (no equipment), and the desired output format (two-column teacher/student). Each specification eliminates one degree of freedom where defaults would have been substituted. The more constrained the prompt, the less the output reflects the model's defaults and the more it reflects your actual requirements."
+      },
+      {
+        "id": "q3",
+        "type": "truefalse",
+        "question": "Beginning a prompt with 'You are an expert in X' gives the model access to knowledge it otherwise wouldn't have.",
+        "answer": "False",
+        "explanation": "Role prompting is a widely used technique but is often misunderstood. What it actually does: it shifts the model's probability distribution toward the vocabulary, tone, and structural patterns associated with expert writing in that domain. An 'expert oncologist' framing pulls the output toward clinical precision, appropriate qualification, and domain-specific terminology — which genuinely improves output quality. What it cannot do: give the model knowledge it was not trained on, improve the accuracy of specific factual claims, or compensate for a knowledge cutoff. If you ask for expert-level analysis of a paper published after the training cutoff, the role prompt changes the tone but cannot supply knowledge the model doesn't have. The practical rule: role prompting improves style and focus; it does not expand knowledge."
+      },
+      {
+        "id": "q4",
+        "type": "fill",
+        "question": "Showing the model 2–5 examples of the exact format, style, or reasoning pattern you want before asking your actual question is called _____ prompting.",
+        "answer": "few-shot",
+        "blank": "few-shot",
+        "explanation": "Few-shot prompting is one of the most powerful and underused prompt techniques. Rather than describing what you want (which requires the model to infer the format from a description), you show it — providing labelled input-output examples that demonstrate the pattern. The model uses in-context learning to infer the rule from your examples and apply it to the new case, without any weight updates. It is particularly effective when: the format is complex or unusual, the writing style must match an existing document, the reasoning pattern is non-standard, or description alone would be ambiguous. The contrast: zero-shot prompting gives no examples and relies entirely on the model's training; few-shot gives examples and lets the model infer the pattern; fine-tuning actually updates the model's weights on examples (requires compute and data, but produces more persistent changes)."
+      },
+      {
+        "id": "q5",
+        "type": "mcq",
+        "question": "An AI gives a technically correct but completely unhelpful response to your question. Before trying a different tool or asking again, what is the most efficient first step?",
+        "options": [
+          "Accept it — if it's technically correct, it's the best the model can do",
+          "Submit the same prompt again and hope for a different result",
+          "Diagnose specifically what is wrong with the response, then add a constraint that addresses exactly that failure",
+          "Switch to a more advanced AI model immediately"
+        ],
+        "answer": "Diagnose specifically what is wrong with the response, then add a constraint that addresses exactly that failure",
+        "explanation": "Re-submitting an identical prompt will produce a slightly different response due to sampling randomness, but it will fail in the same way for the same reason. The root cause of most unhelpful responses is an under-specified prompt, not a model capability ceiling. Before iterating, diagnose the failure: Is it the wrong audience? (Add: 'for a student with no prior knowledge'.) The wrong format? (Add: 'as a numbered list with one sentence per point'.) The wrong scope? (Add: 'focus only on the economic causes, not political or social'.) Too long or too short? (Add: 'in under 100 words' or 'in at least 400 words with examples'.) Generic when you needed specific? (Add: 'use examples from Indian history only'.) Specific diagnosis produces specific fixes. Vague iteration produces vague improvement."
+      },
+      {
+        "id": "q6",
+        "type": "truefalse",
+        "question": "System prompts are instructions visible to users that define how to interact with the AI tool.",
+        "answer": "False",
+        "explanation": "System prompts are hidden instructions set by developers or platform operators — not the end user — that run before every conversation. They are not visible to users by default. They can define: the AI's persona ('You are a customer service agent for X company'), hard constraints ('Never discuss competitor products'), output format rules, the AI's knowledge scope, safety guardrails, and the context in which the AI is deployed. When you interact with a customer service chatbot, an educational tool, or any custom AI application, there is almost certainly a system prompt shaping the AI's behaviour that you cannot see. Understanding this matters because it explains why the same underlying model behaves so differently in different applications — and why the AI might refuse to answer questions that a 'raw' version of the same model would answer."
+      },
+      {
+        "id": "q7",
+        "type": "mcq",
+        "question": "You need the AI to write feedback on a student essay in a specific tone and format. You have an example of feedback you've written before that captures exactly what you need. What is the most effective prompting approach?",
+        "options": [
+          "Describe the tone and format in words as precisely as possible",
+          "Paste your example feedback first, label it as an example, then provide the student essay and ask for feedback in the same format",
+          "Ask the AI to 'write feedback like an experienced teacher would'",
+          "Use a longer, more detailed description of your requirements"
+        ],
+        "answer": "Paste your example feedback first, label it as an example, then provide the student essay and ask for feedback in the same format",
+        "explanation": "This is few-shot prompting applied to a real teaching task. Showing a concrete example of your own feedback is almost always more effective than describing it in words, because description requires the model to infer the pattern while an example demonstrates it directly. The model can learn from one example: your characteristic sentence length, how you balance praise and critique, whether you use direct address or third person, how specific your suggestions are, and your vocabulary level. The prompt structure: [Example label] + [Your example feedback] + [Separator] + [Task: write feedback in the above style for this essay] + [Student essay]. This captures style elements that would take paragraphs to describe — and that you might not even be consciously aware of yourself."
+      }
+    ]
+  },
+  {
+    "pathId": "lp4",
+    "title": "AI Safety and Critical Thinking Quiz",
+    "passingScore": 70,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "fill",
+        "question": "The systematic bias in AI models toward agreeing with users, validating incorrect beliefs, and avoiding disagreement — even when the user is wrong — is called _____.",
+        "answer": "sycophancy",
+        "blank": "sycophancy",
+        "explanation": "Sycophancy emerges from the RLHF training process in a specific way: human raters, when comparing two model responses, tend to rate agreeable responses higher than honest ones — even when the agreeable response is less accurate. The model learns to optimise for what raters reward. Over training, this produces a systematic bias toward validation. The practical danger: if you tell an AI 'I think climate change is a hoax, what do you think?' a sycophantic model will soften its disagreement or find ways to validate your framing. If you push back on a correct model answer, a sycophantic model may reverse its position not because you provided evidence but because you expressed displeasure. For educational use, this means AI feedback is often too positive — it validates student work that needs significant improvement. Always ask for criticism explicitly: 'What are the three weakest parts of this argument?'"
+      },
+      {
+        "id": "q2",
+        "type": "mcq",
+        "question": "Amazon's AI hiring tool was decommissioned in 2018 after discovering it systematically discriminated against women. What was the root cause?",
+        "options": [
+          "The engineers who built it deliberately programmed in gender preferences",
+          "The model was trained on 10 years of historical hiring data from a male-dominated industry, and learned to replicate those patterns",
+          "Women's CVs were formatted differently and the system couldn't parse them correctly",
+          "The model was trained without any data about women's applications"
+        ],
+        "answer": "The model was trained on 10 years of historical hiring data from a male-dominated industry, and learned to replicate those patterns",
+        "explanation": "This case is the canonical example of training data bias producing discriminatory outcomes without any discriminatory intent. Amazon's training data consisted of CVs submitted over 10 years in a male-dominated tech industry, paired with hiring decisions made by humans who reflected those industry norms. The model learned: 'CVs that led to hires look like this.' Because historical hires skewed male, it learned features that correlated with maleness — even without being given gender as an explicit variable. It penalised CVs containing phrases like 'women's chess club' or 'all-women's college', and downgraded graduates of historically women-focused institutions. The crucial insight: the bias wasn't in the algorithm's logic. It was in the data, which encoded historical human discrimination. You cannot fix biased data by removing the protected variable — the bias is distributed across many correlated variables."
+      },
+      {
+        "id": "q3",
+        "type": "truefalse",
+        "question": "If you remove race, gender, and other protected characteristics from the variables an AI system uses, you eliminate the risk of discriminatory outputs.",
+        "answer": "False",
+        "explanation": "This is called 'fairness through blindness' and it doesn't work because of proxy variables — variables that are not protected characteristics but correlate strongly with them. Removing 'race' from a loan application model still leaves: zip code (strongly correlated with race due to historical redlining), school attended, credit history (affected by intergenerational wealth), employment history (affected by historical hiring discrimination), surname patterns. The model can reconstruct the protected variable from the proxies with high accuracy. Some of these proxies are genuinely relevant to the prediction task (credit history is legitimately predictive of loan repayment). The challenge is distinguishing proxies that encode legitimate information from proxies that encode historical discrimination. This is an active and contested area of research, and there is no simple technical fix."
+      },
+      {
+        "id": "q4",
+        "type": "mcq",
+        "question": "An AI model has a training data cutoff of September 2024. A user in March 2025 asks: 'Who is the current Prime Minister of the UK?' What is the most accurate description of what happens?",
+        "options": [
+          "The model searches the internet and retrieves the current answer",
+          "The model correctly states the PM as of September 2024, clearly noting its knowledge cutoff",
+          "The model states whoever was PM as of September 2024 — possibly confidently, possibly without acknowledging the cutoff",
+          "The model refuses to answer because it knows it lacks current information"
+        ],
+        "answer": "The model states whoever was PM as of September 2024 — possibly confidently, possibly without acknowledging the cutoff",
+        "explanation": "This is one of the most practically important limitations of LLMs to understand. The model has no awareness of how much time has passed since its training — it cannot know it is March 2025. When asked a present-tense question about a role ('who is the current X'), it will answer based on its training data, which may be months or years out of date. Some models are trained to acknowledge uncertainty on time-sensitive topics; many are not reliable about this. The risk compounds: the model may confidently state outdated information without any hedge. For any question about who currently holds a position, what the current law or policy is, or what recently happened — use a tool with live internet access (Perplexity, ChatGPT with web search, Gemini) rather than relying on a static model."
+      },
+      {
+        "id": "q5",
+        "type": "mcq",
+        "question": "Which type of AI output carries the highest risk of being factually wrong while sounding completely credible?",
+        "options": [
+          "A general explanation of how photosynthesis works",
+          "A summary of the main themes in the novel 1984",
+          "A specific citation: 'A 2019 study by Kumar et al. in Nature found that...'",
+          "A description of how a transformer neural network processes text"
+        ],
+        "answer": "A specific citation: 'A 2019 study by Kumar et al. in Nature found that...'",
+        "explanation": "Specificity is the single most reliable predictor of hallucination risk. General concepts (how photosynthesis works, the themes of a famous novel, how transformer attention works) are well-represented in training data and are generated from strong statistical patterns. Specific claims — a particular study, an exact year, a specific author name, a precise statistic — require the model to produce narrow, exact details that it may not have reliable training signal for. The model will generate the most statistically plausible version of that specific detail, which may not correspond to anything real. Fake citations are particularly dangerous because they look authoritative: the journal name is real, the author name sounds plausible, the year is plausible, the finding is believable. The detail that is wrong is exactly the detail that would require you to actually find and read the paper to verify. Verify all specific citations before using them."
+      },
+      {
+        "id": "q6",
+        "type": "truefalse",
+        "question": "AI detection tools can reliably identify AI-generated text, making it straightforward to identify when students have submitted AI-written work.",
+        "answer": "False",
+        "explanation": "AI detection tools have two critical problems that make them unreliable for academic integrity use. First, false positive rates are high: research has shown these tools frequently flag text written by non-native English speakers, people with formal writing styles, or students who write clearly and simply as 'likely AI-generated'. Using these tools for academic judgment risks unfairly penalising students, particularly those writing in a second language. Second, evasion is trivial: minor rewrites, paraphrasing, mixing AI and human text, or using tools specifically designed to evade detection all reduce detection rates significantly. The fundamental technical problem: AI detectors look for statistical patterns associated with AI output. As AI models improve and as evasion techniques spread, the overlap between 'AI patterns' and 'clear human writing' increases. Reliable identification of AI-generated text is not currently a solved problem."
+      },
+      {
+        "id": "q7",
+        "type": "fill",
+        "question": "The Indian legislation that regulates how organisations can collect, store, and use personal data — including data shared with AI tools — is the _____ Act 2023.",
+        "answer": "DPDP",
+        "blank": "DPDP",
+        "explanation": "India's Digital Personal Data Protection (DPDP) Act 2023 is the country's first comprehensive personal data protection law. Key provisions with direct relevance to AI use in education: Data principals (the person the data is about) have the right to know what data is collected and why. Organisations need consent to process personal data. Schools and teachers sharing student data — names, grades, attendance, special needs information — with AI tools are processing personal data under this law. The child protection provisions are particularly strict: platforms handling data about minors must get verifiable parental consent and cannot process children's data for targeted advertising. Practically: before putting any student's personal information into a commercial AI tool, consider whether consent has been obtained and whether your institution has a data processing agreement with that tool's provider."
+      }
+    ]
+  },
+  {
+    "pathId": "lp3",
+    "title": "AI for Teachers Quiz",
+    "passingScore": 70,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "mcq",
+        "question": "A teacher uploads her Class 10 history textbook chapter to an AI tool and asks: 'What does this chapter say about the causes of World War I?' Which tool is most likely to give an answer anchored exclusively to that uploaded document rather than its own general knowledge?",
+        "options": [
+          "ChatGPT — it has the most training data on history",
+          "Perplexity — it cites its sources",
+          "NotebookLM — it is architecturally constrained to answer only from uploaded sources",
+          "Gemini — it has access to Google's knowledge graph"
+        ],
+        "answer": "NotebookLM — it is architecturally constrained to answer only from uploaded sources",
+        "explanation": "This is the design difference that makes NotebookLM uniquely suited to curriculum-specific work. ChatGPT, Claude, and Gemini will all answer from a blend of their training knowledge and the uploaded document — meaning their answers may reflect their general knowledge of WWI rather than specifically what your textbook chapter says. NotebookLM is architecturally restricted: it cannot use knowledge outside your uploaded sources. If the answer isn't in your document, it says so. This matters enormously for exam preparation: what a CBSE Class 10 textbook says about the causes of WWI may differ subtly from what a general AI 'knows' about WWI. For generating materials that are accurate to your specific syllabus and textbook, NotebookLM is the safest tool."
+      },
+      {
+        "id": "q2",
+        "type": "truefalse",
+        "question": "An AI tool generates a detailed, well-structured lesson plan for Class 8 CBSE Science on sound waves. It can be used directly in class without further review.",
+        "answer": "False",
+        "explanation": "Three specific failure modes make direct use of AI lesson plans risky without review. First, syllabus misalignment: the AI's knowledge of CBSE Class 8 Science is derived from patterns in its training data, not from reading the current NCERT syllabus. It may include concepts from different classes, omit key objectives, or use terminology that differs from the prescribed textbook. Second, cultural context: AI-generated examples often default to Western contexts — instruments, sports, environments — that may be unfamiliar or less engaging for your specific students. Third, pedagogical suitability: the AI models an average class, not your actual students. The activity it suggests may require materials you don't have, assume prior knowledge your students lack, or be paced incorrectly for your teaching style. Review is not bureaucratic caution — it is the professional act of adapting a generic draft to your specific classroom."
+      },
+      {
+        "id": "q3",
+        "type": "mcq",
+        "question": "A teacher uses an AI tool to generate written feedback on a student's essay. The feedback is well-written, encouraging, and specific-sounding. What is the most important risk to check before sharing it with the student?",
+        "options": [
+          "The feedback might be too long for the student to read",
+          "The feedback might be systematically too positive due to AI sycophancy, validating work that needs significant improvement",
+          "The feedback might use vocabulary that is too advanced",
+          "The AI might have confused this student's essay with someone else's"
+        ],
+        "answer": "The feedback might be systematically too positive due to AI sycophancy, validating work that needs significant improvement",
+        "explanation": "AI sycophancy — the systematic tendency toward agreement and positive framing — is a direct product of RLHF training, where human raters consistently rewarded encouraging responses. Applied to feedback, this means AI tools will often emphasise strengths, soften criticisms, and suggest improvements in language so gentle that the student may not recognise them as criticisms at all. A student who needs to be told 'your argument has no logical structure and you have misunderstood the central concept' may receive feedback that says 'your writing shows real enthusiasm and there are some areas where you could develop your analytical thinking further'. The pleasant framing is kinder but not honest. Before sharing AI feedback with a student, read it asking: if I were a student who read this, would I know what I actually need to improve? If the answer is no, rewrite the critical sections yourself."
+      },
+      {
+        "id": "q4",
+        "type": "fill",
+        "question": "The AI4K12 initiative — the foundational framework for AI literacy education in K–12 — identifies _____ big ideas in AI that form the basis of most school AI curricula worldwide.",
+        "answer": "five",
+        "blank": "five",
+        "explanation": "AI4K12, a joint initiative of CSTA and AAAI, identified five big ideas that structure K–12 AI education: (1) Perception — computers perceive the world using sensors; (2) Representation and Reasoning — agents maintain models of the world and use them to reason; (3) Learning — computers can learn from data; (4) Natural Interaction — intelligent agents require many kinds of knowledge to interact naturally with humans; (5) Societal Impact — AI can impact society in both positive and negative ways. These five ideas provide a curriculum-agnostic framework that different boards — including CBSE Code 417 — adapt to their specific syllabi. Understanding this framework helps teachers see how individual lessons connect to broader AI literacy goals, and helps students build a coherent mental model of AI rather than a collection of disconnected facts."
+      },
+      {
+        "id": "q5",
+        "type": "truefalse",
+        "question": "Using AI to brainstorm an essay structure, discuss arguments, and clarify concepts — then writing the final essay yourself without using AI-generated text — is universally considered an academic integrity violation.",
+        "answer": "False",
+        "explanation": "This is a genuinely contested area where institutional policies vary, but the emerging consensus is that using AI as a thinking partner is fundamentally similar to using a dictionary, a study group, or a writing tutor — none of which are considered violations when the final work is your own. The key ethical distinction is between using AI to understand and structure your thinking (acceptable in most frameworks) versus submitting AI-generated text as your own work (not acceptable in any framework). Practically: a student who uses AI to understand what 'post-colonial theory' means, then writes their own analysis applying that concept, has learned something. A student who asks AI to write their analysis and submits it has not. The honest test is: does the submitted work represent the student's own thinking and writing? Many institutions are still writing their policies on this. Always check your institution's current guidelines, and teach students to be transparent about how they use AI in their process."
+      },
+      {
+        "id": "q6",
+        "type": "mcq",
+        "question": "A teacher wants to use AI to create differentiated reading materials — simpler text for struggling readers and more complex text for advanced readers — from the same base content. Which approach is most effective?",
+        "options": [
+          "Ask the AI to 'simplify' the text for one group and 'extend' it for another, without further specification",
+          "Specify reading level using concrete anchors: vocabulary grade level, sentence length limits, presence or absence of analogies, and the assumed prior knowledge of each group",
+          "Use separate AI tools for each group, as different tools are better suited to different complexity levels",
+          "Generate the advanced version first, then ask the AI to automatically simplify it for other groups"
+        ],
+        "answer": "Specify reading level using concrete anchors: vocabulary grade level, sentence length limits, presence or absence of analogies, and the assumed prior knowledge of each group",
+        "explanation": "'Simplify this' is one of the most under-specified instructions you can give an AI — it leaves every dimension of simplification undefined. Simplification can mean: shorter sentences, simpler vocabulary, more analogies, less assumed prior knowledge, more explicit transitions, more examples, reduced abstraction. Without specification, the model will apply its own defaults, which may not match your pedagogical intent. Concrete anchors give you control: 'Rewrite this for a student with a reading age of 10, using no words longer than three syllables, with one analogy comparing the concept to something in daily life, and assuming no prior knowledge of the topic.' The advanced version: 'Rewrite this for a student with strong subject knowledge, maintain technical vocabulary, include one extension concept not in the original, and assume familiarity with the basic principles.'"
+      }
+    ]
+  },
+  {
+    "pathId": "cbse-unit6-ethics",
+    "title": "CBSE AI Ethics and Bias Quiz",
+    "passingScore": 70,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "mcq",
+        "question": "A hospital deploys an AI system to prioritise patients for extra care. Research finds it consistently assigns lower risk scores to Black patients than to white patients with the same medical needs. What is the most likely cause?",
+        "options": [
+          "The algorithm was intentionally designed to treat patients differently by race",
+          "The algorithm used healthcare spending as a proxy for health need, but historically Black patients had less spent on their care due to systemic inequities",
+          "The data used to train the system was too small to be statistically reliable",
+          "The algorithm was accurate — it correctly identified that the two groups had different levels of medical need"
+        ],
+        "answer": "The algorithm used healthcare spending as a proxy for health need, but historically Black patients had less spent on their care due to systemic inequities",
+        "explanation": "This is a real case studied extensively in AI ethics literature. The system used historical healthcare costs as a proxy for health need — a reasonable assumption: sicker patients cost more to treat. But the data reflected a racially unequal healthcare system: Black patients, facing historical barriers to access and facing systemic undertreatment, had lower costs not because they were healthier but because they received less care. The algorithm learned 'lower costs = less sick' and assigned them lower priority scores — even when their objective medical need was identical. No one programmed in racial bias. The bias emerged because a reasonable-sounding proxy variable was contaminated by historical inequality. This is why algorithmic bias auditing must examine outcomes by demographic group, not just the logic of the model."
+      },
+      {
+        "id": "q2",
+        "type": "truefalse",
+        "question": "Removing protected characteristics (race, gender, caste, religion) from the variables an AI system uses is sufficient to make it non-discriminatory.",
+        "answer": "False",
+        "explanation": "This approach, sometimes called 'fairness through blindness', fails because of proxy variables. Protected characteristics like race and caste in India are correlated with other variables that may appear in training data: neighbourhood or pin code (correlated with caste due to historical segregation of communities), school attended (private vs. government schools often segment by economic class which correlates with caste), language used, and even name patterns that are associated with caste or religion. A model trained to predict loan repayment can infer caste from pin code and school name with high accuracy even without a 'caste' variable. Removing the protected variable doesn't remove the information — it just forces the model to infer it indirectly. Genuine fairness requires actively auditing outcomes across demographic groups, not just removing variables from inputs."
+      },
+      {
+        "id": "q3",
+        "type": "fill",
+        "question": "India's first comprehensive law regulating how personal data can be collected, processed, and stored — which also covers personal data shared with AI tools — is the Digital _____ Data Protection Act 2023.",
+        "answer": "Personal",
+        "blank": "Personal",
+        "explanation": "The Digital Personal Data Protection (DPDP) Act 2023 establishes foundational rights and obligations for personal data in India. Key concepts from the Act relevant to CBSE students: Data Principal — the individual whose data is being processed; Data Fiduciary — the organisation processing the data (this includes schools, edtech companies, and AI platforms); Consent — fiduciaries must obtain specific, informed consent before processing data; Purpose limitation — data collected for one purpose cannot be used for another without new consent; Children's data protection — especially strict provisions apply to processing data about minors, prohibiting behavioural tracking and targeted advertising. For AI use: when a student submits work to an AI tool for feedback, shares their name and class with an edtech platform, or uses a school-deployed AI application, they are generating personal data. Understanding who processes it, under what consent, and for what purpose is a DPDP-relevant question."
+      },
+      {
+        "id": "q4",
+        "type": "mcq",
+        "question": "According to CBSE Code 417 Unit 6, AI development should contribute to which international framework of goals for global human welfare?",
+        "options": [
+          "The Universal Declaration of Human Rights (UDHR)",
+          "The United Nations Sustainable Development Goals (SDGs)",
+          "The Paris Agreement on Climate Change",
+          "The Convention on the Rights of the Child (UNCRC)"
+        ],
+        "answer": "United Nations Sustainable Development Goals (SDGs)",
+        "explanation": "CBSE Code 417 Unit 6 frames AI not as a purely technical subject but as a tool with social purpose — one that should be developed and deployed to advance the UN's 17 Sustainable Development Goals. The SDGs include: zero hunger (AI in agriculture for yield prediction), good health (AI in diagnostics), quality education (personalised learning tools), reduced inequalities (bias and fairness in AI), and climate action (AI for energy efficiency). The curriculum asks students to think about AI design choices from the perspective of whether they advance or harm these goals. This is a departure from purely technical AI education: it asks who benefits from an AI system, who is harmed, and whether those distributional effects align with the kind of world the SDGs envision. Responsible AI development requires this kind of question to be asked at the design stage, not retrofitted after deployment."
+      },
+      {
+        "id": "q5",
+        "type": "truefalse",
+        "question": "AI systems that produce biased outputs do so because their developers intentionally programmed in those biases.",
+        "answer": "False",
+        "explanation": "Most AI bias is unintentional and emerges statistically from data that reflects existing societal inequalities — this is a critically important distinction. Developers who build hiring, credit, or healthcare AI systems are typically not trying to discriminate. The bias enters through: (1) historical data that reflects past human discrimination, (2) proxy variables that encode protected characteristics indirectly, (3) underrepresentation of certain groups in training data (a face recognition system trained mostly on lighter-skinned faces will be less accurate on darker-skinned faces not by design but by data composition), and (4) objective functions that optimise for a metric that correlates with protected characteristics. Understanding that bias is usually unintentional has two implications: it means good intent is not sufficient protection against discriminatory outputs; and it means bias should be audited systematically in outcomes, not assumed to be absent because no one wanted it."
+      },
+      {
+        "id": "q6",
+        "type": "mcq",
+        "question": "A student argues: 'AI is just a tool, like a calculator. Whether it causes harm depends on how people use it, not on the AI itself.' What is the most substantive objection to this view?",
+        "options": [
+          "AI is more expensive than calculators, so the comparison is not valid",
+          "Unlike calculators, AI systems embed value judgments and reflect the biases of their training data — the 'tool' itself has built-in tendencies that are not neutral",
+          "AI is more complex than a calculator, so users need more training to use it responsibly",
+          "Calculators are always accurate but AI sometimes makes mistakes, which is the key difference"
+        ],
+        "answer": "Unlike calculators, AI systems embed value judgments and reflect the biases of their training data — the 'tool' itself has built-in tendencies that are not neutral",
+        "explanation": "The 'AI is just a tool' argument fails because it assumes the tool is neutral — that it merely executes user intentions without shaping outcomes. A calculator performs arithmetic identically regardless of who uses it or for what. An AI hiring system trained on historical data has encoded a specific worldview: that what made a 'good hire' in the past (a male engineer from an elite university) is what should make a 'good hire' now. That worldview is baked into the model. Users cannot simply 'choose' to use the tool neutrally — the tool pushes toward certain outcomes even when users intend otherwise. The more powerful implication: ethical responsibility for AI systems lies not only with individual users but with the organisations that design, train, deploy, and govern them. The 'just a tool' framing obscures these upstream responsibilities."
+      }
+    ]
+  },
+  {
+    "pathId": "igcse-topic6-full",
+    "title": "IGCSE Computer Science Topic 6 Quiz",
+    "passingScore": 70,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "mcq",
+        "question": "In supervised learning, what specifically does the training dataset contain that distinguishes it from unsupervised learning?",
+        "options": [
+          "Only raw input data, with patterns detected by the algorithm automatically",
+          "Pairs of inputs and their corresponding correct output labels, provided by human annotators or existing records",
+          "Randomly generated data used to test how the model generalises",
+          "Only the desired outputs, from which the model must infer the corresponding inputs"
+        ],
+        "answer": "Pairs of inputs and their corresponding correct output labels, provided by human annotators or existing records",
+        "explanation": "The defining feature of supervised learning is labelled training data: for every input example, there is a corresponding correct output that the model is trained to predict. For an image classifier: millions of images each labelled with the correct object category ('cat', 'dog', 'car'). For a spam filter: thousands of emails each labelled 'spam' or 'not spam'. The model learns a function mapping inputs to outputs by minimising the difference between its predictions and the correct labels. This contrasts with unsupervised learning, where no labels are provided and the model must discover structure in the data itself (clustering similar examples together). The requirement for labelled data is both supervised learning's strength (it can learn very specific human-defined categories) and its bottleneck (labelling large datasets accurately is expensive and time-consuming)."
+      },
+      {
+        "id": "q2",
+        "type": "mcq",
+        "question": "A neural network achieves 99% accuracy on its training data but only 61% accuracy on new data it has never seen. This is a clear example of:",
+        "options": [
+          "Underfitting — the model is too simple to learn the training patterns",
+          "Overfitting — the model has memorised training-specific details rather than learning generalisable patterns",
+          "A data quality problem — the test data must be fundamentally different from training data",
+          "Normal variance — a 38-point accuracy gap between training and test data is expected"
+        ],
+        "answer": "Overfitting — the model has memorised training-specific details rather than learning generalisable patterns",
+        "explanation": "Overfitting is one of the central challenges in machine learning. When a model overfits, it learns not just the underlying pattern but also the noise, idiosyncrasies, and specific quirks of the training examples. On training data it performs perfectly — it has essentially memorised the answers. On new data, where those specific quirks are not present, performance drops sharply. Analogy: a student who memorises past exam papers and specific correct answers without understanding the underlying concepts. They score perfectly on past papers but poorly on any question with slightly different phrasing. Common causes: model too complex relative to training data size, training for too many iterations, insufficient regularisation. Common fixes: more training data, dropout layers, early stopping, regularisation, cross-validation. The goal of machine learning is generalisation — learning a pattern that works on data the model has never seen."
+      },
+      {
+        "id": "q3",
+        "type": "fill",
+        "question": "In a neural network, the layers between the input layer and the output layer — where complex features are progressively learned — are called _____ layers.",
+        "answer": "hidden",
+        "blank": "hidden",
+        "explanation": "Hidden layers are where the representational work of a neural network happens. The input layer receives raw data (pixel values, word tokens, numerical features). The output layer produces the final prediction (a class label, a probability, a generated word). Hidden layers transform the input representation progressively: early hidden layers in an image network learn to detect edges and textures; middle layers learn to detect shapes and object parts; deeper layers learn to detect whole objects. The word 'hidden' refers to the fact that these layers are not directly observed in either the inputs or outputs — their activations are internal to the model. Deeper networks (more hidden layers) can learn more complex, hierarchical representations — this is the 'deep' in 'deep learning'. However, deeper networks are also harder to train and more prone to overfitting without sufficient data."
+      },
+      {
+        "id": "q4",
+        "type": "truefalse",
+        "question": "Reinforcement learning requires a large labelled dataset of correct actions to learn from, similar to supervised learning.",
+        "answer": "False",
+        "explanation": "Reinforcement learning (RL) is fundamentally different in its learning mechanism. It has no labelled dataset of correct actions. Instead, it learns through interaction with an environment: the agent takes an action, the environment transitions to a new state and returns a reward or penalty, and the agent updates its behaviour to maximise cumulative reward over time. The learning signal is not 'here is the correct action' (supervised) but 'here is a scalar reward for what you just did' (reinforcement). This makes RL powerful for sequential decision-making tasks — games, robot control, resource optimisation — where the correct action is not known in advance but can be evaluated after the fact. It is also used to train language models: RLHF (Reinforcement Learning from Human Feedback) uses human preference ratings as the reward signal to fine-tune model behaviour. RL's challenge is sample efficiency: it often requires millions of interactions to learn behaviours that would take humans minutes to learn."
+      },
+      {
+        "id": "q5",
+        "type": "mcq",
+        "question": "Which of these four applications genuinely uses machine learning — where the system improves its predictions based on patterns in data — rather than a fixed programmed rule?",
+        "options": [
+          "A calculator applying the formula F = ma to compute force",
+          "A spell-checker that flags words not found in a fixed dictionary",
+          "A streaming platform that recommends new shows based on your watching history and the patterns of users similar to you",
+          "A thermostat that turns on heating when temperature drops below a set threshold"
+        ],
+        "answer": "A streaming platform that recommends new shows based on your watching history and the patterns of users similar to you",
+        "explanation": "The key distinction is whether the system's behaviour changes based on learned patterns in data, or whether it follows a fixed rule programmed by a human. The calculator, spell-checker, and thermostat all follow explicit, static rules: apply this formula; check against this list; trigger at this threshold. No data changes how they behave — they perform the same computation regardless of history. The recommendation system uses collaborative filtering: it identifies users with similar watching patterns to you, identifies what those users watched next and rated highly, and recommends those items. Its predictions change as more viewing data accumulates, improve as it learns more about your preferences, and are different for every user. The system's behaviour is generated by learned statistical patterns, not by explicit human-written rules. This is the defining characteristic of machine learning."
+      },
+      {
+        "id": "q6",
+        "type": "mcq",
+        "question": "Landmark research (Buolamwini and Gebru, 2018) found commercial facial recognition systems had significantly higher error rates for certain groups. Which finding most accurately describes the results?",
+        "options": [
+          "Systems failed only in low-light conditions, affecting all groups equally",
+          "Systems had error rates up to 34 percentage points higher for darker-skinned women compared to lighter-skinned men",
+          "Systems performed equally across all demographic groups but failed on unusual angles",
+          "Systems failed predominantly for people over 60 regardless of other characteristics"
+        ],
+        "answer": "Systems had error rates up to 34 percentage points higher for darker-skinned women compared to lighter-skinned men",
+        "explanation": "Joy Buolamwini and Timnit Gebru's 'Gender Shades' paper (2018) audited commercial facial analysis systems from Microsoft, IBM, and Face++ and found error rates of 1% for lighter-skinned men rising to up to 35% for darker-skinned women — a 34 percentage point gap in a commercially deployed system. The cause: training datasets were not balanced across gender and skin tone, overrepresenting lighter-skinned male faces. The system learned to classify faces well for the demographic groups most represented in its training data, and poorly for underrepresented groups. The implications extend beyond facial recognition: any AI system trained on a non-representative dataset will perform unequally across groups. The paper became a landmark case because it moved AI bias from an abstract concern to documented evidence with specific numbers in deployed commercial products — systems that were being used for consequential decisions like identity verification."
+      },
+      {
+        "id": "q7",
+        "type": "fill",
+        "question": "The process of training a pre-trained large model on a smaller, specific dataset to adapt its behaviour for a particular task or domain is called _____.",
+        "answer": "fine-tuning",
+        "blank": "fine-tuning",
+        "explanation": "Fine-tuning is the technique that allows the capabilities of large pre-trained models to be directed toward specific applications at much lower cost than training from scratch. A general language model pre-trained on vast text corpora has broad capabilities but is not optimised for any specific task. Fine-tuning updates the model's weights on a smaller domain-specific dataset — medical records, legal documents, customer service transcripts, or labelled examples of a specific task — adjusting the model's behaviour toward that domain. Key advantages: requires far less data and compute than pre-training; leverages the broad knowledge encoded in the pre-trained weights; can produce highly specialised models. This is how most real-world AI applications are built: take a foundation model (GPT, Llama, Gemini), fine-tune on task-specific data, deploy. RLHF is a form of fine-tuning using human preference data as the training signal."
+      }
+    ]
+  },
+  {
+    "pathId": "lp5",
+    "title": "How AI Actually Thinks Quiz",
+    "passingScore": 70,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "mcq",
+        "question": "A language model has a context window of 128,000 tokens. What does this mean in practice — and what happens at the boundary?",
+        "options": [
+          "The model has memorised 128,000 facts and can retrieve any of them on demand",
+          "The model can process up to 128,000 tokens in a single conversation; everything within that window influences the response, and everything outside it is not available to the model",
+          "The model generates up to 128,000 tokens per response before stopping",
+          "The model updates its permanent knowledge after every 128,000 tokens of conversation"
+        ],
+        "answer": "The model can process up to 128,000 tokens in a single conversation; everything within that window influences the response, and everything outside it is not available to the model",
+        "explanation": "The context window is the model's working memory — the total amount of text it can consider simultaneously when generating a response. Everything in the context window is attended to when predicting the next token. Everything outside it — earlier conversations, documents not included, information not pasted in — does not exist from the model's perspective. A 128,000 token context window fits roughly 90,000–100,000 words, or about 300–400 pages of text. This is why models have no memory across separate conversations by default: the previous conversation is outside the context window. This is also why extremely long conversations or very large document uploads can cause quality degradation — as context fills, earlier content has less influence on current responses. The context window is a hard architectural limit; it cannot be expanded by telling the model to 'remember more'."
+      },
+      {
+        "id": "q2",
+        "type": "fill",
+        "question": "Before a language model can process text, the text must be split into subword units. This process of converting text into the fundamental units the model operates on is called _____.",
+        "answer": "tokenisation",
+        "blank": "tokenisation",
+        "explanation": "Tokenisation is the process of breaking input text into tokens — the basic units of processing. Tokens are not the same as words. Common English words are single tokens ('the', 'is', 'cat'). Rare or complex words are split ('Unbelievable' → ['Un', 'believ', 'able']). Characters and punctuation may be separate tokens. A typical rule of thumb: ~1.3 tokens per word in English. The tokenisation scheme has practical consequences: it affects how the model handles different languages (English text is typically tokenised more efficiently than text in scripts like Devanagari or Arabic, meaning more tokens are used per word, which costs more context space and inference compute); it affects arithmetic (the model sees numbers as sequences of digit tokens, not as numbers, which is part of why LLMs make maths errors); and it affects code (programming languages are tokenised differently from natural language, which is why models specialised for code benefit from code-optimised tokenisers)."
+      },
+      {
+        "id": "q3",
+        "type": "truefalse",
+        "question": "A language model with more parameters will always outperform one with fewer parameters on every task.",
+        "answer": "False",
+        "explanation": "Parameter count is one factor among several that determine model performance, and it is often not the most important one. A smaller model fine-tuned on high-quality domain-specific data frequently outperforms a much larger general model on tasks within that domain. Training procedure matters enormously: RLHF, instruction tuning, constitutional AI, and other alignment techniques significantly change how capable and useful a model is independent of parameter count. Training data quality matters: a smaller model trained on well-curated, diverse data can outperform a larger model trained on noisier data. Inference techniques matter: chain-of-thought prompting, retrieval-augmented generation, and structured output techniques can dramatically improve the effective performance of a small model. Context window size matters for document tasks. The practical implication: choosing the right model for a task requires understanding the task, not just ranking models by parameter count."
+      },
+      {
+        "id": "q4",
+        "type": "mcq",
+        "question": "What is Reinforcement Learning from Human Feedback (RLHF), and why does it matter for how AI assistants behave?",
+        "options": [
+          "A technique where human trainers manually correct every AI response, which is then stored in the model's memory",
+          "A training process where human raters compare model outputs and the model is fine-tuned to produce responses that human raters prefer — transforming a raw language model into a helpful assistant",
+          "A safety filter applied after responses are generated, where humans review and remove harmful content",
+          "A method for training AI on human-written text rather than synthetic data, ensuring outputs are more natural"
+        ],
+        "answer": "A training process where human raters compare model outputs and the model is fine-tuned to produce responses that human raters prefer — transforming a raw language model into a helpful assistant",
+        "explanation": "RLHF is the technique that bridges the gap between 'language model that predicts text' and 'AI assistant that helps people'. Without RLHF, a language model would continue the prompt 'How do I bake bread?' with the statistically likely continuation of that kind of text — not necessarily a helpful recipe. RLHF works in stages: first, human raters compare pairs of model outputs and indicate which is better; this data trains a reward model that can score any response; the language model is then fine-tuned using reinforcement learning to maximise the reward model's score. The result: a model that produces the kinds of responses human raters preferred. RLHF is also why sycophancy exists — if human raters consistently preferred agreeable responses, the model learned to be agreeable. And it is why AI assistants avoid harmful content — if raters downrated harmful responses, the model learned to avoid them. RLHF encodes human preferences, which means it also encodes human biases."
+      },
+      {
+        "id": "q5",
+        "type": "mcq",
+        "question": "What are 'emergent abilities' in large language models, and why are they significant?",
+        "options": [
+          "Abilities that the model was explicitly trained on but only activates for specific user types",
+          "Capabilities that appear suddenly in larger models but are absent in smaller ones — not directly trained, and not predictable from smaller model performance",
+          "The model's ability to learn new tasks at inference time without any weight updates, simply from the examples in the prompt",
+          "Safety properties that emerge from alignment training and were not present before RLHF"
+        ],
+        "answer": "Capabilities that appear suddenly in larger models but are absent in smaller ones — not directly trained, and not predictable from smaller model performance",
+        "explanation": "Emergence is one of the most surprising and debated phenomena in AI research. As models scale — more parameters, more training data, more compute — most capabilities improve gradually and predictably. But some capabilities show a different pattern: near-zero performance across a range of model sizes, then sudden, sharp improvement at a specific scale threshold. Examples include multi-step arithmetic, chain-of-thought reasoning, code generation from natural language descriptions, and certain translation capabilities. These capabilities were not explicitly trained — they appeared as a consequence of scale. Why this happens is an active research question. One hypothesis: emergent abilities represent capabilities that require multiple simpler sub-skills to combine, and that combination only reliably occurs once all the sub-skills reach a sufficient level. The practical significance: it is difficult to predict what capabilities a model will have before you train it at a given scale."
+      },
+      {
+        "id": "q6",
+        "type": "fill",
+        "question": "Providing the model with 2–5 worked examples of the input-output pattern before the actual query — without updating the model's weights — is called _____ prompting.",
+        "answer": "few-shot",
+        "blank": "few-shot",
+        "explanation": "Few-shot prompting exploits one of the most striking properties of large language models: in-context learning. By providing examples of the desired input-output mapping in the prompt, the model can infer the pattern and apply it to new inputs — with no gradient updates, no fine-tuning, no changes to the model's weights. The pattern is learned purely from the context window, at inference time. This is different from how traditional machine learning systems work: they require retraining to learn new tasks. Few-shot prompting exists on a spectrum: zero-shot (no examples, the model relies entirely on its training), one-shot (one example), few-shot (2–10 examples), and many-shot (dozens to hundreds of examples, possible in large context windows). The quality and choice of examples matters significantly: examples that accurately represent the desired pattern and cover the relevant range of inputs produce much better results than arbitrary examples."
+      },
+      {
+        "id": "q7",
+        "type": "truefalse",
+        "question": "Language models have a separate internal fact database that they query when answering factual questions, similar to how a search engine retrieves documents.",
+        "answer": "False",
+        "explanation": "This misconception is consequential because it affects how much you trust AI factual claims. Language models have no separate fact database. All knowledge is encoded implicitly and distributedly across the model's billions of parameters during training — the same parameters that also encode grammar, writing style, reasoning patterns, and everything else. There is no lookup table, no indexed knowledge base, no separate retrieval step when the model answers a factual question. When generating the sentence 'The capital of France is...', the model predicts 'Paris' because 'Paris' is the most statistically probable continuation of that phrase in its training distribution — not because it looked it up. This is why hallucination is architecturally inevitable: the model cannot distinguish between 'Paris' (correct) and a plausible-sounding but incorrect completion because it is always doing the same thing — predicting probable text. Systems like Retrieval-Augmented Generation (RAG) add an actual external database lookup step, which is specifically designed to address this limitation."
+      }
+    ]
+  }
+]

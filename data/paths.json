@@ -1,0 +1,953 @@
+[
+  {
+    "id": "lp1",
+    "title": "AI fundamentals",
+    "description": "From 'AI is magic' to actually understanding how it works. No technical background needed.",
+    "resourceIds": [
+      "yt-3b1b-neural-net",
+      "yt-karpathy-llm-intro",
+      "yt-3b1b-attention",
+      "yt-hallucinations"
+    ],
+    "difficulty": "beginner",
+    "audience": "both",
+    "persona": ["self-studier", "curious-learner"],
+    "estimatedHours": 3.5,
+    "topics": ["AI fundamentals", "How AI works"],
+    "subtopics": ["neural networks", "large language models", "attention mechanisms", "hallucinations"],
+    "learningOutcomes": [
+      "Explain how neural networks learn from data",
+      "Describe what large language models are and how they generate text",
+      "Identify common AI failure modes like hallucinations",
+      "Distinguish AI hype from actual capability"
+    ],
+    "prereqIds": [],
+    "nextPathIds": ["lp4", "lp5"],
+    "completedByCount": 2413,
+    "rating": 4.9,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-brand-500",
+    "iconName": "Brain"
+  },
+  {
+    "id": "lp2",
+    "title": "Prompting that actually works",
+    "description": "Stop guessing. Learn the structure behind prompts that consistently get useful, accurate results.",
+    "resourceIds": [
+      "art-openai-prompt-guide",
+      "sem-deeplearning-prompting"
+    ],
+    "difficulty": "beginner",
+    "audience": "both",
+    "persona": ["self-studier", "curious-learner", "career-explorer"],
+    "estimatedHours": 2.0,
+    "topics": ["Prompting"],
+    "subtopics": ["prompt engineering", "chain-of-thought", "few-shot prompting", "system prompts"],
+    "learningOutcomes": [
+      "Write prompts that reliably produce accurate, useful outputs",
+      "Use few-shot and chain-of-thought techniques to improve results",
+      "Identify why a prompt is failing and how to fix it"
+    ],
+    "prereqIds": ["lp1"],
+    "nextPathIds": ["lp-genai-practical"],
+    "completedByCount": 1872,
+    "rating": 4.8,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-emerald-600",
+    "iconName": "MessageSquare"
+  },
+  {
+    "id": "lp3",
+    "title": "AI for classroom teachers",
+    "description": "Practical AI skills for teachers: lesson planning, differentiation, assessment, and honest answers about what to watch out for.",
+    "resourceIds": [
+      "yt-sal-khan-ted",
+      "yt-edutopia-classroom",
+      "art-mit-day-of-ai",
+      "art-ai4k12",
+      "book-ai-teachers"
+    ],
+    "difficulty": "beginner",
+    "audience": "teacher",
+    "persona": ["teacher"],
+    "estimatedHours": 4.5,
+    "topics": ["AI for teachers"],
+    "subtopics": ["lesson planning", "AI-assisted differentiation", "assessment design", "academic integrity", "classroom policy"],
+    "learningOutcomes": [
+      "Use AI tools to create differentiated lesson plans and assessments",
+      "Set clear, fair classroom policies around student AI use",
+      "Identify and explain AI limitations to students",
+      "Design tasks that develop critical AI literacy alongside subject knowledge"
+    ],
+    "prereqIds": [],
+    "nextPathIds": ["lp-responsible-ai-schools"],
+    "completedByCount": 3104,
+    "rating": 4.9,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-amber-500",
+    "iconName": "GraduationCap"
+  },
+  {
+    "id": "lp4",
+    "title": "AI safety and critical thinking",
+    "description": "Learn to spot hallucinations, identify bias, and evaluate AI outputs critically.",
+    "resourceIds": [
+      "yt-hallucinations",
+      "yt-computerphile-bias",
+      "yt-hinton-risks"
+    ],
+    "difficulty": "intermediate",
+    "audience": "both",
+    "persona": ["self-studier", "curious-learner", "exam-crammer"],
+    "estimatedHours": 3.0,
+    "topics": ["AI safety", "AI ethics"],
+    "subtopics": ["hallucination detection", "algorithmic bias", "AI risk", "critical evaluation"],
+    "learningOutcomes": [
+      "Detect hallucinations and verify AI-generated claims",
+      "Explain how bias enters AI systems and its real-world consequences",
+      "Articulate key AI safety concerns using concrete examples",
+      "Evaluate AI outputs critically before acting on them"
+    ],
+    "prereqIds": ["lp1"],
+    "nextPathIds": [],
+    "completedByCount": 1241,
+    "rating": 4.7,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-purple-600",
+    "iconName": "ShieldCheck"
+  },
+  {
+    "id": "lp5",
+    "title": "How AI actually thinks",
+    "description": "A deeper look under the hood — attention mechanisms, training dynamics, and why AI behaves the way it does.",
+    "resourceIds": [
+      "yt-karpathy-llm-intro",
+      "yt-3b1b-attention",
+      "yt-mit-ethics"
+    ],
+    "difficulty": "advanced",
+    "audience": "student",
+    "persona": ["self-studier", "career-explorer"],
+    "estimatedHours": 3.5,
+    "topics": ["How AI works", "AI fundamentals"],
+    "subtopics": ["attention mechanisms", "transformer architecture", "training dynamics", "emergent behaviour"],
+    "learningOutcomes": [
+      "Explain how the attention mechanism works and why it matters",
+      "Describe what happens during model training at a conceptual level",
+      "Reason about why large models exhibit emergent capabilities",
+      "Read and understand popular AI research coverage critically"
+    ],
+    "prereqIds": ["lp1"],
+    "nextPathIds": [],
+    "completedByCount": 891,
+    "rating": 4.8,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-rose-600",
+    "iconName": "Cpu"
+  },
+  {
+    "id": "cbse-unit1-what-is-ai",
+    "title": "CBSE Unit 1: What is AI? (Class 9)",
+    "description": "Mapped to CBSE Code 417 Unit 1. Covers AI definition, history, types, and relation to human intelligence.",
+    "resourceIds": [
+      "yt-google-genai",
+      "yt-fireship-llm",
+      "art-cbse-code417-syllabus"
+    ],
+    "difficulty": "beginner",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier"],
+    "estimatedHours": 2,
+    "topics": ["AI fundamentals"],
+    "subtopics": ["AI history", "types of AI", "narrow vs general AI", "AI vs human intelligence"],
+    "learningOutcomes": [
+      "Define AI and distinguish it from traditional programming",
+      "Describe key milestones in AI history",
+      "Classify AI systems as narrow, general, or super AI",
+      "Explain how AI relates to and differs from human intelligence"
+    ],
+    "prereqIds": [],
+    "nextPathIds": ["cbse-unit2-python-ai"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-orange-500",
+    "iconName": "Brain",
+    "board": "CBSE",
+    "boardUnit": "Code 417 Unit 1",
+    "examRelevance": {
+      "CBSE": { "code": "417", "unit": "Unit 1", "class": "9" }
+    }
+  },
+  {
+    "id": "cbse-unit2-python-ai",
+    "title": "CBSE Unit 2: Python for AI (Class 9–10)",
+    "description": "Mapped to CBSE Code 417 Unit 2. Python fundamentals for AI — variables, data structures, functions, NumPy, pandas.",
+    "resourceIds": [
+      "other-harvard-cs50-ai"
+    ],
+    "difficulty": "beginner",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier"],
+    "estimatedHours": 4,
+    "topics": ["How AI works"],
+    "subtopics": ["Python basics", "NumPy", "pandas", "data structures", "functions"],
+    "learningOutcomes": [
+      "Write basic Python programs using variables, loops, and functions",
+      "Use NumPy arrays for numerical computation",
+      "Load and explore datasets using pandas",
+      "Apply Python skills to simple AI-related tasks"
+    ],
+    "prereqIds": ["cbse-unit1-what-is-ai"],
+    "nextPathIds": ["cbse-unit3-ml-basics"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-blue-500",
+    "iconName": "Code",
+    "board": "CBSE",
+    "boardUnit": "Code 417 Unit 2",
+    "examRelevance": {
+      "CBSE": { "code": "417", "unit": "Unit 2", "class": "9-10" }
+    }
+  },
+  {
+    "id": "cbse-unit3-ml-basics",
+    "title": "CBSE Unit 3: Machine Learning Basics (Class 9–10)",
+    "description": "Mapped to CBSE Code 417 Unit 3. Supervised, unsupervised, reinforcement learning. Neural network basics.",
+    "resourceIds": [
+      "yt-3b1b-neural-net",
+      "yt-supervised-unsupervised",
+      "yt-rl-simple",
+      "other-tf-playground"
+    ],
+    "difficulty": "beginner",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier"],
+    "estimatedHours": 3.5,
+    "topics": ["How AI works"],
+    "subtopics": ["supervised learning", "unsupervised learning", "reinforcement learning", "neural networks"],
+    "learningOutcomes": [
+      "Distinguish supervised, unsupervised, and reinforcement learning with examples",
+      "Describe how a neural network learns from labelled data",
+      "Identify which ML type suits a given problem",
+      "Interpret basic model outputs and accuracy metrics"
+    ],
+    "prereqIds": ["cbse-unit2-python-ai"],
+    "nextPathIds": ["cbse-unit4-cv-nlp"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-brand-500",
+    "iconName": "Brain",
+    "board": "CBSE",
+    "boardUnit": "Code 417 Unit 3",
+    "examRelevance": {
+      "CBSE": { "code": "417", "unit": "Unit 3", "class": "9-10" }
+    }
+  },
+  {
+    "id": "cbse-unit4-cv-nlp",
+    "title": "CBSE Unit 4: Computer Vision & NLP (Class 10–11)",
+    "description": "Mapped to CBSE Code 417/843 Unit 4. Image processing, object detection, text processing, sentiment analysis. Practical Python exercises included.",
+    "resourceIds": [
+      "yt-cbse-computer-vision",
+      "yt-cbse-nlp-unit",
+      "yt-hi-nlp-hindi",
+      "yt-hi-computer-vision-hindi"
+    ],
+    "difficulty": "intermediate",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier"],
+    "estimatedHours": 4,
+    "topics": ["How AI works", "NLP", "Computer vision"],
+    "subtopics": ["image classification", "object detection", "text preprocessing", "sentiment analysis", "tokenisation"],
+    "learningOutcomes": [
+      "Explain how computer vision models detect objects in images",
+      "Describe the NLP pipeline from raw text to model input",
+      "Perform basic sentiment analysis using Python",
+      "Distinguish between CV and NLP applications in real products"
+    ],
+    "prereqIds": ["cbse-unit3-ml-basics"],
+    "nextPathIds": ["cbse-unit5-project-cycle"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-purple-500",
+    "iconName": "BookOpen",
+    "board": "CBSE",
+    "boardUnit": "Code 417 Unit 4",
+    "examRelevance": {
+      "CBSE": { "code": "417/843", "unit": "Unit 4", "class": "10-11" }
+    }
+  },
+  {
+    "id": "cbse-unit5-project-cycle",
+    "title": "CBSE Unit 5: AI Project Cycle (Class 9–10)",
+    "description": "Mapped to CBSE Code 417 Unit 5. Problem scoping, data collection, data exploration, modelling, evaluation. The complete project methodology tested in exams.",
+    "resourceIds": [
+      "yt-cbse-ai-project-cycle",
+      "yt-hi-data-science-hindi",
+      "sem-fast-ai"
+    ],
+    "difficulty": "beginner",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier"],
+    "estimatedHours": 3,
+    "topics": ["AI project cycle"],
+    "subtopics": ["problem scoping", "data collection", "data exploration", "model evaluation", "project methodology"],
+    "learningOutcomes": [
+      "Apply the five-stage AI project cycle to a real problem",
+      "Scope an AI problem correctly, including defining success criteria",
+      "Collect, clean, and explore a dataset for an AI task",
+      "Evaluate model performance using appropriate metrics"
+    ],
+    "prereqIds": ["cbse-unit3-ml-basics"],
+    "nextPathIds": ["cbse-unit6-ethics"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-emerald-500",
+    "iconName": "Route",
+    "board": "CBSE",
+    "boardUnit": "Code 417 Unit 5",
+    "examRelevance": {
+      "CBSE": { "code": "417", "unit": "Unit 5", "class": "9-10" }
+    }
+  },
+  {
+    "id": "cbse-unit6-ethics",
+    "title": "CBSE Unit 6: AI Ethics & Bias (Class 9–12)",
+    "description": "Mapped to CBSE Code 417 Unit 6. Algorithmic bias, data privacy, AI and sustainable development goals.",
+    "resourceIds": [
+      "yt-hallucinations",
+      "yt-computerphile-bias",
+      "yt-data-bias-explained"
+    ],
+    "difficulty": "beginner",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier"],
+    "estimatedHours": 3,
+    "topics": ["AI ethics", "AI safety"],
+    "subtopics": ["algorithmic bias", "data privacy", "sustainable development goals", "responsible AI", "fairness"],
+    "learningOutcomes": [
+      "Identify sources of bias in AI training data and model outputs",
+      "Explain data privacy risks in AI systems",
+      "Connect AI development to UN Sustainable Development Goals",
+      "Propose mitigation strategies for a given AI bias scenario"
+    ],
+    "prereqIds": ["cbse-unit5-project-cycle"],
+    "nextPathIds": [],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-red-500",
+    "iconName": "ShieldCheck",
+    "board": "CBSE",
+    "boardUnit": "Code 417 Unit 6",
+    "examRelevance": {
+      "CBSE": { "code": "417", "unit": "Unit 6", "class": "9-12" }
+    }
+  },
+  {
+    "id": "cbse-teachers-pack",
+    "title": "CBSE AI Teachers: Implementation Guide",
+    "description": "For CBSE school teachers implementing Code 417/843. Covers curriculum structure, practical lab setup, assessment design.",
+    "resourceIds": [
+      "art-cbse-code417-syllabus",
+      "art-mit-day-of-ai",
+      "art-ai4k12"
+    ],
+    "difficulty": "beginner",
+    "audience": "teacher",
+    "persona": ["teacher"],
+    "estimatedHours": 4,
+    "topics": ["AI for teachers"],
+    "subtopics": ["curriculum mapping", "lab setup", "assessment design", "CBSE Code 417", "CBSE Code 843"],
+    "learningOutcomes": [
+      "Map the CBSE Code 417/843 units to available teaching resources",
+      "Set up a practical AI lab session with free tools",
+      "Design theory and practical assessments aligned to board expectations",
+      "Handle common student misconceptions about AI"
+    ],
+    "prereqIds": [],
+    "nextPathIds": ["lp-responsible-ai-schools"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-amber-500",
+    "iconName": "GraduationCap",
+    "board": "CBSE",
+    "boardUnit": "Teacher development",
+    "examRelevance": {
+      "CBSE": { "code": "417/843", "unit": "All units", "class": "9-12" }
+    }
+  },
+  {
+    "id": "cbse-hindi-complete",
+    "title": "CBSE AI in Hindi — Complete Series",
+    "description": "Complete CBSE AI curriculum covered in Hindi. All four core units: What is AI, ML basics, Project Cycle, Ethics. Ideal for Hindi-medium CBSE and RBSE students.",
+    "resourceIds": [
+      "yt-hi-ai-kya-hai",
+      "yt-hi-codewithharry-ml",
+      "yt-hi-python-ai-hindi",
+      "yt-hi-neural-network-hindi",
+      "yt-hi-ai-ethics-hindi",
+      "art-hi-ncert-ai",
+      "art-hi-diksha-ai"
+    ],
+    "difficulty": "beginner",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier"],
+    "estimatedHours": 5,
+    "topics": ["AI fundamentals", "How AI works"],
+    "subtopics": ["AI basics", "machine learning", "Python", "ethics", "NCERT AI", "DIKSHA"],
+    "learningOutcomes": [
+      "Understand core CBSE AI curriculum concepts explained in Hindi",
+      "Follow AI and ML explanations without needing English resources",
+      "Prepare for CBSE Code 417 exams using Hindi-medium materials",
+      "Access NCERT and DIKSHA AI resources confidently"
+    ],
+    "prereqIds": [],
+    "nextPathIds": ["cbse-unit1-what-is-ai"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "hi",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-orange-500",
+    "iconName": "Brain",
+    "board": "CBSE",
+    "boardUnit": "Hindi medium — full curriculum",
+    "examRelevance": {
+      "CBSE": { "code": "417", "unit": "Units 1–6", "class": "9-12" }
+    }
+  },
+  {
+    "id": "igcse-topic6-full",
+    "title": "IGCSE Computer Science: Topic 6 Complete Pack",
+    "description": "Full preparation for IGCSE Computer Science (0478/0984) Topic 6: Automated and emerging technologies.",
+    "resourceIds": [
+      "yt-supervised-unsupervised",
+      "yt-3b1b-neural-net",
+      "yt-hallucinations",
+      "yt-computerphile-bias"
+    ],
+    "difficulty": "intermediate",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier"],
+    "estimatedHours": 5,
+    "topics": ["How AI works", "AI ethics"],
+    "subtopics": ["machine learning types", "neural networks", "expert systems", "natural language processing", "bias", "automation"],
+    "learningOutcomes": [
+      "Answer IGCSE Paper 1 questions on Topic 6 with mark-scheme language",
+      "Distinguish machine learning from rule-based AI systems",
+      "Evaluate the benefits and risks of automated technologies",
+      "Structure 4-mark and 6-mark ethics answers correctly"
+    ],
+    "prereqIds": ["igcse-ml-types"],
+    "nextPathIds": ["igcse-ethics-risks"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-sky-600",
+    "iconName": "BookOpen",
+    "board": "IGCSE",
+    "boardUnit": "Topic 6: Automated and emerging technologies",
+    "examRelevance": {
+      "IGCSE": { "code": "0478/0984", "unit": "Topic 6", "paper": "Paper 1" }
+    }
+  },
+  {
+    "id": "igcse-ml-types",
+    "title": "IGCSE Topic 6.2–6.3: ML Types (Supervised, Unsupervised, RL)",
+    "description": "Deep dive into the three machine learning paradigms for IGCSE Paper 1. Definitions, examples, differences. Exam technique for how to answer comparison questions.",
+    "resourceIds": [
+      "yt-igcse-ml-types",
+      "yt-supervised-unsupervised",
+      "yt-rl-simple"
+    ],
+    "difficulty": "beginner",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier"],
+    "estimatedHours": 2,
+    "topics": ["How AI works"],
+    "subtopics": ["supervised learning", "unsupervised learning", "reinforcement learning", "exam technique"],
+    "learningOutcomes": [
+      "Define and compare the three main ML paradigms",
+      "Give exam-ready examples for each ML type",
+      "Answer IGCSE comparison questions using correct mark-scheme language",
+      "Choose the appropriate ML type for a described scenario"
+    ],
+    "prereqIds": [],
+    "nextPathIds": ["igcse-topic6-full"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-sky-500",
+    "iconName": "GitBranch",
+    "board": "IGCSE",
+    "boardUnit": "Topic 6.2–6.3",
+    "examRelevance": {
+      "IGCSE": { "code": "0478/0984", "unit": "Topic 6.2–6.3", "paper": "Paper 1" }
+    }
+  },
+  {
+    "id": "igcse-ethics-risks",
+    "title": "IGCSE Topic 6.6–6.7: Ethics and Risks of AI",
+    "description": "AI ethics and risks for IGCSE — bias, privacy, job displacement. Mark-scheme focused.",
+    "resourceIds": [
+      "yt-hallucinations",
+      "yt-data-bias-explained",
+      "yt-computerphile-bias"
+    ],
+    "difficulty": "intermediate",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier"],
+    "estimatedHours": 2.5,
+    "topics": ["AI ethics", "AI safety"],
+    "subtopics": ["bias", "privacy", "job displacement", "exam technique", "AI risks"],
+    "learningOutcomes": [
+      "Identify and explain sources of bias in AI systems",
+      "Discuss privacy implications of AI data use",
+      "Evaluate economic and social risks of automation",
+      "Write structured IGCSE ethics answers with balanced arguments"
+    ],
+    "prereqIds": ["igcse-topic6-full"],
+    "nextPathIds": [],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-red-500",
+    "iconName": "ShieldCheck",
+    "board": "IGCSE",
+    "boardUnit": "Topic 6.6–6.7",
+    "examRelevance": {
+      "IGCSE": { "code": "0478/0984", "unit": "Topic 6.6–6.7", "paper": "Paper 1" }
+    }
+  },
+  {
+    "id": "ib-digital-society-ai",
+    "title": "IB Digital Society: AI Systems & Algorithmic Decisions",
+    "description": "IB DP Digital Society (first exam 2024) AI content. Covers algorithmic decision-making, AI systems, digital transformation. Structured around IB concepts: power, privacy, identity, communication.",
+    "resourceIds": [
+      "art-ib-digital-society",
+      "yt-ib-algorithmic-decisions",
+      "yt-hallucinations",
+      "yt-computerphile-bias"
+    ],
+    "difficulty": "advanced",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier"],
+    "estimatedHours": 4,
+    "topics": ["AI ethics", "Future of AI"],
+    "subtopics": ["algorithmic decision-making", "digital transformation", "power", "privacy", "identity", "communication"],
+    "learningOutcomes": [
+      "Analyse AI systems through IB Digital Society's core concepts",
+      "Evaluate algorithmic decision-making across power and equity dimensions",
+      "Connect AI developments to issues of digital identity and privacy",
+      "Apply IB-style conceptual framing to novel AI scenarios"
+    ],
+    "prereqIds": ["ib-intro-orientation"],
+    "nextPathIds": ["ib-case-studies", "ib-ee-ia-guide"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-indigo-600",
+    "iconName": "Globe",
+    "board": "IB",
+    "boardUnit": "Digital Society: AI Systems",
+    "examRelevance": {
+      "IB": { "subject": "Digital Society", "component": "Unit: AI Systems", "firstExam": "2024" }
+    }
+  },
+  {
+    "id": "ib-case-studies",
+    "title": "IB Case Study Library: AI in the Real World",
+    "description": "Six structured AI case studies for IB Digital Society IA and EE. Each with context, concept application (power, privacy, identity), inquiry questions, and source links.",
+    "resourceIds": [
+      "art-ib-ai-healthcare",
+      "art-ib-ai-policing",
+      "art-ib-ai-media",
+      "yt-ib-algorithmic-decisions"
+    ],
+    "difficulty": "advanced",
+    "audience": "student",
+    "persona": ["exam-crammer", "career-explorer"],
+    "estimatedHours": 5,
+    "topics": ["AI ethics"],
+    "subtopics": ["healthcare AI", "AI in policing", "media and AI", "case study methodology", "IA research"],
+    "learningOutcomes": [
+      "Apply IB Digital Society concepts to six real AI case studies",
+      "Construct structured IA or EE arguments grounded in evidence",
+      "Generate original inquiry questions suitable for Internal Assessment",
+      "Evaluate conflicting perspectives on AI deployment in sensitive domains"
+    ],
+    "prereqIds": ["ib-digital-society-ai"],
+    "nextPathIds": ["ib-ee-ia-guide"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-indigo-500",
+    "iconName": "BookOpen",
+    "board": "IB",
+    "boardUnit": "IA and EE preparation",
+    "examRelevance": {
+      "IB": { "subject": "Digital Society", "component": "IA and EE", "firstExam": "2024" }
+    }
+  },
+  {
+    "id": "ib-ee-ia-guide",
+    "title": "IB EE & IA: AI Topics Research Guide",
+    "description": "How to write an IB Extended Essay or Internal Assessment on AI. Subject selection, strong research questions, methodology, and example titles that scored A grades.",
+    "resourceIds": [
+      "art-ib-ee-ai-guide",
+      "art-stanford-ai-index",
+      "book-alignment-problem"
+    ],
+    "difficulty": "advanced",
+    "audience": "student",
+    "persona": ["exam-crammer"],
+    "estimatedHours": 3,
+    "topics": ["AI ethics", "Future of AI"],
+    "subtopics": ["extended essay", "internal assessment", "research questions", "methodology", "A-grade examples"],
+    "learningOutcomes": [
+      "Select an appropriate subject and framing for an AI-focused EE or IA",
+      "Write a focused, assessable research question on an AI topic",
+      "Choose a methodology suited to the research question and subject",
+      "Avoid the most common AI EE/IA pitfalls that lower grades"
+    ],
+    "prereqIds": ["ib-digital-society-ai"],
+    "nextPathIds": [],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-violet-600",
+    "iconName": "BookOpen",
+    "board": "IB",
+    "boardUnit": "EE and IA",
+    "examRelevance": {
+      "IB": { "subject": "Digital Society / multiple", "component": "EE and IA", "firstExam": "2024" }
+    }
+  },
+
+  {
+    "id": "ib-intro-orientation",
+    "title": "IB Digital Society: Getting Started",
+    "description": "The essential entry point for IB Digital Society students. Understand the course structure, core concepts (power, privacy, identity, communication), and how AI fits into the syllabus before diving into advanced content.",
+    "resourceIds": [
+      "art-ib-digital-society",
+      "yt-google-genai",
+      "yt-hallucinations"
+    ],
+    "difficulty": "beginner",
+    "audience": "student",
+    "persona": ["self-studier", "exam-crammer"],
+    "estimatedHours": 2,
+    "topics": ["AI fundamentals", "AI ethics"],
+    "subtopics": ["IB Digital Society structure", "core concepts", "course overview", "AI in context"],
+    "learningOutcomes": [
+      "Describe the structure of the IB Digital Society course and its assessment components",
+      "Explain the four core IB DS concepts: power, privacy, identity, communication",
+      "Situate AI as one of several transformative technologies in the DS syllabus",
+      "Plan a personal study path through the IB DS AI content"
+    ],
+    "prereqIds": [],
+    "nextPathIds": ["ib-digital-society-ai"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-indigo-400",
+    "iconName": "BookOpen",
+    "board": "IB",
+    "boardUnit": "Digital Society: Course orientation",
+    "examRelevance": {
+      "IB": { "subject": "Digital Society", "component": "Course overview", "firstExam": "2024" }
+    }
+  },
+  {
+    "id": "ib-teacher-guide",
+    "title": "IB Digital Society: Teacher Implementation Guide",
+    "description": "For teachers delivering IB DP Digital Society. Covers the syllabus structure, how to teach AI units, IA and EE supervision guidance, and assessment criteria unpacked.",
+    "resourceIds": [
+      "art-ib-digital-society",
+      "art-mit-day-of-ai",
+      "art-ai4k12",
+      "art-stanford-ai-index"
+    ],
+    "difficulty": "beginner",
+    "audience": "teacher",
+    "persona": ["teacher"],
+    "estimatedHours": 4,
+    "topics": ["AI for teachers"],
+    "subtopics": ["IB Digital Society syllabus", "IA supervision", "EE guidance", "assessment criteria", "inquiry-based learning"],
+    "learningOutcomes": [
+      "Map the IB Digital Society AI content to available teaching resources",
+      "Supervise student IA and EE projects on AI topics effectively",
+      "Facilitate concept-based inquiry lessons on algorithmic decision-making",
+      "Apply IB assessment criteria consistently to AI-focused student work"
+    ],
+    "prereqIds": [],
+    "nextPathIds": ["lp-responsible-ai-schools"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-amber-600",
+    "iconName": "GraduationCap",
+    "board": "IB",
+    "boardUnit": "Teacher development",
+    "examRelevance": {
+      "IB": { "subject": "Digital Society", "component": "Teacher support", "firstExam": "2024" }
+    }
+  },
+  {
+    "id": "igcse-teacher-pack",
+    "title": "IGCSE Computer Science: Teacher Pack (Topic 6)",
+    "description": "For teachers delivering IGCSE Computer Science (0478/0984). Covers Topic 6 AI content, exam technique instruction, mark-scheme interpretation, and practical classroom activities.",
+    "resourceIds": [
+      "art-cbse-code417-syllabus",
+      "art-mit-day-of-ai",
+      "art-ai4k12",
+      "yt-computerphile-bias"
+    ],
+    "difficulty": "beginner",
+    "audience": "teacher",
+    "persona": ["teacher"],
+    "estimatedHours": 3.5,
+    "topics": ["AI for teachers"],
+    "subtopics": ["IGCSE Topic 6", "mark scheme", "exam technique", "classroom activities", "assessment"],
+    "learningOutcomes": [
+      "Teach IGCSE Topic 6 AI content with confidence, including ML types and ethics",
+      "Interpret mark schemes and model exam answers for students",
+      "Design Paper 1 style practice questions on AI topics",
+      "Run practical classroom activities on bias and hallucination detection"
+    ],
+    "prereqIds": [],
+    "nextPathIds": ["lp-responsible-ai-schools"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-sky-700",
+    "iconName": "GraduationCap",
+    "board": "IGCSE",
+    "boardUnit": "Teacher development",
+    "examRelevance": {
+      "IGCSE": { "code": "0478/0984", "unit": "Topic 6", "paper": "Paper 1" }
+    }
+  },
+  {
+    "id": "isc-class11-12-ai",
+    "title": "ISC Class 11–12: AI & Emerging Technologies",
+    "description": "Mapped to ISC Computer Science (Class 11–12) Unit 7. Covers AI concepts, machine learning basics, ethical implications, and practical applications relevant to the ISC exam.",
+    "resourceIds": [
+      "yt-3b1b-neural-net",
+      "yt-supervised-unsupervised",
+      "yt-hallucinations",
+      "yt-computerphile-bias",
+      "yt-karpathy-llm-intro"
+    ],
+    "difficulty": "intermediate",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier"],
+    "estimatedHours": 4,
+    "topics": ["AI fundamentals", "How AI works", "AI ethics"],
+    "subtopics": ["ISC Unit 7", "machine learning", "AI applications", "ethics", "emerging technologies"],
+    "learningOutcomes": [
+      "Cover ISC Class 11–12 Unit 7 AI content to exam standard",
+      "Explain machine learning types with ISC-relevant examples",
+      "Evaluate ethical implications of AI in the context of ISC long-answer questions",
+      "Describe real-world AI applications tested in ISC examinations"
+    ],
+    "prereqIds": [],
+    "nextPathIds": [],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-teal-600",
+    "iconName": "BookOpen",
+    "board": "ISC",
+    "boardUnit": "Unit 7: AI and Emerging Technologies",
+    "examRelevance": {
+      "ISC": { "subject": "Computer Science", "unit": "Unit 7", "class": "11-12" }
+    }
+  },
+  {
+    "id": "cbse-843-class11-12",
+    "title": "CBSE Code 843: AI for Class 11–12",
+    "description": "Continuation of the CBSE AI series for Class 11–12 students under Code 843. Covers advanced ML, deep learning concepts, AI in industry, and extended project work.",
+    "resourceIds": [
+      "yt-karpathy-llm-intro",
+      "yt-3b1b-attention",
+      "sem-fast-ai",
+      "art-stanford-ai-index"
+    ],
+    "difficulty": "intermediate",
+    "audience": "student",
+    "persona": ["exam-crammer", "self-studier", "career-explorer"],
+    "estimatedHours": 5,
+    "topics": ["How AI works", "AI fundamentals", "Future of AI"],
+    "subtopics": ["deep learning", "convolutional networks", "AI in industry", "advanced project cycle", "CBSE Code 843"],
+    "learningOutcomes": [
+      "Build on Class 9–10 AI knowledge to tackle Class 11–12 Code 843 content",
+      "Explain deep learning and CNNs at the conceptual level required by Code 843",
+      "Analyse real-world AI industry applications for exam case studies",
+      "Complete an extended AI project meeting Code 843 practical requirements"
+    ],
+    "prereqIds": ["cbse-unit6-ethics", "cbse-unit4-cv-nlp"],
+    "nextPathIds": [],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-brand-600",
+    "iconName": "Cpu",
+    "board": "CBSE",
+    "boardUnit": "Code 843: Class 11–12",
+    "examRelevance": {
+      "CBSE": { "code": "843", "unit": "All units", "class": "11-12" }
+    }
+  },
+  {
+    "id": "lp-genai-practical",
+    "title": "Generative AI: practical tools for everyone",
+    "description": "ChatGPT, image generation, AI writing tools, Copilot — what they are, how to use them well, and what to watch out for. No technical background needed.",
+    "resourceIds": [
+      "yt-google-genai",
+      "yt-fireship-llm",
+      "art-openai-prompt-guide"
+    ],
+    "difficulty": "beginner",
+    "audience": "both",
+    "persona": ["self-studier", "curious-learner", "career-explorer", "parent"],
+    "estimatedHours": 2.5,
+    "topics": ["AI fundamentals", "Prompting"],
+    "subtopics": ["ChatGPT", "image generation", "AI writing tools", "Copilot", "generative AI", "practical usage"],
+    "learningOutcomes": [
+      "Use ChatGPT, image generation, and AI writing tools effectively",
+      "Write prompts that produce consistently useful generative AI outputs",
+      "Identify when generative AI outputs are unreliable or fabricated",
+      "Explain generative AI to a non-technical audience"
+    ],
+    "prereqIds": [],
+    "nextPathIds": ["lp2", "lp4"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-emerald-500",
+    "iconName": "Sparkles"
+  },
+  {
+    "id": "lp-ai-careers",
+    "title": "AI career pathways: what's actually out there",
+    "description": "For students exploring whether to pursue AI, data science, or related fields. Covers roles, skills needed, degree vs. self-study routes, and realistic expectations.",
+    "resourceIds": [
+      "yt-karpathy-llm-intro",
+      "sem-fast-ai",
+      "art-stanford-ai-index",
+      "other-harvard-cs50-ai"
+    ],
+    "difficulty": "beginner",
+    "audience": "student",
+    "persona": ["career-explorer"],
+    "estimatedHours": 3,
+    "topics": ["Future of AI", "AI fundamentals"],
+    "subtopics": ["AI careers", "data science", "ML engineering", "degree vs self-study", "skills roadmap"],
+    "learningOutcomes": [
+      "Map the main AI-adjacent career paths and what each requires",
+      "Identify the skills gap between where you are and your target role",
+      "Evaluate degree, bootcamp, and self-study routes honestly",
+      "Build a realistic 12-month learning plan toward an AI career"
+    ],
+    "prereqIds": ["lp1"],
+    "nextPathIds": ["lp5"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-violet-500",
+    "iconName": "Briefcase"
+  },
+  {
+    "id": "lp-responsible-ai-schools",
+    "title": "Responsible AI for school leaders",
+    "description": "For school leadership, heads of department, and policy leads. Covers what AI means for your institution: student use policies, staff training, academic integrity, and safeguarding.",
+    "resourceIds": [
+      "yt-sal-khan-ted",
+      "art-ai4k12",
+      "art-mit-day-of-ai",
+      "yt-hinton-risks"
+    ],
+    "difficulty": "beginner",
+    "audience": "teacher",
+    "persona": ["teacher"],
+    "estimatedHours": 2.5,
+    "topics": ["AI for teachers", "AI ethics"],
+    "subtopics": ["AI policy", "academic integrity", "student AI use", "staff training", "safeguarding", "school leadership"],
+    "learningOutcomes": [
+      "Draft a clear, workable school AI use policy for students and staff",
+      "Identify the safeguarding and academic integrity risks specific to your context",
+      "Make an evidence-based case to governors or trustees for AI professional development",
+      "Plan a phased staff AI training programme"
+    ],
+    "prereqIds": [],
+    "nextPathIds": [],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-slate-600",
+    "iconName": "ShieldCheck"
+  },
+  {
+    "id": "lp-parent-guide",
+    "title": "AI in your child's education: a parent's guide",
+    "description": "Not technical. Answers the questions parents actually ask: Is my child using AI to cheat? Is AI taking over classrooms? What should they know? How do I talk to them about it?",
+    "resourceIds": [
+      "yt-sal-khan-ted",
+      "yt-hallucinations",
+      "art-ai4k12"
+    ],
+    "difficulty": "beginner",
+    "audience": "both",
+    "persona": ["parent"],
+    "estimatedHours": 1.5,
+    "topics": ["AI fundamentals", "AI ethics"],
+    "subtopics": ["AI and schooling", "academic integrity", "parenting and AI", "AI literacy for families"],
+    "learningOutcomes": [
+      "Explain what AI tools students are actually using and how",
+      "Have an informed conversation with your child about responsible AI use",
+      "Understand how schools are — and should be — responding to AI",
+      "Identify reliable sources for staying updated as AI in education evolves"
+    ],
+    "prereqIds": [],
+    "nextPathIds": ["lp1"],
+    "completedByCount": 0,
+    "rating": null,
+    "language": "en",
+    "lastReviewedAt": "2025-01-01",
+    "accentColor": "bg-rose-400",
+    "iconName": "Home"
+  }
+]
