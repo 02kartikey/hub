@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
 import { createClient, type SupabaseClient, type User, type AuthError } from '@supabase/supabase-js'
-
+import type { PostgrestError } from '@supabase/postgrest-js'
 
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? ''
