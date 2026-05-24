@@ -7,6 +7,10 @@ import type {
   Message, ListResponse,
 } from './types'
 
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:8000"
+
 let _token: string | null = null
 
 export const api = {
@@ -21,7 +25,7 @@ export const api = {
   chat:         chatApi(),
   progress:     progressApi(),
   bookmarks:    bookmarksApi(),
-  profile:      profileApi(),
+  profile:     profileApi(),
 }
 
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -29,12 +33,19 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   }
+
   if (_token) headers['Authorization'] = `Bearer ${_token}`
-  const res = await fetch(path, { ...options, headers })
+
+  const res = await fetch(
+    `${API_BASE}${path}`,
+    { ...options, headers }
+  )
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new Error(body.detail ?? body.error ?? `HTTP ${res.status}`)
   }
+
   return res.json()
 }
 
@@ -110,14 +121,17 @@ function quizzesApi() {
 function chatApi() {
   return {
     send: async (messages: Message[], systemPrompt?: string): Promise<{ text: string }> => {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(_token ? { 'Authorization': `Bearer ${_token}` } : {}),
-        },
-        body: JSON.stringify({ messages, systemPrompt }),
-      })
+      const res = await fetch(
+        `${API_BASE}/api/chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(_token ? { 'Authorization': `Bearer ${_token}` } : {}),
+          },
+          body: JSON.stringify({ messages, systemPrompt }),
+        }
+      )
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail ?? data.error ?? `HTTP ${res.status}`)
       return data
