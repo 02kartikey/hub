@@ -22,49 +22,96 @@ export function saveOnboardingProfile(p: OnboardingProfile) {
 }
 export function resetOnboarding() { try { localStorage.removeItem(ONBOARD_KEY) } catch {} }
 
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react'
+
+import {
+  type User,
+  type AuthError,
+  type PostgrestError,
+} from '@supabase/supabase-js'
+
+import { supabase } from './supabase'
+
 // ── Auth context ──────────────────────────────────────────────────────────────
-// ── Auth context ──────────────────────────────────────────────────────────────
+
 interface AuthCtx {
   user: User | null
-  profile: { full_name: string | null; avatar_url: string | null; role: string | null } | null
+
+  profile: {
+    full_name: string | null
+    avatar_url: string | null
+    role: string | null
+  } | null
+
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
-  signUp: (email: string, password: string, name?: string) => Promise<{ error: AuthError | null }>
+
+  signIn: (
+    email: string,
+    password: string
+  ) => Promise<{ error: AuthError | null }>
+
+  signUp: (
+    email: string,
+    password: string,
+    name?: string
+  ) => Promise<{ error: AuthError | null }>
+
   signOut: () => Promise<void>
-  resetPassword: (email: string) => Promise<{ error: AuthError | null }>
-  updateRole: (role: string) => Promise<{ error: AuthError | null }>
+
+  resetPassword: (
+    email: string
+  ) => Promise<{ error: AuthError | null }>
+
+  updateRole: (
+    role: string
+  ) => Promise<{ error: PostgrestError | null }>
 }
 
 const Ctx = createContext<AuthCtx>({
   user: null,
   profile: null,
   loading: true,
+
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
   signOut: async () => {},
+
   resetPassword: async () => ({ error: null }),
+
   updateRole: async () => ({ error: null }),
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+
   const [profile, setProfile] = useState<AuthCtx['profile']>(null)
+
   const [loading, setLoading] = useState(true)
 
   const loadProfile = async (u: User) => {
     const { data } = await supabase
       .from('profiles')
-      .select('full_name,avatar_url,role')
+      .select('full_name, avatar_url, role')
       .eq('id', u.id)
       .single()
+
     setProfile(data ?? null)
   }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user ?? null
+
       setUser(u)
+
       if (u) loadProfile(u)
+
       setLoading(false)
     })
 
@@ -72,7 +119,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user ?? null
+
       setUser(u)
+
       if (u) loadProfile(u)
       else setProfile(null)
     })
@@ -81,16 +130,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
     return { error }
   }
 
-  const signUp = async (email: string, password: string, name?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    name?: string
+  ) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: name ? { data: { full_name: name } } : undefined,
+      options: name
+        ? {
+            data: {
+              full_name: name,
+            },
+          }
+        : undefined,
     })
+
     return { error }
   }
 
@@ -102,11 +166,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/forgot-password`,
     })
+
     return { error }
   }
 
   const updateRole = async (role: string) => {
-    if (!user) return { error: null }
+    if (!user) {
+      return { error: null }
+    }
 
     const { error } = await supabase
       .from('profiles')
@@ -114,7 +181,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq('id', user.id)
 
     if (!error) {
-      setProfile(prev => (prev ? { ...prev, role } : prev))
+      setProfile(prev =>
+        prev
+          ? {
+              ...prev,
+              role,
+            }
+          : prev
+      )
     }
 
     return { error }
@@ -141,7 +215,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   return useContext(Ctx)
 }
-
 // ── Progress hook ─────────────────────────────────────────────────────────────
 const PROG_KEY = 'aihub_progress'
 
