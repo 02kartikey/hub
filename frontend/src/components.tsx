@@ -15,7 +15,7 @@ import {
 import { cn, Button, Badge, ProgressBar, TypingDots, Kbd, Divider, EmptyState } from './ui'
 import { useAuth, useProgress, useBookmarks, getOnboardingProfile,
          saveOnboardingProfile, resetOnboarding, supabase } from './auth'
-import { useBadges, BadgeNotificationManager, checkAndAward } from './badges'
+import { useBadges, BadgeNotificationManager, checkAndAward, BADGES } from './badges'
 import { buildSearchIndex, search as searchIndex, isIndexReady } from './search'
 import type { SearchResult } from './search'
 import { api } from './api'
