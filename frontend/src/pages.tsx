@@ -1314,11 +1314,11 @@ export function QuizPage() {
         passed ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'
       )}>
         <p className={cn('text-xs font-bold uppercase tracking-widest mb-1', passed ? 'text-emerald-700' : 'text-amber-700')}>
-          {passed ? '✓ Passed' : 'Not yet — here's what to do'}
+          {passed ? "✓ Passed" : "Not yet — here's what to do"}
         </p>
         <p className={cn('text-sm leading-relaxed', passed ? 'text-emerald-800' : 'text-amber-900')}>
           {passed
-            ? 'You've demonstrated solid understanding. Explore the next path or dive deeper into the Playground.'
+            ? "You've demonstrated solid understanding. Explore the next path or dive deeper into the Playground."
             : 'Review the learning path resources, then retry. Focus on the questions you got wrong — the explanations above tell you exactly why.'}
         </p>
       </div>
@@ -1414,7 +1414,7 @@ export function QuizPage() {
           wasCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'
         )}>
           <p className={cn('text-xs font-bold mb-2', wasCorrect ? 'text-emerald-700' : 'text-amber-700')}>
-            {wasCorrect ? '✅ Correct' : '❌ Not quite — here's why'}
+            {wasCorrect ? "✅ Correct" : "❌ Not quite — here's why"}
           </p>
           <p className={cn('text-sm leading-relaxed', wasCorrect ? 'text-emerald-800' : 'text-amber-900')}>
             {q.explanation}
