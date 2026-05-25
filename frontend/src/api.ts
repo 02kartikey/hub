@@ -1,13 +1,15 @@
 /**
  * api.ts — single source of truth for all backend calls
  */
+const API_BASE =
+  import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 import type {
   Resource, LearningPath, ClassroomActivity, DeepExercise,
   ToolGuide, Walkthrough, ResourceProgress, Profile,
   Message, ListResponse,
 } from './types'
 
-// ── Classroom / assignment types ──────────────────────────────────────────────
 export interface Classroom {
   id: string; teacher_id: string; code: string; name: string; created_at: string
 }
