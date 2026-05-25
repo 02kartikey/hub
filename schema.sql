@@ -148,3 +148,69 @@ create index if not exists idx_classrooms_teacher on public.classrooms(teacher_i
 create index if not exists idx_classrooms_code    on public.classrooms(code);
 create index if not exists idx_cm_classroom       on public.classroom_members(classroom_id);
 create index if not exists idx_cm_student         on public.classroom_members(student_id);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- ASSIGNMENTS  (teacher assigns content to their classroom)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+create table if not exists public.assignments (
+  id           uuid primary key default uuid_generate_v4(),
+  classroom_id uuid not null references public.classrooms(id) on delete cascade,
+  teacher_id   uuid not null references auth.users(id) on delete cascade,
+  -- what is being assigned
+  content_type text not null check (content_type in ('resource', 'exercise', 'path', 'activity')),
+  content_id   text not null,   -- resource/exercise/path/activity id from JSON files
+  title        text not null,   -- denormalised for display without extra fetch
+  note         text,            -- optional teacher note / instructions
+  due_date     date,
+  created_at   timestamptz not null default now()
+);
+alter table public.assignments enable row level security;
+
+-- Teachers fully manage their own classroom's assignments
+create policy "Teachers manage assignments"
+  on public.assignments for all
+  using  (auth.uid() = teacher_id)
+  with check (auth.uid() = teacher_id);
+
+-- Students can read assignments for classrooms they're in
+create policy "Students read their assignments"
+  on public.assignments for select
+  using (
+    classroom_id in (
+      select classroom_id from public.classroom_members where student_id = auth.uid()
+    )
+  );
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- ASSIGNMENT COMPLETIONS  (per-student completion of an assignment)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+create table if not exists public.assignment_completions (
+  id            uuid primary key default uuid_generate_v4(),
+  assignment_id uuid not null references public.assignments(id) on delete cascade,
+  student_id    uuid not null references auth.users(id) on delete cascade,
+  completed_at  timestamptz not null default now(),
+  constraint assignment_completions_unique unique (assignment_id, student_id)
+);
+alter table public.assignment_completions enable row level security;
+
+-- Students manage their own completions
+create policy "Students manage own completions"
+  on public.assignment_completions for all
+  using  (auth.uid() = student_id)
+  with check (auth.uid() = student_id);
+
+-- Teachers can read completions for their classroom's assignments
+create policy "Teachers read assignment completions"
+  on public.assignment_completions for select
+  using (
+    assignment_id in (
+      select id from public.assignments where teacher_id = auth.uid()
+    )
+  );
+
+create index if not exists idx_assignments_classroom on public.assignments(classroom_id);
+create index if not exists idx_assignments_teacher   on public.assignments(teacher_id);
+create index if not exists idx_ac_assignment         on public.assignment_completions(assignment_id);
+create index if not exists idx_ac_student            on public.assignment_completions(student_id);
