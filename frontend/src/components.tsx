@@ -1727,25 +1727,24 @@ export function DeepAnalysis({ exercise, onNext, onRepeat, relevantResources = [
                 ))}
               </div>
             </div>
-          </div>
-          {relevantResources.length > 0 && (
-            <div className="mt-6 pt-5 border-t border-zinc-100">
-              <p className="text-2xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Continue learning on AIhub</p>
-              <div className="space-y-2">
-                {relevantResources.slice(0, 4).map(r => (
-                  <Link key={r.id} to={`/content/${r.id}`}
-                    className="flex items-start gap-3 p-3.5 bg-white border border-zinc-200 rounded-xl hover:border-indigo-200 hover:bg-indigo-50 transition-all group">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-zinc-800 group-hover:text-[#5855D6] transition-colors leading-snug">{r.title}</p>
-                      <p className="text-2xs text-zinc-400 mt-1 capitalize">{r.type} · {r.difficulty}</p>
-                    </div>
-                    <ArrowRight size={13} className="text-zinc-300 group-hover:text-[#5855D6] flex-shrink-0 mt-0.5 transition-colors"/>
-                  </Link>
-                ))}
+            {relevantResources.length > 0 && (
+              <div className="mt-6 pt-5 border-t border-zinc-100">
+                <p className="text-2xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Continue learning on AIhub</p>
+                <div className="space-y-2">
+                  {relevantResources.slice(0, 4).map(r => (
+                    <Link key={r.id} to={`/content/${r.id}`}
+                      className="flex items-start gap-3 p-3.5 bg-white border border-zinc-200 rounded-xl hover:border-indigo-200 hover:bg-indigo-50 transition-all group">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-zinc-800 group-hover:text-[#5855D6] transition-colors leading-snug">{r.title}</p>
+                        <p className="text-2xs text-zinc-400 mt-1 capitalize">{r.type} · {r.difficulty}</p>
+                      </div>
+                      <ArrowRight size={13} className="text-zinc-300 group-hover:text-[#5855D6] flex-shrink-0 mt-0.5 transition-colors"/>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         )}
         {tab === 'mechanism' && (
           <div>
