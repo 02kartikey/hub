@@ -139,7 +139,8 @@ const START_HERE_PATHS: Record<string, { pathId: string; title: string; why: str
 
 function StartHereBanner({ role = 'student', progressCount = 0 }: { role?: string; progressCount?: number }) {
   const navigate = useNavigate()
-  if (progressCount > 0) return null  // only show when nothing has been started
+  // Show until the user has meaningfully started a path (3+ resources completed), not just any single click
+  if (progressCount >= 3) return null
   const rec = START_HERE_PATHS[role] ?? START_HERE_PATHS.student
 
   return (
@@ -214,6 +215,9 @@ export function HomePage() {
 // ══════════════════════════════════════════════════════════════════════════════
 // BROWSE PAGE
 // ══════════════════════════════════════════════════════════════════════════════
+
+// Alias — App.tsx routes /dashboard to DashboardPage
+export const DashboardPage = HomePage
 
 export function BrowsePage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -1537,13 +1541,36 @@ export function SeminarsPage() {
       {loading ? <PageLoader/> : data?.data.length ? (
         <ContentGrid resources={data.data}/>
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl text-center" style={{ border:"1px solid var(--border)" }}>
-          <Video size={28} className="text-zinc-300 mb-3"/>
-          <p className="text-sm font-semibold text-zinc-600 mb-1">No seminars found</p>
-          <p className="text-xs text-zinc-400 leading-relaxed">More structured courses being added. Browse other resources in the meantime.</p>
-          <Link to="/browse" className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-[#5855D6] text-white text-xs font-bold rounded-lg hover:bg-[#4744C8] transition-colors">
-            Browse all resources <ArrowRight size={12}/>
-          </Link>
+        <div className="space-y-4">
+          <div className="flex flex-col items-center justify-center py-14 bg-white rounded-2xl text-center" style={{ border:"1px solid var(--border)" }}>
+            <Video size={28} className="text-zinc-300 mb-3"/>
+            <p className="text-sm font-semibold text-zinc-600 mb-1">Seminars are being curated</p>
+            <p className="text-xs text-zinc-400 leading-relaxed max-w-xs">Structured courses from MIT, DeepLearning.AI, fast.ai, and ISTE are being added. Explore all resources in the meantime.</p>
+            <div className="flex gap-3 mt-5">
+              <Link to="/browse" className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#5855D6] text-white text-xs font-bold rounded-lg hover:bg-[#4744C8] transition-colors">
+                Browse all resources <ArrowRight size={12}/>
+              </Link>
+              <Link to="/curriculum" className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-zinc-200 text-zinc-700 text-xs font-bold rounded-lg hover:bg-zinc-50 transition-colors">
+                Learning paths
+              </Link>
+            </div>
+          </div>
+          {/* Show courses and guides as useful fallback */}
+          <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Meanwhile — curated courses and guides</p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            {[
+              { title: 'Elements of AI', href: 'https://www.elementsofai.com', tag: 'Free course', sub: 'University of Helsinki · Beginner' },
+              { title: 'Fast.ai — Practical Deep Learning', href: 'https://fast.ai', tag: 'Free course', sub: 'fast.ai · Intermediate' },
+              { title: 'AI for Everyone — Coursera', href: 'https://www.coursera.org/learn/ai-for-everyone', tag: 'Course', sub: 'Andrew Ng · Beginner' },
+            ].map(c => (
+              <a key={c.href} href={c.href} target="_blank" rel="noreferrer"
+                className="group flex flex-col gap-2 p-4 bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 hover:shadow-card transition-all">
+                <span className="text-2xs font-bold text-[#5855D6] bg-indigo-50 px-2 py-0.5 rounded self-start">{c.tag}</span>
+                <p className="text-xs font-bold text-zinc-800 group-hover:text-[#5855D6] transition-colors leading-snug">{c.title}</p>
+                <p className="text-2xs text-zinc-400">{c.sub}</p>
+              </a>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -2181,13 +2208,17 @@ export function ProgressPage() {
               { label: 'Paths in progress',  val: pathStats.length,     icon: <GitBranch size={15}/>,    cls: 'text-violet-600',  bg: 'bg-violet-50',   border: 'border-violet-100' },
               { label: 'Quizzes passed',     val: passedQuizzes.length, icon: <Award size={15}/>,        cls: 'text-amber-600',   bg: 'bg-amber-50',    border: 'border-amber-100' },
             ].map(s => (
-              <div key={s.label} className="bg-white rounded-2xl p-4" style={{ border:'1px solid var(--border)' }}>
+              <Link key={s.label} to="/progress"
+                className="bg-white rounded-2xl p-4 hover:shadow-card-hover hover:border-zinc-300 transition-all group"
+                style={{ border:'1px solid var(--border)' }}>
                 <div className="flex items-center justify-between mb-3">
-    
+                  <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0', s.bg, s.border, 'border')}>
+                    <span className={s.cls}>{s.icon}</span>
+                  </div>
                   <p className="text-2xl font-extrabold text-zinc-900">{s.val}</p>
                 </div>
-                <p className="text-xs text-zinc-500 font-medium">{s.label}</p>
-              </div>
+                <p className="text-xs text-zinc-500 font-medium group-hover:text-[#5855D6] transition-colors">{s.label}</p>
+              </Link>
             ))}
           </div>
 
@@ -2233,21 +2264,34 @@ export function ProgressPage() {
             </section>
           )}
 
-          {/* ── Type breakdown ── */}
-          {Object.keys(byType).length > 1 && (
-            <section>
-              <SectionHeading title="Completed by type"/>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(byType).sort(([,a],[,b]) => b - a).map(([type, count]) => (
-                  <div key={type}
-                    className="flex items-center gap-2 px-3 py-2 bg-white border border-zinc-200 rounded-xl">
-                    <span className="text-sm font-extrabold text-zinc-800">{count}</span>
-                    <span className="text-xs text-zinc-500 capitalize font-medium">{type}{count !== 1 ? 's' : ''}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          {/* ── Topics covered — meaningful signal, not just content type ── */}
+          {completedRes.length > 0 && (() => {
+            const byTopic: Record<string, number> = {}
+            for (const r of completedRes) {
+              for (const t of (r.topics ?? [])) {
+                byTopic[t] = (byTopic[t] ?? 0) + 1
+              }
+            }
+            const sorted = Object.entries(byTopic).sort(([,a],[,b]) => b - a)
+            if (sorted.length === 0) return null
+            return (
+              <section>
+                <SectionHeading title="Topics you've covered" action={
+                  <span className="text-2xs text-zinc-400">{sorted.length} topic{sorted.length !== 1 ? 's' : ''}</span>
+                }/>
+                <div className="flex flex-wrap gap-2">
+                  {sorted.map(([topic, count]) => (
+                    <Link key={topic} to={`/browse?topic=${encodeURIComponent(topic)}`}
+                      className="flex items-center gap-2 px-3 py-2 bg-white border border-zinc-200 rounded-xl hover:border-[#C0BFEF] hover:bg-indigo-50 transition-all group">
+                      <span className="text-sm font-extrabold text-zinc-800">{count}</span>
+                      <span className="text-xs text-zinc-500 group-hover:text-[#5855D6] font-medium transition-colors">{topic}</span>
+                    </Link>
+                  ))}
+                </div>
+                <p className="text-2xs text-zinc-400 mt-3">Each number is how many resources you've completed in that topic. Click to explore more.</p>
+              </section>
+            )
+          })()}
 
           {/* ── In progress ── */}
           {inProgRes.length > 0 && (
@@ -2334,21 +2378,33 @@ export function ProgressPage() {
 // DASHBOARD
 // ══════════════════════════════════════════════════════════════════════════════
 
-/** Circular ring progress indicator */
+// ── Shared helpers for classroom/dashboard ───────────────────────────────────
+
+/** Circular SVG ring progress indicator */
 function RingProgress({ value, size = 44, strokeWidth = 3 }: { value: number; size?: number; strokeWidth?: number }) {
   const r      = (size - strokeWidth * 2) / 2
   const circ   = 2 * Math.PI * r
   const pct    = Math.min(100, Math.max(0, value))
   const offset = circ * (1 - pct / 100)
-  const stroke = pct === 100 ? '#10B981' : '#6366F1'
+  const col    = pct === 100 ? '#10B981' : '#5855D6'
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#E2E8F0" strokeWidth={strokeWidth}/>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={stroke} strokeWidth={strokeWidth}
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#E8E8ED" strokeWidth={strokeWidth}/>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={col} strokeWidth={strokeWidth}
         strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
         style={{ transition: 'stroke-dashoffset 0.7s ease-out' }}/>
     </svg>
   )
+}
+
+/** Deterministic avatar colour class from name string */
+function avatarColor(name: string): string {
+  const p = [
+    'bg-violet-100 text-violet-700', 'bg-blue-100 text-blue-700',
+    'bg-emerald-100 text-emerald-700', 'bg-amber-100 text-amber-700',
+    'bg-rose-100 text-rose-700', 'bg-sky-100 text-sky-700',
+  ]
+  return p[(name || '?').split('').reduce((a, c) => a + c.charCodeAt(0), 0) % p.length]
 }
 
 /** 6-char classroom code (no ambiguous 0/O/1/I chars) */
@@ -2357,50 +2413,11 @@ function generateCode(): string {
   return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
 }
 
-/** Deterministic avatar colour from name string */
-function avatarColor(name: string): string {
-  const p = [
-    'bg-violet-100 text-violet-700', 'bg-blue-100 text-blue-700',
-    'bg-emerald-100 text-emerald-700', 'bg-amber-100 text-amber-700',
-    'bg-rose-100 text-rose-700', 'bg-cyan-100 text-cyan-700',
-    'bg-orange-100 text-orange-700', 'bg-teal-100 text-teal-700',
-  ]
-  return p[(name || '?').split('').reduce((a, c) => a + c.charCodeAt(0), 0) % p.length]
-}
-
-type Classroom  = { id: string; teacher_id: string; code: string; name: string; created_at: string }
-type StudentRow = { id: string; name: string; email: string; joinedAt: string; started: number; completed: number; rate: number }
-
 // ── Teacher classroom dashboard ───────────────────────────────────────────────
 
 // ── local types (dashboard-only) ─────────────────────────────────────────────
 type AssignableType = 'resource' | 'exercise' | 'path' | 'activity'
 interface AssignableItem { id: string; title: string; type: AssignableType; meta: string }
-
-// Build a palette from initials for avatar colours
-function avatarColor(name: string) {
-  const palettes = [
-    'bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700',
-    'bg-amber-100 text-amber-700', 'bg-pink-100 text-pink-700',
-    'bg-violet-100 text-violet-700', 'bg-sky-100 text-sky-700',
-  ]
-  return palettes[(name.charCodeAt(0) + (name.charCodeAt(1) ?? 0)) % palettes.length]
-}
-
-function RingProgress({ value, size = 44, stroke = 3 }: { value: number; size?: number; stroke?: number }) {
-  const r    = (size - stroke * 2) / 2
-  const circ = 2 * Math.PI * r
-  const off  = circ * (1 - Math.min(100, Math.max(0, value)) / 100)
-  const col  = value === 100 ? '#10B981' : '#5855D6'
-  return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#F0F0F0" strokeWidth={stroke}/>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={col} strokeWidth={stroke}
-        strokeDasharray={circ} strokeDashoffset={off} strokeLinecap="round"
-        style={{ transition: 'stroke-dashoffset 0.7s ease-out' }}/>
-    </svg>
-  )
-}
 
 // ── Student profile drill-down ────────────────────────────────────────────────
 function StudentProfile({ student, assignments, onBack }: {
@@ -2453,7 +2470,7 @@ function StudentProfile({ student, assignments, onBack }: {
               ) : Object.entries(student.pathProgress).map(([pathId, pct]) => (
                 <div key={pathId} className="flex items-center gap-3">
                   <div className="relative flex-shrink-0">
-                    <RingProgress value={pct} size={38} stroke={3}/>
+                    <RingProgress value={pct} size={38} strokeWidth={3}/>
                     <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-zinc-600">
                       {pct}%
                     </span>
@@ -3049,49 +3066,80 @@ function TeacherClassroomDashboard() {
 // CHAT PAGE — general AI literacy chat
 // ══════════════════════════════════════════════════════════════════════════════
 
-const CHAT_SYSTEM = `You are an expert AI literacy tutor. Your job is to help teachers, students, and curious learners genuinely understand AI — not just use it.
+const CHAT_STARTERS_BY_ROLE: Record<string, string[]> = {
+  teacher: [
+    'How do I teach AI hallucination to Class 9 students?',
+    'Design an AI-proof assessment for CBSE.',
+    'What ethical issues should I cover in my AI unit?',
+    'How do I integrate AI tools without harming student thinking?',
+    'Give me a 45-minute lesson plan on AI bias.',
+  ],
+  student: [
+    'Why does AI make things up? Explain the mechanism.',
+    'What is sycophancy in AI and why does it happen?',
+    'How do I prepare for CBSE AI Code 417?',
+    'What is the difference between supervised and reinforcement learning?',
+    'What should I know before trusting AI outputs?',
+  ],
+  curious: [
+    'Explain AI hallucination like I have no tech background.',
+    'What is the most important thing to understand about AI?',
+    'Is AI actually intelligent?',
+    'What are the real risks of AI?',
+    'How do I use AI without being misled?',
+  ],
+}
 
-You explain:
-- How AI language models actually work (transformers, attention, RLHF)
-- Why AI hallucinates, what sycophancy is, what bias means technically
-- How to use AI tools intelligently and critically
-- AI ethics, safety, curriculum (CBSE, IGCSE, IB)
-- Practical AI literacy skills
+function buildChatSystemPrompt(): string {
+  let role = 'student', board = '', goals: string[] = []
+  try {
+    const raw = localStorage.getItem('aihub_onboarding')
+    if (raw) { const p = JSON.parse(raw); role = p.role ?? 'student'; board = p.board ?? ''; goals = p.goals ?? [] }
+  } catch {}
+  const roleLabel = role === 'teacher' ? 'an educator' : role === 'curious' ? 'a curious learner' : 'a student'
+  const boardLine = board ? `\nThe user follows the ${board} curriculum.` : ''
+  const goalsLine = goals.length ? `\nTheir stated learning goals: ${goals.join(', ')}.` : ''
+  return `You are an expert AI literacy tutor on AIhub. You are speaking with ${roleLabel}.${boardLine}${goalsLine}
 
-Rules:
-- Be clear, honest, and direct. Never hype AI.
-- Acknowledge uncertainty when you have it.
-- Encourage critical thinking, not dependence on AI.
-- Keep responses under 200 words unless the question genuinely needs more.
-- If a student asks for homework answers, redirect to understanding.`
+Your job: help this person genuinely understand AI. Personalise language, examples, and depth to their role.
 
-const CHAT_STARTERS = [
-  'Why does AI make things up? Explain the mechanism.',
-  'What is sycophancy in AI and why does it happen?',
-  'How do I prepare for CBSE AI Code 417?',
-  'What is the difference between supervised and reinforcement learning?',
-  'How can teachers use AI without harming learning?',
-  'What should every student know before trusting AI?',
-]
+If educator: focus on classroom application, lesson design, explaining to students, assessment.
+If student: focus on concepts, exam prep (${board || 'CBSE/IGCSE/IB'}), critical thinking. Redirect homework requests to understanding.
+If curious learner: be accessible, everyday analogies, no assumed technical knowledge.
+
+You explain: LLMs, transformers, attention, RLHF, hallucination, sycophancy, bias, safety, prompting, ethics, curriculum alignment.
+
+Rules: Be clear, direct, honest. Never hype AI. Acknowledge uncertainty. Under 200 words unless depth is needed. Encourage critical thinking over AI dependence.`
+}
 
 export function ChatPage() {
+  const { user, profile } = useAuth()
+  const navigate = useNavigate()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string|null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
+  const systemPrompt = useMemo(() => buildChatSystemPrompt(), [])
+  const role     = profile?.role ?? 'student'
+  const starters = CHAT_STARTERS_BY_ROLE[role] ?? CHAT_STARTERS_BY_ROLE.student
+
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages, loading])
 
   const send = async (text: string) => {
     const msg = text.trim()
     if (!msg || loading) return
+    if (!user) {
+      setError('Sign in to start chatting — 30 seconds and your conversation history is saved.')
+      return
+    }
     setError(null); setInput('')
     const userMsg: Message = { role:'user', content:msg }
     setMessages(prev => [...prev, userMsg])
     setLoading(true)
     try {
-      const data = await api.chat.send([...messages, userMsg], CHAT_SYSTEM)
+      const data = await api.chat.send([...messages, userMsg], systemPrompt)
       setMessages(prev => [...prev, { role:'assistant', content:data.text }])
     } catch(e) { setError(e instanceof Error ? e.message : 'Something went wrong') }
     finally { setLoading(false) }
@@ -3104,7 +3152,7 @@ export function ChatPage() {
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div>
             <h2 className="text-sm font-semibold text-zinc-900">AI Literacy Chat</h2>
-            <p className="text-xs text-zinc-400">Ask anything about AI — honest, deep answers</p>
+            <p className="text-xs text-zinc-400">{role === 'teacher' ? 'Educator mode — lesson design, classroom application, curriculum alignment' : role === 'curious' ? 'Ask anything about AI — no jargon required' : 'Ask anything about AI — honest, exam-ready answers'}</p>
           </div>
           {messages.length > 0 && (
             <button onClick={() => setMessages([])} className="text-xs text-zinc-400 hover:text-zinc-600 flex items-center gap-1">
@@ -3127,12 +3175,21 @@ export function ChatPage() {
                 <p className="text-xs text-zinc-400 max-w-xs mx-auto">Genuine answers about AI — how it works, where it fails, how to use it wisely.</p>
               </div>
               <div className="grid sm:grid-cols-2 gap-2">
-                {CHAT_STARTERS.map(s => (
+                {starters.map(s => (
                   <button key={s} onClick={() => send(s)}
                     className="text-left text-xs text-zinc-600 bg-white border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 rounded-xl px-3 py-2.5 transition-colors leading-snug">
                     {s}
                   </button>
                 ))}
+                {!user && (
+                  <div className="sm:col-span-2 mt-2 p-3 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-between gap-3">
+                    <p className="text-xs text-indigo-800">Sign in for a personalised experience and saved conversation history.</p>
+                    <button onClick={() => navigate('/auth/login')}
+                      className="text-xs font-bold text-[#5855D6] hover:text-[#4744C8] flex-shrink-0 transition-colors">
+                      Sign in →
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -3535,20 +3592,38 @@ export function SettingsPage() {
         </div>
       </section>
 
-      {/* Danger zone */}
-      <section className="bg-white border border-red-100 rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-red-100 bg-red-50/50">
-          <h2 className="text-sm font-bold text-red-700">Danger zone</h2>
+      {/* Account actions */}
+      <section className="bg-white border border-zinc-200 rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
+          <h2 className="text-sm font-bold text-zinc-700">Account actions</h2>
         </div>
-        <div className="px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <p className="text-sm font-semibold text-zinc-800">Sign out</p>
-            <p className="text-xs text-zinc-500">Your progress is saved and will be here when you return.</p>
+        <div className="divide-y divide-zinc-100">
+          <div className="px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="text-sm font-semibold text-zinc-800">Sign out</p>
+              <p className="text-xs text-zinc-500">Your progress is saved and will be here when you return.</p>
+            </div>
+            <button onClick={() => { signOut(); navigate('/') }}
+              className="px-4 py-2 border border-zinc-200 text-zinc-600 text-sm font-bold rounded-xl hover:bg-zinc-50 transition-colors flex-shrink-0">
+              Sign out
+            </button>
           </div>
-          <button onClick={() => { signOut(); navigate('/') }}
-            className="px-4 py-2 border border-red-200 text-red-600 text-sm font-bold rounded-xl hover:bg-red-50 transition-colors flex-shrink-0">
-            Sign out
-          </button>
+          <div className="px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="text-sm font-semibold text-zinc-800">Reset progress</p>
+              <p className="text-xs text-zinc-500">Clears local learning progress. Use if you want to start fresh.</p>
+            </div>
+            <button onClick={() => {
+              if (window.confirm('Reset all local progress? This cannot be undone.')) {
+                localStorage.removeItem('aihub_progress')
+                localStorage.removeItem('quiz_scores')
+                window.location.reload()
+              }
+            }}
+              className="px-4 py-2 border border-red-200 text-red-600 text-sm font-bold rounded-xl hover:bg-red-50 transition-colors flex-shrink-0">
+              Reset progress
+            </button>
+          </div>
         </div>
       </section>
     </div>
