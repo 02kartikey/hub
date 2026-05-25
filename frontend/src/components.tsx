@@ -28,7 +28,8 @@ import type {
 // SIDEBAR — OS navigation
 // ══════════════════════════════════════════════════════════════════════════════
 
-const NAV = [
+// Base nav — shown to all users
+const NAV_BASE = [
   { group: 'Workspace', items: [
     { label:'Dashboard',   href:'/',            icon:<LayoutDashboard size={15}/> },
     { label:'Browse',      href:'/browse',      icon:<Compass size={15}/> },
@@ -48,7 +49,14 @@ const NAV = [
     { label:'Progress',    href:'/progress',    icon:<BarChart2 size={15}/> },
     { label:'AI Chat',     href:'/chat',        icon:<MessageSquare size={15}/> },
     { label:'Badges',      href:'/badges',      icon:<Award size={15}/> },
-    { label:'For teachers',href:'/teacher',     icon:<GraduationCap size={15}/> },
+  ]},
+]
+
+// Teacher-only additions — appended when role === 'teacher'
+const NAV_TEACHER_EXTRA = [
+  { group: 'Classroom', items: [
+    { label:'Teacher Hub',  href:'/teacher',   icon:<GraduationCap size={15}/> },
+    { label:'My Classroom', href:'/classroom', icon:<Users size={15}/> },
   ]},
 ]
 
@@ -149,6 +157,10 @@ export function TourTrigger({ onStart }: { onStart: () => void }) {
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { pathname } = useLocation()
+  const { profile }  = useAuth()
+  const isTeacher    = profile?.role === 'teacher'
+  const NAV          = isTeacher ? [...NAV_BASE, ...NAV_TEACHER_EXTRA] : NAV_BASE
+
   return (
     <>
       {open && <div className="fixed inset-0 z-20 bg-black/20 backdrop-blur-[2px] lg:hidden" onClick={onClose}/>}
@@ -161,12 +173,9 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         {/* Logo */}
         <div className="flex items-center justify-between h-[52px] px-5 flex-shrink-0" style={{ borderBottom:"1px solid var(--border)" }}>
           <Link to="/" className="flex items-center gap-2.5 group">
-            {/* Wordmark icon: stacked A+I in a square */}
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
               <rect width="28" height="28" rx="7" fill="#0A0A0B"/>
-              {/* A letterform */}
               <path d="M8 20L11.5 10H13L16.5 20H15L14.1 17.5H10.4L9.5 20H8ZM10.8 16.4H13.7L12.25 12.2L10.8 16.4Z" fill="white"/>
-              {/* I letterform */}
               <path d="M17.5 10H19V20H17.5V10Z" fill="#8B85F4"/>
             </svg>
             <div className="flex items-baseline gap-0">
@@ -1728,7 +1737,7 @@ export function DeepAnalysis({ exercise, onNext, onRepeat, relevantResources = [
               </div>
             </div>
             {relevantResources.length > 0 && (
-              <div className="mt-6 pt-5 border-t border-zinc-100">
+              <div className="pt-5 border-t border-zinc-100">
                 <p className="text-2xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Continue learning on AIhub</p>
                 <div className="space-y-2">
                   {relevantResources.slice(0, 4).map(r => (
@@ -2115,8 +2124,16 @@ export function SpotlightTour({ onDone }: { onDone: () => void }) {
 }
 
 export function OnboardingFlow({ onComplete }: { onComplete: (p: OnboardingProfile) => void }) {
-  const [step, setStep] = useState<'role'|'board'|'goals'>('role')
-  const [role, setRole] = useState<OnboardRole|null>(null)
+  // Pre-fill role from signup selection — avoids asking twice
+  const signupRole = ((): OnboardRole | null => {
+    try {
+      const v = localStorage.getItem('aihub_signup_role')
+      return (v === 'teacher' || v === 'student' || v === 'curious') ? v : null
+    } catch { return null }
+  })()
+
+  const [step, setStep] = useState<'role'|'board'|'goals'>(signupRole ? 'board' : 'role')
+  const [role, setRole] = useState<OnboardRole|null>(signupRole)
   const [board, setBoard] = useState('')
   const [goals, setGoals] = useState<string[]>([])
   const [anim, setAnim] = useState(false)
