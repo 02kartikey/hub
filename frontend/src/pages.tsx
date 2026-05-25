@@ -39,7 +39,7 @@ import {
   LearningPathStrip, ToolGuideStrip, ContentGrid, FilterRow, ContentCard,
   StageChat, StageProgress, DeepAnalysis, OnboardingModal,
   OnboardingFlow, ResourceAssistant, SmartThumbnail, ResourceBanner,
-  ToolLettermark, SpotlightTour} from './components'
+  ToolLettermark, SpotlightTour, CONCEPT_TOPICS} from './components'
 import { api } from './api'
 import type { Resource, LearningPath, ClassroomActivity, DeepExercise, Message } from './types'
 import type { PathQuiz, QuizQuestion } from './api'
@@ -552,18 +552,28 @@ export function PlaygroundPage() {
         <div className="grid sm:grid-cols-2 gap-4">
           {data.data.map((exercise, i) => (
             <Link key={exercise.id} to={`/playground/${exercise.id}`}
-              className="group relative bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-card-hover hover:border-zinc-300 transition-all duration-200 overflow-hidden">
+              className="group relative bg-white border border-zinc-200 rounded-2xl p-6 hover:shadow-card-hover hover:border-zinc-300 transition-all duration-200 overflow-hidden flex flex-col">
               <div className="flex items-start justify-between mb-3">
                 <span className={cn('inline-flex items-center px-2 py-0.5 rounded text-xs font-medium', exercise.badgeColor)}>
                   {exercise.concept}
                 </span>
                 {exercise.isPro && <Badge variant="purple">Pro</Badge>}
               </div>
-              <h3 className="text-base font-semibold text-zinc-900 mb-1 group-hover:text-[#5855D6] transition-colors">
+              <h3 className="text-base font-semibold text-zinc-900 mb-1.5 group-hover:text-[#5855D6] transition-colors">
                 {exercise.title}
               </h3>
               <p className="text-sm text-zinc-500 leading-relaxed mb-4 line-clamp-2">{exercise.tagline}</p>
-              <div className="flex items-center gap-3 text-xs text-zinc-400">
+              {exercise.whatYouWillLearn?.length > 0 && (
+                <div className="mb-4 space-y-1.5">
+                  {exercise.whatYouWillLearn.slice(0, 2).map((item: string, j: number) => (
+                    <p key={j} className="text-xs text-zinc-500 flex items-start gap-1.5">
+                      <CheckCircle2 size={11} className="text-signal-green flex-shrink-0 mt-0.5"/>
+                      <span className="line-clamp-1">{item}</span>
+                    </p>
+                  ))}
+                </div>
+              )}
+              <div className="mt-auto flex items-center gap-3 text-xs text-zinc-400">
                 <span className="flex items-center gap-1"><Clock size={11}/> {exercise.estimatedMinutes} min</span>
                 <Badge variant={exercise.difficulty as any}/>
                 <span className="ml-auto flex items-center gap-1 text-[#5855D6] group-hover:gap-2 transition-all font-medium">
@@ -588,7 +598,27 @@ export function PlaygroundExercisePage() {
   const [currentStage, setCurrentStage] = useState(0)
   const [completed, setCompleted] = useState<Set<number>>(new Set())
   const [showAnalysis, setShowAnalysis] = useState(false)
+  const [relevantResources, setRelevantResources] = useState<Resource[]>([])
   const navigate = useNavigate()
+
+  // Fetch platform resources relevant to this exercise's concept
+  useEffect(() => {
+    if (!exercise) return
+    const topics = CONCEPT_TOPICS[exercise.concept] || ['How AI works']
+    const fetches = topics.slice(0, 2).map(topic => api.resources.list({ topic, limit: 6 }))
+    Promise.all(fetches)
+      .then(results => {
+        const seen = new Set<string>()
+        const merged: Resource[] = []
+        for (const r of results) {
+          for (const item of r.data) {
+            if (!seen.has(item.id)) { seen.add(item.id); merged.push(item) }
+          }
+        }
+        setRelevantResources(merged.slice(0, 8))
+      })
+      .catch(() => {})
+  }, [exercise?.concept])
 
   if (loading) return <PageLoader/>
   if (error || !exercise) return <PageError msg={error ?? 'Exercise not found'}/>
@@ -599,6 +629,7 @@ export function PlaygroundExercisePage() {
       <div className="flex flex-col h-full">
         <DeepAnalysis
           exercise={exercise}
+          relevantResources={relevantResources}
           onRepeat={() => { setShowAnalysis(false); setCurrentStage(0); setCompleted(new Set()) }}
           onNext={() => navigate('/playground')}
         />
@@ -608,31 +639,26 @@ export function PlaygroundExercisePage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Exercise header */}
-      <div className="flex-shrink-0 bg-white border-b border-zinc-200 px-5 py-4">
-        <div className="flex items-center gap-3 mb-3">
-          <Link to="/playground" className="text-xs text-zinc-400 hover:text-zinc-600 flex items-center gap-1">
-            <ArrowLeft size={12}/> Playground
-          </Link>
-          <span className="text-slate-200">/</span>
-          <span className={cn('text-xs font-medium px-2 py-0.5 rounded', exercise.badgeColor)}>{exercise.concept}</span>
+      {/* Slim exercise header — breadcrumb + meta + compact stage progress */}
+      <div className="flex-shrink-0 bg-white border-b border-zinc-100">
+        <div className="flex items-center justify-between px-5 py-2.5 border-b border-zinc-50">
+          <div className="flex items-center gap-2 min-w-0">
+            <Link to="/playground" className="text-xs text-zinc-400 hover:text-zinc-700 flex items-center gap-1 flex-shrink-0 transition-colors">
+              <ArrowLeft size={11}/> Playground
+            </Link>
+            <span className="text-zinc-200 flex-shrink-0">/</span>
+            <span className={cn('text-xs font-semibold px-2 py-0.5 rounded flex-shrink-0', exercise.badgeColor)}>{exercise.concept}</span>
+            <span className="text-zinc-200 flex-shrink-0 hidden sm:block">/</span>
+            <span className="text-xs font-medium text-zinc-600 truncate hidden sm:block">{exercise.title}</span>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+            <span className="text-2xs text-zinc-400 flex items-center gap-1">
+              <Clock size={10}/> {exercise.estimatedMinutes}m
+            </span>
+            <Badge variant={exercise.difficulty as any}/>
+          </div>
         </div>
-        <h2 className="font-extrabold leading-snug mb-0.5" style={{ fontSize:17, color:"var(--text-1)" }}>{exercise.title}</h2>
-        <p className="text-sm text-zinc-500 mb-4">{exercise.tagline}</p>
-
-        {/* Why it matters */}
-        <details className="group">
-          <summary className="text-xs font-semibold text-[#5855D6] cursor-pointer select-none flex items-center gap-1.5 hover:text-[#4744C8]">
-            <Lightbulb size={12}/> Why this matters
-            <ChevronRight size={12} className="group-open:rotate-90 transition-transform"/>
-          </summary>
-          <p className="text-sm text-zinc-600 leading-relaxed mt-2 pl-4 border-l-2 border-brand-100">
-            {exercise.whyItMatters}
-          </p>
-        </details>
-
-        {/* Stage progress indicator */}
-        <div className="mt-4">
+        <div className="px-5 py-2.5">
           <StageProgress
             stages={exercise.stages}
             currentStageIdx={currentStage}
@@ -646,10 +672,12 @@ export function PlaygroundExercisePage() {
       <div className="flex-1 overflow-hidden">
         <StageChat
           key={`${exercise.id}-${currentStage}`}
+          exercise={exercise}
           stage={exercise.stages[currentStage]}
           stageIndex={currentStage}
           totalStages={exercise.stages.length}
-          systemPrompt={exercise.systemPrompt}
+          completedStages={completed}
+          relevantResources={relevantResources}
           isCompleted={completed.has(currentStage)}
           onStageComplete={() => {
             const next = new Set(completed)
@@ -666,9 +694,9 @@ export function PlaygroundExercisePage() {
 
       {/* All done shortcut */}
       {allDone && !showAnalysis && (
-        <div className="flex-shrink-0 border-t border-zinc-100 px-5 py-3 bg-white">
+        <div className="flex-shrink-0 border-t border-zinc-100 px-6 py-4 bg-white">
           <button onClick={() => setShowAnalysis(true)}
-            className="w-full py-2.5 bg-ink-900 text-white text-sm font-medium rounded-xl hover:bg-ink-800 transition-colors flex items-center justify-center gap-2">
+            className="w-full py-3 bg-ink-900 text-white text-sm font-semibold rounded-xl hover:bg-ink-800 transition-colors flex items-center justify-center gap-2">
             View deep analysis <ArrowRight size={14}/>
           </button>
         </div>

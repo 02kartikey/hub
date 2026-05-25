@@ -1247,159 +1247,312 @@ export function PersonalisedBanner() {
 // STAGE CHAT + STAGE PROGRESS — playground components (unchanged functionality)
 // ══════════════════════════════════════════════════════════════════════════════
 
-export function StageChat({ stage, stageIndex, totalStages, systemPrompt, onStageComplete, isCompleted }: {
-  stage: ExerciseStage; stageIndex: number; totalStages: number
-  systemPrompt: string; onStageComplete: () => void; isCompleted: boolean
+// Maps exercise concepts to platform resource topics for smart recommendations
+const CONCEPT_TOPICS: Record<string, string[]> = {
+  'Hallucination':                  ['How AI works', 'LLMs', 'Critical thinking'],
+  'Sycophancy':                     ['How AI works', 'AI safety', 'Critical thinking'],
+  'Training data bias':             ['AI ethics', 'How AI works'],
+  'Training data cutoff':           ['How AI works', 'LLMs'],
+  'Prompt injection':               ['AI safety', 'Prompting'],
+  'Few-shot prompting':             ['Prompting', 'How AI works'],
+  'Logical reasoning failures':     ['How AI works', 'Critical thinking'],
+  'Token prediction':               ['How AI works', 'LLMs'],
+  'RLHF and alignment':             ['AI safety', 'How AI works'],
+  'AI text detection':              ['Critical thinking', 'Generative AI'],
+  'Context window and memory':      ['How AI works', 'LLMs'],
+  'Multimodal AI limits':           ['How AI works', 'Deep learning'],
+  'Error compounding in AI chains': ['AI safety', 'How AI works'],
+}
+export { CONCEPT_TOPICS }
+
+/** Builds a rich per-stage system prompt that teaches, corrects, and recommends platform resources */
+function buildPlaygroundSystemPrompt(
+  exercise: DeepExercise,
+  stage: ExerciseStage,
+  stageIndex: number,
+  totalStages: number,
+  completedStages: Set<number>,
+  resources: Resource[]
+): string {
+  const completedTitles = [...completedStages]
+    .map(i => exercise.stages[i]?.title).filter(Boolean)
+
+  const learnList = (exercise.whatYouWillLearn || []).slice(0, 3)
+    .map((l: string) => `- ${l}`).join('\n')
+
+  const resourceLines = resources.slice(0, 6).map(r =>
+    `- "${r.title}" (${r.type}, ${r.difficulty}) — ${r.description.slice(0, 110)}… → /content/${r.id}`
+  ).join('\n')
+
+  const completedNote = completedTitles.length > 0
+    ? `STUDENT PROGRESS: They have already completed — ${completedTitles.join(', ')}. Build on these naturally.`
+    : `STUDENT PROGRESS: This is their very first stage. Be welcoming and make it easy to start.`
+
+  const noticeList = stage.whatToNotice.map((w: string) => `- ${w}`).join('\n')
+
+  return [
+    `You are a warm, patient AI literacy tutor on AIhub — an educational platform for students (age 10+), teachers, and complete beginners with no AI background.`,
+    ``,
+    `EXERCISE: "${exercise.title}"`,
+    `CONCEPT BEING TAUGHT: ${exercise.concept}`,
+    `WHAT THE STUDENT WILL LEARN:`,
+    learnList,
+    ``,
+    `CURRENT STAGE ${stageIndex + 1} of ${totalStages}: "${stage.title}"`,
+    `STAGE TEACHING GOAL: ${stage.instruction}`,
+    `KEY INSIGHTS TO GUIDE THE STUDENT TOWARD:`,
+    noticeList,
+    ``,
+    completedNote,
+    ``,
+    `HOW TO RESPOND:`,
+    `1. Always answer the student's question clearly and helpfully. Use simple language — explain any jargon. Write as if explaining to a curious 12-year-old, but never be patronising.`,
+    `2. Use real-world, everyday examples (school, social media, everyday objects) to make concepts concrete.`,
+    `3. After every answer, always add a short section that begins with exactly "💡 Prompt tip:" — in 1–2 sentences, tell the student how they could rephrase or improve their question for better learning. If their question was already excellent, say so briefly and suggest a variation. This section is mandatory.`,
+    `4. If a student goes off-topic or seems stuck, gently redirect them toward the exercise concept: "${exercise.concept}".`,
+    `5. Be warm, patient, and enthusiastic. Every question is valid. Never make the student feel silly.`,
+    ``,
+    `PLATFORM RESOURCES — Recommend ONLY from this list when a student asks for a guide, wants to learn more, or their question matches a topic:`,
+    resourceLines || `- No specific resources matched — suggest the student visit the Browse section on AIhub.`,
+    ``,
+    `When recommending, say: "On AIhub, I'd suggest checking out '[title]' — you can find it in the Browse section." Never invent resources.`,
+  ].join('\n')
+}
+
+/** Splits an AI response into the main answer and the optional prompt tip */
+function parseAIResponse(content: string): { main: string; tip: string | null } {
+  const marker = '💡 Prompt tip:'
+  const idx = content.indexOf(marker)
+  if (idx === -1) return { main: content.trim(), tip: null }
+  return {
+    main: content.slice(0, idx).trim(),
+    tip: content.slice(idx + marker.length).trim(),
+  }
+}
+
+export function StageChat({ exercise, stage, stageIndex, totalStages, completedStages, relevantResources, onStageComplete, isCompleted }: {
+  exercise: DeepExercise
+  stage: ExerciseStage
+  stageIndex: number
+  totalStages: number
+  completedStages: Set<number>
+  relevantResources: Resource[]
+  onStageComplete: () => void
+  isCompleted: boolean
 }) {
   const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState(stage.promptToTry)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string|null>(null)
-  const [showSystem, setShowSystem] = useState(false)
-  const [showHints, setShowHints] = useState(false)
+  const [input, setInput]       = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState<string | null>(null)
+  const [showSystem, setShowSystem]     = useState(false)
+  const [showHints, setShowHints]       = useState(false)
   const [showFollowUp, setShowFollowUp] = useState(false)
-  const [copiedIdx, setCopiedIdx] = useState<number|null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setMessages([]); setInput(stage.promptToTry)
+    setMessages([]); setInput('')
     setShowSystem(false); setShowHints(false); setShowFollowUp(false); setError(null)
-  }, [stage.id, stage.promptToTry])
+  }, [stage.id])
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages, loading])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, loading])
+
+  const builtSystemPrompt = useMemo(
+    () => buildPlaygroundSystemPrompt(exercise, stage, stageIndex, totalStages, completedStages, relevantResources),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [exercise.id, stage.id, stageIndex, completedStages.size, relevantResources.length]
+  )
 
   const send = async (text: string) => {
     if (!text.trim() || loading) return
     setError(null)
-    const userMsg: Message = { role:'user', content:text.trim() }
+    const userMsg: Message = { role: 'user', content: text.trim() }
     setMessages(prev => [...prev, userMsg])
+    setInput('')
     setLoading(true)
     try {
-      const data = await api.chat.send([...messages, userMsg], systemPrompt)
-      setMessages(prev => [...prev, { role:'assistant', content:data.text }])
-    } catch(e) { setError(e instanceof Error ? e.message : 'Something went wrong') }
-    finally { setLoading(false) }
-  }
-
-  const copyPrompt = async (text: string, idx: number) => {
-    await navigator.clipboard.writeText(text)
-    setCopiedIdx(idx); setTimeout(() => setCopiedIdx(null), 1500); setInput(text)
+      const data = await api.chat.send([...messages, userMsg], builtSystemPrompt)
+      setMessages(prev => [...prev, { role: 'assistant', content: data.text }])
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const hasResponded = messages.some(m => m.role === 'assistant')
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="flex-shrink-0 border-b border-zinc-100 px-5 py-4">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-2xs font-bold text-zinc-400 uppercase tracking-wider">Stage {stageIndex+1} / {totalStages}</span>
-          {isCompleted && <Badge variant="green" size="xs">Done</Badge>}
-        </div>
-        <h3 className="text-base font-semibold text-zinc-900">{stage.title}</h3>
-        <p className="text-sm text-zinc-500 mt-1 leading-relaxed">{stage.instruction}</p>
-        <div className="flex items-center gap-3 mt-3 flex-wrap">
-          <button onClick={() => setShowSystem(v => !v)} className="flex items-center gap-1.5 text-xs text-[#5855D6] hover:text-[#4744C8] font-semibold">
-            {showSystem ? <EyeOff size={11}/> : <Eye size={11}/>} {showSystem ? 'Hide':'See'} system prompt
-          </button>
-          <span className="text-zinc-300">·</span>
-          <button onClick={() => setShowHints(v => !v)} className="flex items-center gap-1.5 text-xs text-amber-600 hover:text-amber-700 font-semibold">
-            <Lightbulb size={11}/> {showHints ? 'Hide':'What to notice'}
-          </button>
-          {stage.followUps.length > 0 && <>
-            <span className="text-zinc-300">·</span>
-            <button onClick={() => setShowFollowUp(v => !v)} className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-700 font-semibold">
-              {showFollowUp ? <ChevronDown size={11}/> : <ChevronRight size={11}/>} Follow-ups
-            </button>
-          </>}
-        </div>
 
-        {showSystem && (
-          <div className="mt-3 p-3 bg-ink-950 rounded-xl">
-            <p className="text-2xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">What the AI was told</p>
-            <p className="text-xs text-accent-300 font-mono leading-relaxed">{systemPrompt}</p>
-          </div>
-        )}
-        {showHints && (
-          <div className="mt-3 p-3 bg-amber-50 border border-amber-100 rounded-xl space-y-1.5">
-            <p className="text-2xs font-bold text-amber-700 uppercase tracking-wider mb-2">What to observe</p>
-            {stage.whatToNotice.map((h,i) => (
-              <p key={i} className="text-xs text-amber-800 leading-relaxed flex items-start gap-2">
-                <span className="text-amber-400 flex-shrink-0 mt-0.5">→</span>{h}
-              </p>
-            ))}
-          </div>
-        )}
-        {showFollowUp && (
-          <div className="mt-3 p-3 bg-zinc-50 border border-zinc-100 rounded-xl space-y-2">
-            <p className="text-2xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Try these</p>
-            {stage.followUps.map((fu,i) => (
-              <div key={i} className="flex items-start gap-2">
-                <p className="flex-1 text-xs text-zinc-600 leading-relaxed">{fu}</p>
-                <button onClick={() => copyPrompt(fu,i)} className="p-1 text-zinc-400 hover:text-zinc-700 flex-shrink-0">
-                  {copiedIdx === i ? <Check size={11} className="text-signal-green"/> : <Copy size={11}/>}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
+      {/* Chat messages — stage mission card lives inside here, not as a separate header */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+
+        {/* Mission card — always at top, collapses context in place */}
+        <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-2xs font-bold text-zinc-400 uppercase tracking-wider">
+              Stage {stageIndex + 1} / {totalStages}
+            </span>
+            {isCompleted && <Badge variant="green" size="xs">Done</Badge>}
+          </div>
+          <h3 className="text-sm font-semibold text-zinc-900 mb-1">{stage.title}</h3>
+          <p className="text-xs text-zinc-500 leading-relaxed mb-3">{stage.instruction}</p>
+
+          {/* Compact toggle row */}
+          <div className="flex items-center gap-4 pt-3 border-t border-zinc-100 flex-wrap">
+            <button onClick={() => setShowSystem(v => !v)}
+              className="flex items-center gap-1 text-2xs text-[#5855D6] hover:text-[#4744C8] font-semibold">
+              {showSystem ? <EyeOff size={11}/> : <Eye size={11}/>}
+              {showSystem ? 'Hide' : 'System prompt'}
+            </button>
+            <button onClick={() => setShowHints(v => !v)}
+              className="flex items-center gap-1 text-2xs text-amber-600 hover:text-amber-700 font-semibold">
+              <Lightbulb size={11}/>
+              {showHints ? 'Hide hints' : 'Hints'}
+            </button>
+            {stage.followUps.length > 0 && (
+              <button onClick={() => setShowFollowUp(v => !v)}
+                className="flex items-center gap-1 text-2xs text-zinc-400 hover:text-zinc-700 font-semibold">
+                {showFollowUp ? <ChevronDown size={11}/> : <ChevronRight size={11}/>}
+                Follow-ups
+              </button>
+            )}
+          </div>
+
+          {/* Expandable panels — expand downward within the mission card */}
+          {showSystem && (
+            <div className="mt-3 p-3 bg-ink-950 rounded-xl">
+              <p className="text-2xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">What the AI was told</p>
+              <pre className="text-2xs text-accent-300 font-mono leading-relaxed whitespace-pre-wrap">{builtSystemPrompt}</pre>
+            </div>
+          )}
+          {showHints && (
+            <div className="mt-3 p-3 bg-amber-50 border border-amber-100 rounded-xl space-y-2">
+              <p className="text-2xs font-bold text-amber-700 uppercase tracking-wider">What to observe</p>
+              {stage.whatToNotice.map((h, i) => (
+                <p key={i} className="text-xs text-amber-800 leading-relaxed flex items-start gap-1.5">
+                  <span className="text-amber-400 flex-shrink-0 mt-0.5">→</span>{h}
+                </p>
+              ))}
+            </div>
+          )}
+          {showFollowUp && (
+            <div className="mt-3 p-3 bg-white border border-zinc-100 rounded-xl space-y-2.5">
+              <p className="text-2xs font-bold text-zinc-500 uppercase tracking-wider">Try these follow-up prompts</p>
+              {stage.followUps.map((fu, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <p className="flex-1 text-xs text-zinc-600 leading-relaxed">{fu}</p>
+                  <button onClick={() => setInput(fu)}
+                    className="px-2 py-0.5 text-2xs font-semibold text-[#5855D6] border border-[#5855D6] rounded-md hover:bg-indigo-50 flex-shrink-0 transition-colors">
+                    Use
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Suggested prompt card — shown only before any message */}
         {messages.length === 0 && (
-          <div className="flex items-center justify-center h-full text-center">
-            <div>
-              <p className="text-sm text-zinc-400 mb-1">Starting prompt is pre-filled below.</p>
-              <p className="text-xs text-zinc-300">Send it as-is, or modify it first.</p>
+          <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5">
+            <p className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-2">
+              Suggested prompt to try
+            </p>
+            <p className="text-sm text-indigo-800 leading-relaxed mb-4">{stage.promptToTry}</p>
+            <div className="flex items-center gap-3">
+              <button onClick={() => send(stage.promptToTry)}
+                className="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1.5">
+                <Send size={11}/> Send this
+              </button>
+              <button onClick={() => setInput(stage.promptToTry)}
+                className="px-4 py-2 border border-indigo-200 text-indigo-600 text-xs font-semibold rounded-lg hover:bg-indigo-100 transition-colors">
+                Edit first
+              </button>
             </div>
           </div>
         )}
-        {messages.map((msg,i) => (
-          <div key={i} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
-            <div className={cn('max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
-              msg.role === 'user'
-                ? 'bg-ink-900 text-white rounded-br-sm'
-                : 'bg-zinc-50 border border-zinc-100 text-zinc-800 rounded-bl-sm')}>
-              {msg.role === 'assistant' && <p className="text-2xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">AI response</p>}
-              <p className="whitespace-pre-wrap">{msg.content}</p>
+
+        {messages.map((msg, i) => {
+          if (msg.role === 'user') {
+            return (
+              <div key={i} className="flex justify-end">
+                <div className="max-w-[80%] bg-ink-900 text-white rounded-2xl rounded-br-sm px-5 py-3.5 text-sm leading-relaxed">
+                  {msg.content}
+                </div>
+              </div>
+            )
+          }
+          const { main, tip } = parseAIResponse(msg.content)
+          return (
+            <div key={i} className="flex justify-start">
+              <div className="max-w-[85%] space-y-3">
+                <div className="bg-zinc-50 border border-zinc-100 rounded-2xl rounded-bl-sm px-5 py-4">
+                  <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">AI response</p>
+                  <p className="text-sm text-zinc-800 leading-relaxed whitespace-pre-wrap">{main}</p>
+                </div>
+                {tip && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-2.5">
+                    <Lightbulb size={14} className="text-amber-500 flex-shrink-0 mt-0.5"/>
+                    <div>
+                      <p className="text-xs font-bold text-amber-700 mb-1">Prompt tip</p>
+                      <p className="text-xs text-amber-800 leading-relaxed">{tip}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
+
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-zinc-50 border border-zinc-100 rounded-2xl rounded-bl-sm px-4 py-3"><TypingDots/></div>
+            <div className="bg-zinc-50 border border-zinc-100 rounded-2xl rounded-bl-sm px-5 py-4"><TypingDots/></div>
           </div>
         )}
-        {error && <p className="text-xs text-signal-red bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>}
+        {error && (
+          <p className="text-sm text-signal-red bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>
+        )}
         <div ref={bottomRef}/>
       </div>
 
-      <div className="flex-shrink-0 border-t border-zinc-100 px-5 py-4 bg-white">
+      {/* Input area */}
+      <div className="flex-shrink-0 border-t border-zinc-100 px-4 py-3 bg-white">
         <div className="relative">
-          <textarea value={input} onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if ((e.metaKey||e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); send(input) } }}
-            rows={3} placeholder="Type your prompt…"
-            className="w-full px-4 py-3 pr-12 text-sm resize-none rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent transition-all"/>
-          <button onClick={() => send(input)} disabled={!input.trim()||loading}
-            className="absolute right-3 bottom-3 w-8 h-8 rounded-lg bg-ink-900 text-white flex items-center justify-center hover:bg-ink-800 disabled:opacity-30 transition-colors">
+          <textarea
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); send(input) }
+            }}
+            rows={2}
+            placeholder="Write a prompt, or use the suggestion above…"
+            className="w-full px-4 py-2.5 pr-12 text-sm resize-none rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent transition-all leading-relaxed"
+          />
+          <button
+            onClick={() => send(input)}
+            disabled={!input.trim() || loading}
+            className="absolute right-2.5 bottom-2.5 w-8 h-8 rounded-lg bg-ink-900 text-white flex items-center justify-center hover:bg-ink-800 disabled:opacity-30 transition-colors">
             <Send size={13}/>
           </button>
         </div>
-        <div className="flex items-center justify-between mt-2">
-          <p className="text-2xs text-zinc-400">⌘ + Enter to send</p>
-          <button onClick={() => { setMessages([]); setInput(stage.promptToTry); setError(null) }}
-            className="flex items-center gap-1 text-2xs text-zinc-400 hover:text-zinc-700">
+        <div className="flex items-center justify-between mt-1.5">
+          <p className="text-2xs text-zinc-400">⌘↩ to send</p>
+          <button
+            onClick={() => { setMessages([]); setInput(''); setError(null) }}
+            className="flex items-center gap-1 text-2xs text-zinc-400 hover:text-zinc-600 transition-colors">
             <RotateCcw size={10}/> Reset
           </button>
         </div>
+
         {hasResponded && !isCompleted && (
           <button onClick={onStageComplete}
-            className="mt-3 w-full py-2.5 bg-signal-green text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-opacity">
-            I've observed this — {stageIndex < totalStages-1 ? 'next stage' : 'see analysis'} →
+            className="mt-2.5 w-full py-2.5 bg-signal-green text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-opacity">
+            I've observed this — {stageIndex < totalStages - 1 ? 'next stage' : 'see analysis'} →
           </button>
         )}
-        {isCompleted && stageIndex < totalStages-1 && (
+        {isCompleted && stageIndex < totalStages - 1 && (
           <button onClick={onStageComplete}
-            className="mt-3 w-full py-2.5 bg-zinc-100 text-zinc-700 text-sm font-semibold rounded-xl hover:bg-zinc-200 transition-colors">
+            className="mt-2.5 w-full py-2.5 bg-zinc-100 text-zinc-700 text-sm font-semibold rounded-xl hover:bg-zinc-200 transition-colors">
             Continue to next stage →
           </button>
         )}
@@ -1408,34 +1561,38 @@ export function StageChat({ stage, stageIndex, totalStages, systemPrompt, onStag
   )
 }
 
+
 export function StageProgress({ stages, currentStageIdx, completedStages, onSelect }: {
   stages: ExerciseStage[]; currentStageIdx: number; completedStages: Set<number>; onSelect: (idx: number) => void
 }) {
   return (
-    <div className="flex items-center">
+    <div className="flex items-center gap-0">
       {stages.map((stage, idx) => {
         const done = completedStages.has(idx)
         const active = idx === currentStageIdx
-        const locked = idx > 0 && !completedStages.has(idx-1) && !active
+        const locked = idx > 0 && !completedStages.has(idx - 1) && !active
+        const label = stage.title.replace(`Stage ${idx + 1} — `, '').replace(`Stage ${idx + 1} - `, '')
         return (
-          <div key={stage.id} className="flex items-center">
-            <button onClick={() => !locked && onSelect(idx)} disabled={locked}
-              className={cn('flex flex-col items-center gap-1 group', locked ? 'cursor-not-allowed opacity-30' : 'cursor-pointer')}>
-              <div className={cn('w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all',
-                done ? 'bg-signal-green border-signal-green text-white' :
-                active ? 'bg-white border-accent-500 text-[#5855D6]' : 'bg-white border-zinc-200 text-zinc-400')}>
-                {done ? <CheckCircle2 size={15}/> : <span className="text-xs font-bold">{idx+1}</span>}
-              </div>
-              <span className={cn('text-2xs font-semibold text-center max-w-[64px] leading-tight hidden sm:block',
-                active ? 'text-[#5855D6]' : done ? 'text-signal-green' : 'text-zinc-400')}>
-                {stage.title.replace(`Stage ${idx+1} — `,'')}
-              </span>
+          <React.Fragment key={stage.id}>
+            <button
+              onClick={() => !locked && onSelect(idx)}
+              disabled={locked}
+              title={label}
+              aria-label={`Stage ${idx + 1}: ${label}${done ? ' (done)' : active ? ' (current)' : ''}`}
+              className={cn(
+                'w-7 h-7 rounded-full flex items-center justify-center border-2 text-2xs font-bold transition-all flex-shrink-0',
+                locked ? 'opacity-30 cursor-not-allowed border-zinc-200 text-zinc-400' :
+                done    ? 'bg-signal-green border-signal-green text-white cursor-pointer' :
+                active  ? 'bg-white border-[#5855D6] text-[#5855D6] cursor-pointer shadow-sm' :
+                          'bg-white border-zinc-200 text-zinc-400 cursor-pointer hover:border-zinc-400'
+              )}>
+              {done ? <CheckCircle2 size={12}/> : idx + 1}
             </button>
-            {idx < stages.length-1 && (
-              <div className={cn('h-0.5 w-8 sm:w-14 flex-shrink-0 transition-colors mx-1',
-                completedStages.has(idx) ? 'bg-signal-green' : 'bg-zinc-200')}/>
+            {idx < stages.length - 1 && (
+              <div className={cn('h-0.5 flex-1 transition-colors min-w-[12px]',
+                completedStages.has(idx) ? 'bg-signal-green' : 'bg-zinc-100')}/>
             )}
-          </div>
+          </React.Fragment>
         )
       })}
     </div>
@@ -1526,8 +1683,8 @@ const TABS: { id: AnalysisTab; label: string }[] = [
   {id:'misconceptions',label:'Myths'},{id:'changes',label:'Change this'},
 ]
 
-export function DeepAnalysis({ exercise, onNext, onRepeat }: {
-  exercise: DeepExercise; onNext?: () => void; onRepeat: () => void
+export function DeepAnalysis({ exercise, onNext, onRepeat, relevantResources = [] }: {
+  exercise: DeepExercise; onNext?: () => void; onRepeat: () => void; relevantResources?: Resource[]
 }) {
   const [tab, setTab] = useState<AnalysisTab>('concept')
   return (
@@ -1571,6 +1728,24 @@ export function DeepAnalysis({ exercise, onNext, onRepeat }: {
               </div>
             </div>
           </div>
+          {relevantResources.length > 0 && (
+            <div className="mt-6 pt-5 border-t border-zinc-100">
+              <p className="text-2xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Continue learning on AIhub</p>
+              <div className="space-y-2">
+                {relevantResources.slice(0, 4).map(r => (
+                  <Link key={r.id} to={`/content/${r.id}`}
+                    className="flex items-start gap-3 p-3.5 bg-white border border-zinc-200 rounded-xl hover:border-indigo-200 hover:bg-indigo-50 transition-all group">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-zinc-800 group-hover:text-[#5855D6] transition-colors leading-snug">{r.title}</p>
+                      <p className="text-2xs text-zinc-400 mt-1 capitalize">{r.type} · {r.difficulty}</p>
+                    </div>
+                    <ArrowRight size={13} className="text-zinc-300 group-hover:text-[#5855D6] flex-shrink-0 mt-0.5 transition-colors"/>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
         )}
         {tab === 'mechanism' && (
           <div>
