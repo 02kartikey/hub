@@ -114,14 +114,13 @@ export class ErrorBoundary extends React.Component<{ children: ReactNode }, EBSt
 function BadgeNavCount() {
   const [count, setCount] = useState(0)
   useEffect(() => {
-    const earned  = JSON.parse(localStorage.getItem('aihub_badges') ?? '[]') as string[]
-    const unearned = (11) - earned.length  // total badges = 11
-    setCount(Math.max(0, unearned))
-    // Re-check after storage events (badge earned elsewhere)
+    const earned   = JSON.parse(localStorage.getItem('aihub_badges') ?? '[]') as string[]
+    const total    = BADGES.length  // derived, not hardcoded
+    setCount(Math.max(0, total - earned.length))
     const handler = (e: StorageEvent) => {
       if (e.key === 'aihub_badges') {
         const next = JSON.parse(e.newValue ?? '[]') as string[]
-        setCount(Math.max(0, 11 - next.length))
+        setCount(Math.max(0, BADGES.length - next.length))
       }
     }
     window.addEventListener('storage', handler)
@@ -570,6 +569,54 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 // APP SHELL
 // ══════════════════════════════════════════════════════════════════════════════
 
+// ── Mobile bottom navigation bar — visible only on small screens ──────────────
+function MobileBottomNav() {
+  const { pathname } = useLocation()
+  const { profile }  = useAuth()
+  const isTeacher    = profile?.role === 'teacher'
+
+  const tabs = [
+    { href: '/',           icon: <LayoutDashboard size={20}/>, label: 'Home'      },
+    { href: '/browse',     icon: <Compass size={20}/>,         label: 'Browse'    },
+    { href: '/playground', icon: <FlaskConical size={20}/>,    label: 'Play'      },
+    { href: '/chat',       icon: <MessageSquare size={20}/>,   label: 'Chat'      },
+    { href: isTeacher ? '/classroom' : '/progress',
+      icon: isTeacher ? <Users size={20}/> : <BarChart2 size={20}/>,
+      label: isTeacher ? 'Class' : 'Progress' },
+  ]
+
+  return (
+    <nav className={cn(
+      'fixed bottom-0 left-0 right-0 z-40 lg:hidden',
+      'bg-white border-t border-zinc-200 safe-area-inset-bottom',
+    )}>
+      <div className="flex items-stretch h-14">
+        {tabs.map(tab => {
+          const active = pathname === tab.href ||
+            (tab.href !== '/' && pathname.startsWith(tab.href))
+          return (
+            <Link key={tab.href} to={tab.href}
+              className={cn(
+                'flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors',
+                active ? 'text-[#5855D6]' : 'text-zinc-400 hover:text-zinc-600'
+              )}>
+              <span className={cn('transition-transform', active ? 'scale-110' : '')}>
+                {tab.icon}
+              </span>
+              <span className={cn('text-[10px] font-semibold leading-none', active ? 'text-[#5855D6]' : 'text-zinc-400')}>
+                {tab.label}
+              </span>
+              {active && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#5855D6] rounded-full"/>
+              )}
+            </Link>
+          )
+        })}
+      </div>
+    </nav>
+  )
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -609,11 +656,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)}/>
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Topbar onMenuClick={() => setSidebarOpen(true)} onCmdK={() => setCmdOpen(true)}/>
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        {/* pb-16 on mobile to make room for bottom tab bar */}
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">{children}</main>
       </div>
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)}/>
       <BadgeNotificationManager queue={badgeQueue} onClear={clearFromQueue}/>
       {appShowTour && <SpotlightTour onDone={() => setAppShowTour(false)}/>}
+      {/* Mobile bottom nav — hidden on large screens */}
+      <MobileBottomNav/>
     </div>
   )
 }
@@ -645,7 +695,7 @@ const THUMB_ICON: Record<string, ReactNode> = {
   pdf:         <BookOpen size={32} strokeWidth={1.5}/>,
 }
 
-const DIFFICULTY_DOT = { beginner:'bg-signal-green', intermediate:'bg-signal-blue', advanced:'bg-[#EEEEFF]0' }
+const DIFFICULTY_DOT = { beginner:'bg-signal-green', intermediate:'bg-signal-blue', advanced:'bg-[#5855D6]' }
 
 // Per-type rich gradient palettes for text thumbnails
 const TEXT_THUMB_GRADIENT: Record<string, string> = {
@@ -818,7 +868,7 @@ export function ContentCard({ resource }: { resource: Resource }) {
         <button onClick={e => { e.preventDefault(); e.stopPropagation(); toggle(resource.id) }}
           className={cn('absolute bottom-2 left-2.5 w-6 h-6 rounded-full flex items-center justify-center transition-all',
             bookmarked
-              ? 'bg-[#EEEEFF]0 text-white'
+              ? 'bg-[#5855D6] text-white'
               : 'bg-black/30 text-white/70 hover:bg-black/50 backdrop-blur-sm')}>
           <Bookmark size={11} fill={bookmarked ? 'currentColor' : 'none'}/>
         </button>
@@ -941,7 +991,7 @@ export function OSHero({ name }: { name?: string }) {
       <div className="absolute inset-0 opacity-[0.04]"
         style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 0)', backgroundSize: '24px 24px' }}/>
       {/* Glows */}
-      <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-[#EEEEFF]0/25 blur-3xl pointer-events-none"/>
+      <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-[#5855D6]/10 blur-3xl pointer-events-none"/>
       <div className="absolute -bottom-24 -left-12 w-72 h-72 rounded-full bg-violet-500/15 blur-3xl pointer-events-none"/>
 
       <div className="relative z-10">
@@ -1210,7 +1260,7 @@ export function PersonalisedBanner() {
 
   const R = {
     teacher: { bg: 'bg-amber-50 border-amber-100',   bar: 'bg-amber-400',   text: 'text-amber-800',   label: 'Teacher mode',  subtext: 'text-amber-600' },
-    student: { bg: 'bg-[#EEEEFF] border-[#DDDDF8]', bar: 'bg-[#EEEEFF]0',  text: 'text-accent-800',  label: 'Student mode',  subtext: 'text-[#5855D6]' },
+    student: { bg: 'bg-[#EEEEFF] border-[#DDDDF8]', bar: 'bg-[#5855D6]',   text: 'text-accent-800',  label: 'Student mode',  subtext: 'text-[#5855D6]' },
     curious: { bg: 'bg-violet-50 border-violet-100', bar: 'bg-violet-500',  text: 'text-violet-800',  label: 'Explorer mode', subtext: 'text-violet-600' },
   }
   const r = R[profile.role]
@@ -1553,6 +1603,11 @@ export function StageChat({ exercise, stage, stageIndex, totalStages, completedS
           </button>
         </div>
 
+        {!hasResponded && !isCompleted && (
+          <p className="mt-2 text-center text-2xs text-zinc-400 pb-1">
+            Send a prompt above to unlock stage completion.
+          </p>
+        )}
         {hasResponded && !isCompleted && (
           <button onClick={onStageComplete}
             className="mt-2.5 w-full py-2.5 bg-signal-green text-white text-sm font-semibold rounded-xl hover:opacity-90 transition-opacity">
@@ -1869,7 +1924,22 @@ ${resource.cbseUnit ? `CBSE: ${resource.cbseUnit}` : ''}
 ${resource.igcseSection ? `IGCSE: ${resource.igcseSection}` : ''}
 Rules: Be concise (max 150 words). Ask probing questions. Connect to what they know. If off-topic, redirect.`
 
-  const STARTERS = ['Explain the main idea simply','What should I focus on?','Why does this matter?','Common misconceptions?','Connect this to my exams']
+  // Generate resource-specific starters from the resource's topics and type
+  const STARTERS = useMemo(() => {
+    const topicList = resource.topics?.slice(0, 2).join(' and ') || 'this topic'
+    const base = [
+      `What is the most important concept in this ${resource.type}?`,
+      `Why does ${topicList} matter in real-world AI?`,
+      `What do most people get wrong about ${topicList}?`,
+      `How does this connect to what I might already know about AI?`,
+      `Quiz me on the key ideas from this ${resource.type}.`,
+    ]
+    // Prepend a topic-specific opener if we have topic data
+    if (resource.topics?.length) {
+      base.unshift(`Explain "${resource.topics[0]}" as if I'm completely new to it.`)
+    }
+    return base.slice(0, 5)
+  }, [resource])
 
   const send = async (text: string) => {
     if (!text.trim() || loading) return
@@ -1988,7 +2058,7 @@ const TOUR_STEPS = [
     id: 'browse',
     targetSelector: '[data-tour="browse"]',
     title: 'Browse Resources',
-    body: '78+ curated videos, books, courses, and seminars — all tagged by board, difficulty, and topic.',
+    body: 'Curated videos, books, courses, and seminars — all tagged by board, difficulty, and topic. Filter by your curriculum.',
     emoji: '🔍',
     position: 'right' as const,
   },
@@ -2012,7 +2082,7 @@ const TOUR_STEPS = [
     id: 'workflows',
     targetSelector: '[data-tour="workflows"]',
     title: 'Workflows',
-    body: 'Step-by-step walkthroughs for every major AI tool — ChatGPT, Claude, Gemini, Perplexity, and more.',
+    body: 'Step-by-step walkthroughs for AI tools — how to use them effectively for learning, teaching, and research.',
     emoji: '⚡',
     position: 'right' as const,
   },
@@ -2086,7 +2156,7 @@ export function SpotlightTour({ onDone }: { onDone: () => void }) {
         {/* Step indicator */}
         <div className="flex items-center gap-1.5 mb-3">
           {TOUR_STEPS.map((_, i) => (
-            <div key={i} className={cn('h-1 rounded-full transition-all duration-300', i === step ? 'bg-[#EEEEFF]0 w-5' : i < step ? 'bg-accent-200 w-1.5' : 'bg-zinc-200 w-1.5')}/>
+            <div key={i} className={cn('h-1 rounded-full transition-all duration-300', i === step ? 'bg-[#5855D6] w-5' : i < step ? 'bg-accent-200 w-1.5' : 'bg-zinc-200 w-1.5')}/>
           ))}
           <button onClick={finish} className="ml-auto p-1 rounded-md text-zinc-300 hover:text-zinc-600 hover:bg-zinc-100 transition-colors">
             <X size={12}/>
@@ -2167,7 +2237,7 @@ export function OnboardingFlow({ onComplete }: { onComplete: (p: OnboardingProfi
         <div>
           <div className="flex items-center gap-1.5 mb-5">
             {[1,2,3].map(i => (
-              <div key={i} className={cn('h-1.5 rounded-full transition-all duration-300', i === 1 ? 'bg-[#EEEEFF]0 flex-1' : 'bg-zinc-100 w-6')}/>
+              <div key={i} className={cn('h-1.5 rounded-full transition-all duration-300', i === 1 ? 'bg-[#5855D6] flex-1' : 'bg-zinc-100 w-6')}/>
             ))}
           </div>
           <h2 className="text-2xl font-extrabold text-zinc-900 mb-1.5 tracking-tight">Who are you?</h2>

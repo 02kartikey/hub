@@ -495,14 +495,23 @@ export function useBadges() {
     setQueue(prev => prev.filter(b => b.id !== id))
   }, [])
 
-  // Award first_light on first hook mount
+  // Award first_light once — listen for auth sign-in event rather than mount
+  // Using a storage event + direct call: only shows toast once per device
   useEffect(() => {
-    if (awardBadge('first_light')) {
-      const def = BADGES.find(b => b.id === 'first_light')
-      if (def) setQueue([def])
-      refresh()
+    const tryAward = () => {
+      if (awardBadge('first_light')) {
+        const def = BADGES.find(b => b.id === 'first_light')
+        if (def) setQueue(prev => prev.find(b => b.id === 'first_light') ? prev : [...prev, def])
+        refresh()
+      }
     }
-  }, [refresh])
+    // Award when this hook first mounts AND the badge hasn't been awarded yet
+    // awardBadge is idempotent so this is safe — but only queue toast once
+    tryAward()
+    // Also re-check on storage changes (another tab awarded it)
+    window.addEventListener('storage', tryAward)
+    return () => window.removeEventListener('storage', tryAward)
+  }, []) // empty deps — runs once on mount, which is in AppShell (persistent)
 
   return { earned, queue, award, clearFromQueue, refresh }
 }

@@ -180,33 +180,127 @@ function StartHereBannerHome() {
 // HOME PAGE
 // ══════════════════════════════════════════════════════════════════════════════
 
+// Daily focus suggestion — changes each day, tied to what the user hasn't done yet
+function DailyFocus({ progressMap, paths, resources }: {
+  progressMap: Record<string,number>; paths: LearningPath[]; resources: Resource[]
+}) {
+  const incomplete = paths.find(p =>
+    p.resourceIds.some(id => (progressMap[id] ?? 0) > 0 && (progressMap[id] ?? 0) < 100)
+  )
+  if (!incomplete) return null
+  const nextResourceId = incomplete.resourceIds.find(id => (progressMap[id] ?? 0) < 100)
+  const nextRes = resources.find(r => r.id === nextResourceId)
+  if (!nextRes) return null
+  const pct = Math.round(incomplete.resourceIds.filter(id => (progressMap[id]??0)===100).length / incomplete.resourceIds.length * 100)
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden mb-8 border border-[#C0BFEF] p-5"
+      style={{ background: 'linear-gradient(135deg, #0A0A0B 0%, #1A1840 60%, #2D2880 100%)' }}>
+      <div className="absolute inset-0 opacity-[0.03]"
+        style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 0)', backgroundSize: '20px 20px' }}/>
+      <div className="relative flex flex-wrap items-center gap-5">
+        <div className="flex-1 min-w-0">
+          <p className="text-2xs font-bold text-white/40 uppercase tracking-widest mb-1">Continue where you left off</p>
+          <h3 className="text-base font-bold text-white mb-1 truncate">{incomplete.title}</h3>
+          <p className="text-xs text-white/50 mb-3 truncate">Next: {nextRes.title}</p>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 max-w-[140px] h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-[#8B85F4] rounded-full transition-all" style={{ width: `${pct}%` }}/>
+            </div>
+            <span className="text-2xs text-white/40">{pct}% done</span>
+          </div>
+        </div>
+        <Link to={`/content/${nextRes.id}`}
+          className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 bg-white/10 border border-white/15 text-white text-xs font-bold rounded-xl hover:bg-white/20 transition-colors">
+          Continue <ArrowRight size={13}/>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+// Quick-access stat bar — shows live counts from user's actual progress
+function ProgressStatBar({ progressMap, paths }: { progressMap: Record<string,number>; paths: LearningPath[] }) {
+  const started   = Object.values(progressMap).filter(v => v > 0).length
+  const completed = Object.values(progressMap).filter(v => v === 100).length
+  const pathsDone = paths.filter(p => p.resourceIds.length > 0 && p.resourceIds.every(id => (progressMap[id]??0) === 100)).length
+  if (started === 0) return null
+  return (
+    <div className="grid grid-cols-3 gap-3 mb-7">
+      {[
+        { val: started,   label: 'Started',        href: '/progress', color: 'text-[#5855D6]', bg: 'bg-[#EEEEFF]' },
+        { val: completed, label: 'Completed',       href: '/progress', color: 'text-emerald-700', bg: 'bg-emerald-50' },
+        { val: pathsDone, label: 'Paths finished',  href: '/curriculum', color: 'text-amber-700', bg: 'bg-amber-50' },
+      ].map(s => (
+        <Link key={s.label} to={s.href}
+          className="group flex items-center gap-3 bg-white border border-zinc-100 rounded-xl p-3.5 hover:border-zinc-200 hover:shadow-card transition-all">
+          <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 font-extrabold text-base', s.bg, s.color)}>
+            {s.val}
+          </div>
+          <p className="text-xs text-zinc-500 group-hover:text-zinc-700 transition-colors font-medium">{s.label}</p>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
 export function HomePage() {
-  const [paths, setPaths]   = useState<LearningPath[]>([])
-  const [resources, setRes] = useState<Resource[]>([])
-  const [tools, setTools]   = useState<any[]>([])
-  const { profile } = useAuth()
+  const [paths, setPaths]       = useState<LearningPath[]>([])
+  const [resources, setRes]     = useState<Resource[]>([])
+  const [tools, setTools]       = useState<any[]>([])
+  const [allResources, setAllR] = useState<Resource[]>([])
+  const { profile }  = useAuth()
+  const { progressMap } = useProgress()
   const userName = profile?.full_name?.split(' ')[0] ?? null
 
   useEffect(() => {
     api.resources.list({ featured:true, limit:12 }).then(r => setRes(r.data)).catch(() => {})
+    api.resources.list({ limit:200 }).then(r => setAllR(r.data)).catch(() => {})
     api.paths.list().then(r => setPaths(r.data)).catch(() => {})
     api.tools.list().then(r => setTools(r.data)).catch(() => {})
   }, [])
+
+  // Recommend resources the user hasn't touched yet, matching their onboarding topics
+  const recommended = useMemo(() => {
+    const onboard = getOnboardingProfile()
+    const goals   = onboard?.goals ?? []
+    const untouched = allResources.filter(r => !progressMap[r.id])
+    if (goals.length === 0) return untouched.slice(0, 6)
+    const scored = untouched.map(r => ({
+      r,
+      score: r.topics.filter(t => goals.some(g => g.toLowerCase().includes(t.toLowerCase()) || t.toLowerCase().includes(g.toLowerCase()))).length
+    }))
+    return scored.sort((a,b) => b.score - a.score).slice(0, 6).map(s => s.r)
+  }, [allResources, progressMap])
+
+  const hasProgress = Object.values(progressMap).some(v => v > 0)
 
   return (
     <div className="px-4 lg:px-8 py-6 max-w-6xl mx-auto">
       <OSHero name={userName ?? undefined}/>
       <StartHereBannerHome/>
+      <ProgressStatBar progressMap={progressMap} paths={paths}/>
+      <DailyFocus progressMap={progressMap} paths={paths} resources={allResources}/>
       <CapabilityModules/>
       <PersonalisedBanner/>
+      {hasProgress && recommended.length > 0 && (
+        <section className="mb-8">
+          <SectionHeading title="Recommended for you" action={
+            <Link to="/browse" className="text-xs text-[#5855D6] hover:text-[#4744C8] font-semibold flex items-center gap-1">Browse all <ChevronRight size={12}/></Link>
+          }/>
+          <ContentGrid resources={recommended}/>
+        </section>
+      )}
       <LearningPathStrip paths={paths.filter(p => !p.board).slice(0,8)}/>
       <ToolGuideStrip tools={tools}/>
-      <section className="mb-8">
-        <SectionHeading title="Featured resources" action={
-          <Link to="/browse" className="text-xs text-[#5855D6] hover:text-[#4744C8] font-semibold flex items-center gap-1">Browse all <ChevronRight size={12}/></Link>
-        }/>
-        <ContentGrid resources={resources}/>
-      </section>
+      {!hasProgress && (
+        <section className="mb-8">
+          <SectionHeading title="Featured resources" action={
+            <Link to="/browse" className="text-xs text-[#5855D6] hover:text-[#4744C8] font-semibold flex items-center gap-1">Browse all <ChevronRight size={12}/></Link>
+          }/>
+          <ContentGrid resources={resources}/>
+        </section>
+      )}
       <OnboardingModal/>
     </div>
   )
@@ -285,20 +379,26 @@ function BadgeAwardingCompleteButton({ resource, done, markComplete }: {
 }) {
   const { progressMap } = useProgress()
   const [burst, setBurst] = useState(false)
+  const [paths, setPaths] = useState<LearningPath[]>([])
+  useEffect(() => { api.paths.list().then(r => setPaths(r.data)).catch(() => {}) }, [])
 
   const handleClick = () => {
     const wasNotDone = !done
     markComplete(resource.id, !done)
     if (wasNotDone) {
       setBurst(true); setTimeout(() => setBurst(false), 1200)
-      // Compute completion count AFTER this mark
-      const completedCount = Object.values(progressMap).filter(p => p === 100).length + 1
-      const newBadges = checkAndAward({ progressMap: { ...progressMap, [resource.id]: 100 }, pathsCompleted: 0 })
+      const nextMap = { ...progressMap, [resource.id]: 100 }
+      // Count actually completed paths
+      const pathsCompleted = paths.filter(p =>
+        p.resourceIds.length > 0 &&
+        p.resourceIds.every(id => (nextMap[id] ?? 0) === 100)
+      ).length
+      const newBadges = checkAndAward({ progressMap: nextMap, pathsCompleted })
       if (newBadges.length) window.dispatchEvent(new CustomEvent('aihub:badges', { detail: newBadges }))
-      // Check night owl
+      // Night owl
       const hour = new Date().getHours()
       if (hour >= 22 || hour < 4) {
-        const nb2 = checkAndAward({ progressMap: { ...progressMap, [resource.id]: 100 }, pathsCompleted: 0 })
+        const nb2 = checkAndAward({ progressMap: nextMap, pathsCompleted })
         if (nb2.length) window.dispatchEvent(new CustomEvent('aihub:badges', { detail: nb2 }))
       }
     }
@@ -393,7 +493,19 @@ export function ContentPage() {
 
           {/* Stats row */}
           <div className="flex flex-wrap gap-4 text-xs text-zinc-500 mb-6 pb-6 border-b border-zinc-100">
-            {resource.duration && <span className="flex items-center gap-1.5"><Clock size={13}/> {resource.duration}</span>}
+            {(() => {
+              if (resource.duration) return (
+                <span className="flex items-center gap-1.5"><Clock size={13}/> {resource.duration}</span>
+              )
+              const est: Record<string,string> = {
+                book:'~6–8 hr read', article:'~10 min read', guide:'~20 min read',
+                course:'~4–6 hr', seminar:'~2–3 hr', pdf:'~30 min read',
+                walkthrough:'~15 min',
+              }
+              return est[resource.type] ? (
+                <span className="flex items-center gap-1.5 italic text-zinc-400"><Clock size={13}/> {est[resource.type]}</span>
+              ) : null
+            })()}
             <span className="flex items-center gap-1.5"><Star size={13} className="text-amber-400 fill-amber-400"/> {resource.rating} · {resource.completionCount.toLocaleString()} completed</span>
             {resource.year && <span>{resource.year}</span>}
           </div>
@@ -1089,324 +1201,238 @@ export function AssessmentPage() {
 type QuizState = 'intro'|'active'|'results'
 
 export function QuizPage() {
-  const { pathId } = useParams<{ pathId: string }>()
-  const { data: quiz, loading, error } = useFetch(() => api.quizzes.get(pathId!), [pathId])
+  const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [state, setState] = useState<QuizState>('intro')
-  const [current, setCurrent] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, string>>({})
-  const [fillInput, setFillInput] = useState('')
-  const [results, setResults] = useState<{ score: number; passed: boolean; breakdown: { correct: boolean; explanation: string; yourAnswer: string; correctAnswer: string }[] } | null>(null)
+  const { data: quiz, loading, error } = useFetch(() => api.quizzes.get(id!), [id])
+  const { progressMap } = useProgress()
+
+  // Adaptive state
+  const [difficulty, setDifficulty]   = useState<'beginner'|'intermediate'|'advanced'>('beginner')
+  const [answered,   setAnswered]     = useState<Record<string, number>>({})
+  const [history,    setHistory]      = useState<{ qIdx: number; correct: boolean; difficulty: string }[]>([])
+  const [showExp,    setShowExp]      = useState(false)
+  const [streak,     setStreak]       = useState(0)
+  const [qIndex,     setQIndex]       = useState(0)
+  const [stage,      setStage]        = useState<'quiz'|'results'>('quiz')
+  const { award } = useBadges()
+
+  // Difficulty bands — if quiz has typed questions, use them; else treat all as one band
+  const DIFF_ORDER: Array<'beginner'|'intermediate'|'advanced'> = ['beginner','intermediate','advanced']
+
+  // Group questions by difficulty if they have a difficulty field, else treat as one pool
+  const grouped = useMemo(() => {
+    if (!quiz) return { beginner:[], intermediate:[], advanced:[] }
+    const g: Record<string, any[]> = { beginner:[], intermediate:[], advanced:[] }
+    quiz.questions.forEach((q: any) => {
+      const d = q.difficulty ?? 'beginner'
+      g[d] = [...(g[d] ?? []), q]
+    })
+    return g as Record<'beginner'|'intermediate'|'advanced', any[]>
+  }, [quiz])
+
+  const pool   = useMemo(() => grouped[difficulty] ?? quiz?.questions ?? [], [grouped, difficulty, quiz])
+  const q      = pool[qIndex % Math.max(pool.length, 1)]
+  const isAnswered = q && answered[q.id] !== undefined
+  const wasCorrect = isAnswered && answered[q.id] === q.answer
 
   if (loading) return <PageLoader/>
   if (error || !quiz) return <PageError msg={error ?? 'Quiz not found'}/>
 
-  const q = quiz.questions[current]
-  const answered = answers[q?.id ?? ''] !== undefined
+  const correctCount = history.filter(h => h.correct).length
+  const score        = history.length > 0 ? Math.round((correctCount / history.length) * 100) : 0
+  const passed       = score >= (quiz.passingScore ?? 70)
 
-  const submitAnswer = (ans: string) => {
-    if (!q) return
-    setAnswers(prev => ({ ...prev, [q.id]: ans }))
-    setFillInput('')
-  }
+  const selectAnswer = (idx: number) => {
+    if (isAnswered) return
+    const correct = idx === q.answer
+    const newStreak = correct ? streak + 1 : 0
+    setAnswered(prev => ({ ...prev, [q.id]: idx }))
+    setShowExp(true)
+    setStreak(newStreak)
+    setHistory(prev => [...prev, { qIdx: qIndex, correct, difficulty }])
 
-  const grade = async () => {
-    const breakdown = quiz.questions.map(qn => {
-      const yourAnswer    = String(answers[qn.id] ?? '').trim().toLowerCase()
-      const correctAnswer = String(qn.answer ?? '').trim().toLowerCase()
-      return {
-        correct: yourAnswer === correctAnswer,
-        explanation: qn.explanation,
-        yourAnswer: answers[qn.id] ?? '(no answer)',
-        correctAnswer: qn.answer ?? '(missing answer)',
-      }
-    })
-    const score = Math.round((breakdown.filter(b => b.correct).length / quiz.questions.length) * 100)
-    const passed = score >= quiz.passingScore
-
-    // 1. Persist locally immediately (instant UI feedback)
-    try {
-      const prev = JSON.parse(localStorage.getItem('quiz_scores') ?? '{}')
-      localStorage.setItem('quiz_scores', JSON.stringify({ ...prev, [quiz.pathId]: score }))
-    } catch {}
-
-    // 2. Submit to server for persistence across devices
-    try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token
-      if (token) {
-        await fetch('/api/quizzes/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ pathId: quiz.pathId, answers, score }),
-        })
-      }
-    } catch { /* localStorage fallback already written */ }
-
-    setResults({ score, passed, breakdown })
-    setState('results')
-    // Award quiz badge
-    if (passed) {
-      const newBadges = checkAndAward({ progressMap: {}, pathsCompleted: 0, quizPassed: true })
-      if (newBadges.length) {
-        // Dispatch custom event — AppShell badge queue picks it up
-        window.dispatchEvent(new CustomEvent('aihub:badges', { detail: newBadges }))
-      }
+    // Adaptive difficulty: go up after 2 correct, down after 1 wrong
+    if (correct && newStreak >= 2 && difficulty !== 'advanced' && grouped[DIFF_ORDER[DIFF_ORDER.indexOf(difficulty)+1]]?.length > 0) {
+      setTimeout(() => {
+        setDifficulty(DIFF_ORDER[DIFF_ORDER.indexOf(difficulty)+1])
+        setQIndex(0); setShowExp(false)
+      }, 1800)
+    } else if (!correct && difficulty !== 'beginner') {
+      setTimeout(() => {
+        setDifficulty(DIFF_ORDER[DIFF_ORDER.indexOf(difficulty)-1])
+        setQIndex(0); setShowExp(false)
+      }, 1800)
     }
   }
 
-  if (state === 'intro') return (
-    <div className="px-4 lg:px-8 py-6 max-w-xl mx-auto">
-      <Link to="/assessment" className="inline-flex items-center gap-1.5 font-medium hover:text-zinc-700 mb-5 transition-colors" style={{ fontSize:13, color:"var(--text-3)" }}>
-        <ArrowLeft size={13}/> All assessments
-      </Link>
-      <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden">
-        {/* Coloured header */}
-        <div className="px-7 py-7 text-center relative overflow-hidden"
-          style={{ background:'linear-gradient(135deg,#0A0A0B,#1A1840,#2D2880)' }}>
-          <div className="absolute inset-0 pointer-events-none opacity-20"
-            style={{ background:'radial-gradient(ellipse at 70% 30%,rgba(139,133,244,0.7) 0%,transparent 60%)' }}/>
-          <div className="relative">
-            <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center mx-auto mb-4">
-              <Target size={24} className="text-white"/>
-            </div>
-            <h1 className="text-xl font-extrabold text-white mb-1 tracking-tight">{quiz.title}</h1>
-            <p className="text-sm" style={{ color:'rgba(255,255,255,0.45)' }}>{quiz.questions.length} questions · Pass at {quiz.passingScore}%</p>
-          </div>
-        </div>
-        <div className="p-6 space-y-3">
-          {[
-            { icon:<Clock size={14} className="text-blue-500"/>,    text:'Untimed — work at your own pace' },
-            { icon:<AlertCircle size={14} className="text-amber-500"/>, text:'Answers lock once you move to the next question' },
-            { icon:<CheckCircle2 size={14} className="text-emerald-500"/>, text:`Score ${quiz.passingScore}%+ to pass and unlock your badge` },
-          ].map((tip, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-zinc-50 rounded-xl">
-              <span className="flex-shrink-0">{tip.icon}</span>
-              <span className="text-xs text-zinc-600 leading-relaxed">{tip.text}</span>
-            </div>
-          ))}
-          <button onClick={() => setState('active')}
-            className="w-full py-3.5 mt-2 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2" style={{ background:"#5855D6" }} onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background="#4744C8"} onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background="#5855D6"}>
-            Begin assessment <ArrowRight size={15}/>
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+  const next = () => {
+    setShowExp(false)
+    if (qIndex + 1 >= pool.length || history.length >= quiz.questions.length) {
+      setStage('results')
+      // Save score + award badges
+      const prev = (() => { try { return JSON.parse(localStorage.getItem('quiz_scores') ?? '{}') } catch { return {} } })()
+      localStorage.setItem('quiz_scores', JSON.stringify({ ...prev, [quiz.pathId]: score }))
+      if (passed) {
+        const badges = checkAndAward({ progressMap, pathsCompleted: 0, quizPassed: true })
+        if (badges.length) award(badges)
+      }
+    } else {
+      setQIndex(i => i + 1)
+    }
+  }
 
-  if (state === 'results' && results) return (
-    <div className="px-4 lg:px-8 py-6 max-w-2xl mx-auto">
-      {/* Score hero */}
+  if (stage === 'results') return (
+    <div className="max-w-xl mx-auto px-4 py-10 text-center">
       <div className={cn(
-        'relative rounded-2xl overflow-hidden p-8 text-center mb-6',
-        results.passed
-          ? 'border border-emerald-200'
-          : 'border border-red-200'
-      )} style={{ background: results.passed
-        ? 'linear-gradient(135deg,#052e16,#14532d)'
-        : 'linear-gradient(135deg,#1a0505,#450a0a)' }}>
-        <div className="absolute inset-0 opacity-[0.04]"
-          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 0)', backgroundSize: '18px 18px' }}/>
-        <div className="relative">
-          <p className="text-6xl font-black text-white mb-2 tracking-tight">
-            {results.score}<span className="text-3xl text-white/50">%</span>
-          </p>
-          <p className={cn('text-lg font-bold mb-1', results.passed ? 'text-emerald-300' : 'text-red-300')}>
-            {results.passed ? '🎉 Passed!' : 'Not quite yet'}
-          </p>
-          <p className="text-sm text-white/50">
-            {results.breakdown.filter(b => b.correct).length} of {quiz.questions.length} correct · Pass mark {quiz.passingScore}%
-          </p>
-        </div>
-      </div>
-
-      {/* What next panel */}
-      <div className={cn(
-        'rounded-2xl border p-5 mb-6',
-        results.passed ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'
+        'w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-5 text-3xl font-black',
+        score >= 90 ? 'bg-emerald-100 text-emerald-700' :
+        score >= 70 ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
       )}>
-        <p className={cn('text-xs font-bold uppercase tracking-widest mb-3', results.passed ? 'text-emerald-600' : 'text-amber-600')}>
-          {results.passed ? 'What to do next' : 'How to improve'}
+        {score}%
+      </div>
+      <h2 className="text-2xl font-extrabold text-zinc-900 mb-2 tracking-tight">
+        {score >= 90 ? 'Outstanding.' : score >= 70 ? 'Solid work.' : 'Keep going.'}
+      </h2>
+      <p className="text-sm text-zinc-500 mb-6 leading-relaxed">
+        {correctCount} of {history.length} correct · Peak difficulty: <span className="font-semibold capitalize">{difficulty}</span>
+        {streak > 2 && ` · Best streak: ${streak}`}
+      </p>
+      <div className="grid grid-cols-3 gap-3 mb-7">
+        {[
+          { label: 'Score',     val: `${score}%` },
+          { label: 'Answered',  val: history.length },
+          { label: 'Correct',   val: correctCount },
+        ].map(s => (
+          <div key={s.label} className="bg-zinc-50 border border-zinc-100 rounded-xl p-3">
+            <p className="text-xl font-extrabold text-zinc-900">{s.val}</p>
+            <p className="text-2xs text-zinc-400 font-medium">{s.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className={cn(
+        'p-4 rounded-xl text-left mb-6 border',
+        passed ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'
+      )}>
+        <p className={cn('text-xs font-bold uppercase tracking-widest mb-1', passed ? 'text-emerald-700' : 'text-amber-700')}>
+          {passed ? '✓ Passed' : 'Not yet — here's what to do'}
         </p>
-        {results.passed ? (
-          <div className="space-y-2">
-            <Link to="/curriculum"
-              className="flex items-center gap-3 p-3 bg-white rounded-xl border border-emerald-100 hover:border-emerald-300 hover:shadow-card transition-all group">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                <GraduationCap size={15} className="text-emerald-600"/>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-zinc-800 group-hover:text-[#5855D6] transition-colors">Continue with the next learning path</p>
-                <p className="text-2xs text-zinc-500">Pick up where you left off in the curriculum</p>
-              </div>
-              <ChevronRight size={13} className="text-zinc-300 flex-shrink-0"/>
-            </Link>
-            <Link to="/assessment"
-              className="flex items-center gap-3 p-3 bg-white rounded-xl border border-emerald-100 hover:border-emerald-300 hover:shadow-card transition-all group">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                <Award size={15} className="text-emerald-600"/>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-zinc-800 group-hover:text-[#5855D6] transition-colors">Take another assessment</p>
-                <p className="text-2xs text-zinc-500">Test your knowledge on a different topic</p>
-              </div>
-              <ChevronRight size={13} className="text-zinc-300 flex-shrink-0"/>
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <Link to={`/paths/${quiz.pathId}`}
-              className="flex items-center gap-3 p-3 bg-white rounded-xl border border-amber-100 hover:border-amber-300 hover:shadow-card transition-all group">
-              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <BookOpen size={15} className="text-amber-600"/>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-zinc-800 group-hover:text-[#5855D6] transition-colors">Review the learning path first</p>
-                <p className="text-2xs text-zinc-500">Complete the path resources, then retry this quiz</p>
-              </div>
-              <ChevronRight size={13} className="text-zinc-300 flex-shrink-0"/>
-            </Link>
-            <button onClick={() => { setState('intro'); setAnswers({}); setCurrent(0); setResults(null) }}
-              className="w-full flex items-center gap-3 p-3 bg-white rounded-xl border border-amber-100 hover:border-amber-300 hover:shadow-card transition-all group text-left">
-              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <RotateCcw size={15} className="text-amber-600"/>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-zinc-800 group-hover:text-[#5855D6] transition-colors">Retry this quiz now</p>
-                <p className="text-2xs text-zinc-500">You need {quiz.passingScore - results.score}% more to pass</p>
-              </div>
-            </button>
-          </div>
-        )}
+        <p className={cn('text-sm leading-relaxed', passed ? 'text-emerald-800' : 'text-amber-900')}>
+          {passed
+            ? 'You've demonstrated solid understanding. Explore the next path or dive deeper into the Playground.'
+            : 'Review the learning path resources, then retry. Focus on the questions you got wrong — the explanations above tell you exactly why.'}
+        </p>
       </div>
-
-      {/* Answer breakdown */}
-      <SectionHeading title="Answer breakdown"/>
-      <div className="space-y-3 mb-6">
-        {quiz.questions.map((qn, i) => {
-          const r = results.breakdown[i]
-          return (
-            <div key={qn.id} className={cn('rounded-xl border overflow-hidden', r.correct ? 'border-emerald-200' : 'border-red-200')}>
-              <div className={cn('flex items-start gap-3 p-4', r.correct ? 'bg-emerald-50' : 'bg-red-50')}>
-                <span className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0', r.correct ? 'bg-emerald-500' : 'bg-red-500')}>
-                  {r.correct ? <Check size={11} className="text-white"/> : <X size={11} className="text-white"/>}
-                </span>
-                <p className="text-sm font-semibold text-zinc-800 leading-snug">{qn.question}</p>
-              </div>
-              <div className="px-4 py-3 bg-white space-y-1.5">
-                {!r.correct && <p className="text-xs text-red-600"><span className="font-bold">Your answer:</span> {r.yourAnswer}</p>}
-                <p className="text-xs text-emerald-700"><span className="font-bold">Correct:</span> {r.correctAnswer}</p>
-                <p className="text-xs text-zinc-500 leading-relaxed">{r.explanation}</p>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
       <div className="flex gap-3">
-        <button onClick={() => { setState('intro'); setAnswers({}); setCurrent(0); setResults(null) }}
-          className="flex-1 py-3 border border-zinc-200 text-zinc-700 rounded-xl text-sm font-semibold hover:bg-zinc-50 transition-colors">
+        <button onClick={() => { setAnswered({}); setHistory([]); setQIndex(0); setStreak(0); setDifficulty('beginner'); setStage('quiz') }}
+          className="flex-1 py-3 bg-zinc-100 text-zinc-700 text-sm font-bold rounded-xl hover:bg-zinc-200 transition-colors">
           Retry
         </button>
-        <button onClick={() => navigate('/assessment')}
-          className="flex-1 py-3 bg-ink-900 text-white rounded-xl text-sm font-semibold hover:bg-ink-800 transition-colors">
-          All assessments
+        <button onClick={() => navigate(passed ? '/curriculum' : `/paths/${quiz.pathId}`)}
+          className="flex-1 py-3 bg-ink-900 text-white text-sm font-bold rounded-xl hover:bg-ink-800 transition-colors flex items-center justify-center gap-2">
+          {passed ? 'Next path' : 'Review path'} <ArrowRight size={14}/>
         </button>
       </div>
     </div>
   )
 
-  // Active quiz
   return (
-    <div className="px-4 lg:px-8 py-6 max-w-xl mx-auto">
-      {/* Progress header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <Link to="/assessment" className="text-xs text-zinc-400 hover:text-zinc-700 flex items-center gap-1 transition-colors">
-            <ArrowLeft size={12}/> Assessments
-          </Link>
-          <span className="text-xs font-semibold text-zinc-500">{current+1} / {quiz.questions.length}</span>
-        </div>
-        <ProgressBar value={((current) / quiz.questions.length) * 100} size="sm"/>
-        <p className="text-2xs text-zinc-400 mt-1.5 font-medium">{quiz.title}</p>
-      </div>
-
-      <div className="bg-white border border-zinc-200 rounded-2xl overflow-hidden">
-        {/* Question */}
-        <div className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <span className={cn('px-2 py-0.5 rounded text-xs font-medium',
-              q.type === 'mcq' ? 'bg-blue-50 text-blue-700' :
-              q.type === 'truefalse' ? 'bg-purple-50 text-purple-700' : 'bg-amber-50 text-amber-700')}>
-              {q.type === 'mcq' ? 'Multiple choice' : q.type === 'truefalse' ? 'True / False' : 'Fill in the blank'}
-            </span>
+    <div className="max-w-xl mx-auto px-4 py-8">
+      {/* Adaptive difficulty indicator */}
+      <div className="flex items-center gap-3 mb-5 p-3 bg-zinc-50 border border-zinc-100 rounded-xl">
+        <div className="flex-1">
+          <div className="flex justify-between text-2xs mb-1.5">
+            <span className="text-zinc-400">Adaptive difficulty</span>
+            <span className={cn('font-bold capitalize',
+              difficulty === 'advanced' ? 'text-[#5855D6]' :
+              difficulty === 'intermediate' ? 'text-amber-600' : 'text-emerald-600'
+            )}>{difficulty}</span>
           </div>
-          <p className="text-base font-medium text-zinc-900 leading-relaxed">{q.question}</p>
+          <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: difficulty === 'beginner' ? '33%' : difficulty === 'intermediate' ? '66%' : '100%',
+                background: difficulty === 'advanced' ? '#5855D6' : difficulty === 'intermediate' ? '#F59E0B' : '#10B981'
+              }}/>
+          </div>
         </div>
-
-        {/* Answer options */}
-        <div className="px-6 pb-6 space-y-2">
-          {/* MCQ */}
-          {q.type === 'mcq' && q.options?.map(opt => (
-            <button key={opt} onClick={() => !answered && submitAnswer(opt)}
-              className={cn('w-full text-left px-4 py-3 rounded-xl border text-sm transition-all',
-                answers[q.id] === opt ? 'border-accent-500 bg-[#EEEEFF] text-[#4744C8] font-medium' :
-                answered ? 'border-zinc-100 text-zinc-400 cursor-default' : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50')}>
-              {opt}
-            </button>
-          ))}
-
-          {/* True / False */}
-          {q.type === 'truefalse' && ['True','False'].map(opt => (
-            <button key={opt} onClick={() => !answered && submitAnswer(opt)}
-              className={cn('w-full text-left px-4 py-3 rounded-xl border text-sm transition-all',
-                answers[q.id] === opt ? 'border-accent-500 bg-[#EEEEFF] text-[#4744C8] font-medium' :
-                answered ? 'border-zinc-100 text-zinc-400 cursor-default' : 'border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50')}>
-              {opt}
-            </button>
-          ))}
-
-          {/* Fill in the blank */}
-          {q.type === 'fill' && (
-            <div className="flex gap-2">
-              <input value={fillInput} onChange={e => setFillInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && fillInput.trim() && !answered && submitAnswer(fillInput.trim())}
-                placeholder="Type your answer…" disabled={answered}
-                className="flex-1 px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#5855D6] focus:border-transparent disabled:bg-zinc-50 disabled:text-zinc-400"/>
-              {!answered && (
-                <button onClick={() => fillInput.trim() && submitAnswer(fillInput.trim())} disabled={!fillInput.trim()}
-                  className="px-4 py-3 bg-ink-900 text-white rounded-xl text-sm font-medium hover:bg-ink-800 disabled:opacity-40 transition-colors">
-                  Submit
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Answer given — show hint */}
-          {answered && (
-            <div className="mt-2 p-3 bg-zinc-50 border border-zinc-100 rounded-xl">
-              <p className="text-xs text-zinc-500">Your answer: <span className="font-medium text-zinc-700">{answers[q.id]}</span></p>
-            </div>
-          )}
-        </div>
-
-        {/* Navigation */}
-        <div className="px-6 pb-6 flex items-center justify-between">
-          <span className="text-xs text-zinc-400">{current+1} / {quiz.questions.length}</span>
-          {answered && (
-            current < quiz.questions.length - 1 ? (
-              <button onClick={() => { setCurrent(c => c+1); setFillInput('') }}
-                className="flex items-center gap-2 px-4 py-2 bg-ink-900 text-white rounded-lg text-sm font-medium hover:bg-ink-800 transition-colors">
-                Next <ArrowRight size={14}/>
-              </button>
-            ) : (
-              <button onClick={grade}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors">
-                See results <CheckCircle2 size={14}/>
-              </button>
-            )
-          )}
-        </div>
+        {streak >= 2 && <span className="text-xs font-bold text-amber-600 flex-shrink-0">🔥 {streak} streak</span>}
+        <span className="text-2xs text-zinc-400 flex-shrink-0">{history.length + 1} / {quiz.questions.length}</span>
       </div>
+
+      {streak === 2 && !isAnswered && (
+        <div className="mb-4 px-4 py-2.5 bg-indigo-50 border border-indigo-100 rounded-xl">
+          <p className="text-xs font-semibold text-[#5855D6]">✨ 2 correct — moving to harder questions</p>
+        </div>
+      )}
+
+      {/* Question */}
+      {q && (
+        <div className="bg-white border border-zinc-200 rounded-2xl p-5 mb-4">
+          <div className="flex justify-between items-center mb-4">
+            <span className={cn('text-2xs font-bold px-2.5 py-1 rounded-full capitalize',
+              difficulty === 'advanced' ? 'bg-indigo-50 text-[#5855D6]' :
+              difficulty === 'intermediate' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'
+            )}>{difficulty}</span>
+            <span className="text-2xs text-zinc-400">Question {history.length + 1}</span>
+          </div>
+          <p className="text-base font-semibold text-zinc-900 leading-snug mb-5">{q.question}</p>
+          <div className="space-y-2.5">
+            {q.options.map((opt: string, i: number) => {
+              const sel      = answered[q.id] === i
+              const correct  = i === q.answer
+              const revealed = isAnswered
+              return (
+                <button key={i} onClick={() => selectAnswer(i)} disabled={revealed}
+                  className={cn(
+                    'w-full flex items-center gap-3 p-3.5 rounded-xl border text-left text-sm transition-all',
+                    !revealed               ? 'bg-white border-zinc-200 hover:border-[#5855D6] hover:bg-indigo-50 cursor-pointer' :
+                    correct                 ? 'bg-emerald-50 border-emerald-300 text-emerald-900' :
+                    sel && !correct         ? 'bg-red-50 border-red-300 text-red-900' :
+                                              'bg-white border-zinc-100 text-zinc-400 cursor-default'
+                  )}>
+                  <span className={cn(
+                    'w-6 h-6 rounded-full flex items-center justify-center text-2xs font-bold flex-shrink-0 border',
+                    !revealed               ? 'border-zinc-300 text-zinc-500' :
+                    correct                 ? 'bg-emerald-500 border-emerald-500 text-white' :
+                    sel                     ? 'bg-red-500 border-red-500 text-white' :
+                                              'border-zinc-200 text-zinc-300'
+                  )}>
+                    {revealed && correct ? '✓' : revealed && sel ? '✗' : 'ABCD'[i]}
+                  </span>
+                  {opt}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Explanation */}
+      {showExp && q && (
+        <div className={cn(
+          'p-4 rounded-xl border mb-4',
+          wasCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'
+        )}>
+          <p className={cn('text-xs font-bold mb-2', wasCorrect ? 'text-emerald-700' : 'text-amber-700')}>
+            {wasCorrect ? '✅ Correct' : '❌ Not quite — here's why'}
+          </p>
+          <p className={cn('text-sm leading-relaxed', wasCorrect ? 'text-emerald-800' : 'text-amber-900')}>
+            {q.explanation}
+          </p>
+          {!wasCorrect && (
+            <p className={cn('mt-2 text-xs font-semibold text-amber-700')}>
+              Correct answer: {q.options[q.answer]}
+            </p>
+          )}
+        </div>
+      )}
+
+      {isAnswered && (
+        <button onClick={next}
+          className="w-full py-3 bg-ink-900 text-white text-sm font-bold rounded-xl hover:bg-ink-800 transition-colors flex items-center justify-center gap-2">
+          {history.length >= quiz.questions.length - 1 ? 'See results →' : 'Next question →'}
+        </button>
+      )}
     </div>
   )
 }
