@@ -7,16 +7,62 @@ import type {
   Message, ListResponse,
 } from './types'
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ||
-  "http://localhost:8000"
+// ── Classroom / assignment types ──────────────────────────────────────────────
+export interface Classroom {
+  id: string; teacher_id: string; code: string; name: string; created_at: string
+}
+export interface StudentRow {
+  id: string; name: string; email: string; joinedAt: string
+  started: number; completed: number; rate: number
+  streak: number; quizScore: number | null
+  pathProgress: Record<string, number>
+}
+export interface Assignment {
+  id: string; classroom_id: string; teacher_id: string
+  content_type: 'resource' | 'exercise' | 'path' | 'activity'
+  content_id: string; title: string; note?: string
+  due_date?: string; created_at: string
+  completedCount?: number; totalStudents?: number
+}
 
 let _token: string | null = null
+
+function classroomApi() {
+  return {
+    // ── Classroom ──────────────────────────────────────────────────────────
+    get: () => apiFetch<{ classroom: Classroom | null; students: StudentRow[] }>('/api/classroom'),
+
+    // ── Assignments ────────────────────────────────────────────────────────
+    createAssignment: (body: {
+      content_type: Assignment['content_type']
+      content_id: string; title: string; note?: string; due_date?: string
+    }) => apiFetch<{ assignment: Assignment }>('/api/classroom/assignments', {
+      method: 'POST', body: JSON.stringify(body),
+    }),
+
+    getAssignments: () => apiFetch<{ data: Assignment[] }>('/api/classroom/assignments'),
+
+    deleteAssignment: (id: string) =>
+      apiFetch<{ ok: boolean }>(`/api/classroom/assignments/${id}`, { method: 'DELETE' }),
+
+    // ── Student actions (students mark their own completion) ───────────────
+    markComplete: (assignmentId: string) =>
+      apiFetch<{ ok: boolean }>(`/api/classroom/assignments/${assignmentId}/complete`, {
+        method: 'POST',
+      }),
+
+    // ── Student-facing: get assignments for their classroom ────────────────
+    getMyAssignments: () => apiFetch<{ data: (Assignment & { completed: boolean })[] }>(
+      '/api/classroom/my-assignments'
+    ),
+  }
+}
 
 export const api = {
   setToken:   (t: string) => { _token = t },
   clearToken: ()          => { _token = null },
   resources:    resourcesApi(),
+  classroom:    classroomApi(),
   paths:        pathsApi(),
   activities:   activitiesApi(),
   exercises:    exercisesApi(),
@@ -25,7 +71,7 @@ export const api = {
   chat:         chatApi(),
   progress:     progressApi(),
   bookmarks:    bookmarksApi(),
-  profile:     profileApi(),
+  profile:      profileApi(),
 }
 
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -33,19 +79,12 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   }
-
   if (_token) headers['Authorization'] = `Bearer ${_token}`
-
-  const res = await fetch(
-    `${API_BASE}${path}`,
-    { ...options, headers }
-  )
-
+  const res = await fetch(path, { ...options, headers })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new Error(body.detail ?? body.error ?? `HTTP ${res.status}`)
   }
-
   return res.json()
 }
 
@@ -121,17 +160,14 @@ function quizzesApi() {
 function chatApi() {
   return {
     send: async (messages: Message[], systemPrompt?: string): Promise<{ text: string }> => {
-      const res = await fetch(
-        `${API_BASE}/api/chat`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(_token ? { 'Authorization': `Bearer ${_token}` } : {}),
-          },
-          body: JSON.stringify({ messages, systemPrompt }),
-        }
-      )
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(_token ? { 'Authorization': `Bearer ${_token}` } : {}),
+        },
+        body: JSON.stringify({ messages, systemPrompt }),
+      })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail ?? data.error ?? `HTTP ${res.status}`)
       return data

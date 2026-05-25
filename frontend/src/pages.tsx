@@ -32,7 +32,7 @@ import {
   MessageSquare, ArrowRight, ArrowLeft, Play,
   ExternalLink, Clock, Star, Users as UsersIcon, AlertCircle, Check, CheckCircle2, X, ChevronRight,
   RotateCcw, Send, Lightbulb, Filter, Search, GitBranch, Award, Target, Zap,
-  TrendingUp, BookOpen, BarChart2} from 'lucide-react'
+  TrendingUp, BookOpen, BarChart2, AlertTriangle, Plus, Copy} from 'lucide-react'
 import { cn, Badge, Button, ProgressBar, Spinner, EmptyState, TypingDots } from './ui'
 import {
   AppShell, OSHero, CapabilityModules, PersonalisedBanner,
@@ -41,6 +41,7 @@ import {
   OnboardingFlow, ResourceAssistant, SmartThumbnail, ResourceBanner,
   ToolLettermark, SpotlightTour, CONCEPT_TOPICS} from './components'
 import { api } from './api'
+import type { Assignment, StudentRow, Classroom } from './api'
 import type { Resource, LearningPath, ClassroomActivity, DeepExercise, Message } from './types'
 import type { PathQuiz, QuizQuestion } from './api'
 import { useAuth, useProgress, useBookmarks, getOnboardingProfile, supabase } from './auth'
@@ -2371,13 +2372,290 @@ type Classroom  = { id: string; teacher_id: string; code: string; name: string; 
 type StudentRow = { id: string; name: string; email: string; joinedAt: string; started: number; completed: number; rate: number }
 
 // ── Teacher classroom dashboard ───────────────────────────────────────────────
+
+// ── local types (dashboard-only) ─────────────────────────────────────────────
+type AssignableType = 'resource' | 'exercise' | 'path' | 'activity'
+interface AssignableItem { id: string; title: string; type: AssignableType; meta: string }
+
+// Build a palette from initials for avatar colours
+function avatarColor(name: string) {
+  const palettes = [
+    'bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700',
+    'bg-amber-100 text-amber-700', 'bg-pink-100 text-pink-700',
+    'bg-violet-100 text-violet-700', 'bg-sky-100 text-sky-700',
+  ]
+  return palettes[(name.charCodeAt(0) + (name.charCodeAt(1) ?? 0)) % palettes.length]
+}
+
+function RingProgress({ value, size = 44, stroke = 3 }: { value: number; size?: number; stroke?: number }) {
+  const r    = (size - stroke * 2) / 2
+  const circ = 2 * Math.PI * r
+  const off  = circ * (1 - Math.min(100, Math.max(0, value)) / 100)
+  const col  = value === 100 ? '#10B981' : '#5855D6'
+  return (
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#F0F0F0" strokeWidth={stroke}/>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={col} strokeWidth={stroke}
+        strokeDasharray={circ} strokeDashoffset={off} strokeLinecap="round"
+        style={{ transition: 'stroke-dashoffset 0.7s ease-out' }}/>
+    </svg>
+  )
+}
+
+// ── Student profile drill-down ────────────────────────────────────────────────
+function StudentProfile({ student, assignments, onBack }: {
+  student: StudentRow; assignments: Assignment[]
+  onBack: () => void
+}) {
+  const initials = student.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+
+  return (
+    <div className="space-y-5 animate-fade-in">
+      <button onClick={onBack}
+        className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-700 transition-colors">
+        <ArrowLeft size={12}/> Back to class
+      </button>
+
+      <div className="grid grid-cols-1 sm:grid-cols-[220px_1fr] gap-4">
+        {/* Profile card */}
+        <div className="bg-white border border-zinc-200 rounded-2xl p-5 flex flex-col items-center text-center">
+          <div className={cn('w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold mb-3', avatarColor(student.name))}>
+            {initials}
+          </div>
+          <p className="text-sm font-bold text-zinc-900">{student.name}</p>
+          <p className="text-xs text-zinc-400 mb-4">{student.email}</p>
+          <div className="w-full space-y-2.5 border-t border-zinc-100 pt-4 text-left">
+            {[
+              { label: 'Resources started', val: student.started },
+              { label: 'Completed',         val: student.completed },
+              { label: 'Completion rate',   val: `${student.rate}%` },
+              { label: 'Current streak',    val: student.streak > 0 ? `🔥 ${student.streak} days` : '—' },
+              { label: 'Avg quiz score',    val: student.quizScore != null ? `${student.quizScore}%` : '—' },
+            ].map(item => (
+              <div key={item.label} className="flex justify-between items-center">
+                <span className="text-xs text-zinc-400">{item.label}</span>
+                <span className={cn('text-xs font-bold',
+                  item.label === 'Current streak' && student.streak === 0 ? 'text-red-500' : 'text-zinc-800'
+                )}>{item.val}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right column */}
+        <div className="space-y-4">
+          {/* Path progress */}
+          <div className="bg-white border border-zinc-200 rounded-2xl p-5">
+            <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Learning path progress</p>
+            <div className="space-y-3">
+              {Object.entries(student.pathProgress).length === 0 ? (
+                <p className="text-xs text-zinc-400">No path progress recorded yet.</p>
+              ) : Object.entries(student.pathProgress).map(([pathId, pct]) => (
+                <div key={pathId} className="flex items-center gap-3">
+                  <div className="relative flex-shrink-0">
+                    <RingProgress value={pct} size={38} stroke={3}/>
+                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-zinc-600">
+                      {pct}%
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-zinc-800 truncate mb-1">{pathId}</p>
+                    <div className="h-1 bg-zinc-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, background: pct === 100 ? '#10B981' : '#5855D6' }}/>
+                    </div>
+                  </div>
+                  {pct === 0   && <span className="text-2xs text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded flex-shrink-0">Not started</span>}
+                  {pct > 0 && pct < 100 && <span className="text-2xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded flex-shrink-0">In progress</span>}
+                  {pct === 100 && <span className="text-2xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded flex-shrink-0">✓ Done</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Assignments */}
+          <div className="bg-white border border-zinc-200 rounded-2xl p-5">
+            <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4">Assigned work</p>
+            {assignments.length === 0 ? (
+              <p className="text-xs text-zinc-400">No assignments yet — use "Assign to class" to add some.</p>
+            ) : (
+              <div className="space-y-2">
+                {assignments.map(a => (
+                  <div key={a.id} className="flex items-center gap-3 p-3 bg-zinc-50 border border-zinc-100 rounded-xl">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-zinc-800 truncate">{a.title}</p>
+                      {a.due_date && <p className="text-2xs text-zinc-400 mt-0.5">Due {new Date(a.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>}
+                    </div>
+                    <span className={cn('text-2xs font-bold px-2 py-0.5 rounded flex-shrink-0',
+                      a.content_type === 'resource' ? 'bg-blue-50 text-blue-700' :
+                      a.content_type === 'exercise' ? 'bg-amber-50 text-amber-700' :
+                      a.content_type === 'path'     ? 'bg-violet-50 text-violet-700' :
+                                                      'bg-emerald-50 text-emerald-700'
+                    )}>{a.content_type}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* At-risk warning */}
+          {(student.streak === 0 || student.rate < 20) && (
+            <div className="p-4 bg-orange-50 border border-orange-200 rounded-2xl flex items-start gap-2.5">
+              <AlertTriangle size={14} className="text-orange-500 flex-shrink-0 mt-0.5"/>
+              <p className="text-xs text-orange-800 leading-relaxed">
+                <strong>{student.name.split(' ')[0]}</strong> hasn't been active recently.
+                {student.streak === 0 && ' Their streak has reset to 0.'} Consider reaching out or assigning a shorter resource to re-engage them.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Assign modal ──────────────────────────────────────────────────────────────
+function AssignModal({ resources, onClose, onAssign }: {
+  resources: Resource[]
+  onClose: () => void
+  onAssign: (item: AssignableItem, dueDate: string, note: string) => Promise<void>
+}) {
+  const [tab, setTab]           = useState<AssignableType>('resource')
+  const [search, setSearch]     = useState('')
+  const [selected, setSelected] = useState<AssignableItem | null>(null)
+  const [dueDate, setDueDate]   = useState('')
+  const [note, setNote]         = useState('')
+  const [saving, setSaving]     = useState(false)
+  const [success, setSuccess]   = useState(false)
+
+  const exercises = useRef<AssignableItem[]>([
+    { id: 'hallucination-hunt', type: 'exercise', title: 'The Hallucination Hunt', meta: 'Hallucination · 25 min' },
+    { id: 'sycophancy-mirror',  type: 'exercise', title: 'The Sycophancy Mirror', meta: 'Sycophancy · 20 min' },
+    { id: 'bias-probe',         type: 'exercise', title: 'Bias Probe', meta: 'Training data bias · 30 min' },
+    { id: 'prompt-injection',   type: 'exercise', title: 'Prompt Injection', meta: 'AI safety · 25 min' },
+    { id: 'few-shot-power',     type: 'exercise', title: 'Few-Shot Power', meta: 'Prompting · 20 min' },
+  ]).current
+
+  const resourceItems: AssignableItem[] = resources.slice(0, 30).map(r => ({
+    id: r.id, type: 'resource' as const, title: r.title,
+    meta: `${r.type} · ${r.difficulty}`
+  }))
+
+  const items = tab === 'resource' ? resourceItems : exercises
+  const filtered = items.filter(i => i.title.toLowerCase().includes(search.toLowerCase()))
+
+  const handleAssign = async () => {
+    if (!selected) return
+    setSaving(true)
+    await onAssign(selected, dueDate, note)
+    setSuccess(true)
+    setTimeout(onClose, 1400)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.4)' }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
+          <h2 className="text-sm font-bold text-zinc-900">Assign to class</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors">
+            <X size={16} className="text-zinc-400"/>
+          </button>
+        </div>
+
+        {/* Type tabs */}
+        <div className="flex border-b border-zinc-100">
+          {(['resource', 'exercise'] as AssignableType[]).map(t => (
+            <button key={t} onClick={() => { setTab(t); setSelected(null); setSearch('') }}
+              className={cn('flex-1 py-2.5 text-xs font-semibold capitalize transition-colors',
+                tab === t ? 'text-[#5855D6] border-b-2 border-[#5855D6]' : 'text-zinc-400 hover:text-zinc-600'
+              )}>
+              {t === 'resource' ? '📚 Resource' : '🧪 Playground exercise'}
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="px-5 py-3 border-b border-zinc-50">
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder={`Search ${tab}s…`}
+            className="w-full text-xs px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent-400"
+          />
+        </div>
+
+        {/* Item list */}
+        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-1.5">
+          {filtered.slice(0, 20).map(item => (
+            <label key={item.id}
+              className={cn('flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all',
+                selected?.id === item.id
+                  ? 'bg-indigo-50 border-[#5855D6]'
+                  : 'bg-white border-zinc-100 hover:border-zinc-300'
+              )}>
+              <input type="radio" name="assign-item" value={item.id}
+                checked={selected?.id === item.id}
+                onChange={() => setSelected(item)}
+                className="mt-0.5 flex-shrink-0 accent-[#5855D6]"/>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-zinc-800 leading-snug">{item.title}</p>
+                <p className="text-2xs text-zinc-400 mt-0.5 capitalize">{item.meta}</p>
+              </div>
+            </label>
+          ))}
+        </div>
+
+        {/* Due date + note */}
+        <div className="px-5 py-4 border-t border-zinc-100 space-y-3 bg-zinc-50">
+          <div className="flex items-center gap-3">
+            <label className="text-xs text-zinc-500 font-medium w-16 flex-shrink-0">Due date</label>
+            <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
+              className="flex-1 text-xs px-3 py-1.5 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-400"/>
+          </div>
+          <div className="flex items-start gap-3">
+            <label className="text-xs text-zinc-500 font-medium w-16 flex-shrink-0 mt-1.5">Note</label>
+            <textarea value={note} onChange={e => setNote(e.target.value)}
+              rows={2} placeholder="Optional note for students…"
+              className="flex-1 text-xs px-3 py-1.5 bg-white border border-zinc-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-accent-400"/>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-zinc-100 flex items-center gap-3">
+          <button onClick={handleAssign} disabled={!selected || saving || success}
+            className={cn(
+              'flex-1 py-2.5 text-xs font-bold rounded-xl transition-all',
+              success ? 'bg-emerald-500 text-white' :
+              selected ? 'bg-[#5855D6] text-white hover:bg-[#4744C8]' :
+              'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+            )}>
+            {success ? '✓ Assigned!' : saving ? 'Assigning…' : selected ? `Assign "${selected.title.slice(0, 28)}${selected.title.length > 28 ? '…' : ''}"` : 'Select content above'}
+          </button>
+          <button onClick={onClose} className="px-4 py-2.5 text-xs font-semibold text-zinc-500 hover:text-zinc-700 transition-colors">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Main dashboard ────────────────────────────────────────────────────────────
 function TeacherClassroomDashboard() {
   const { user, profile } = useAuth()
-  const [classroom,  setClassroom]  = useState<Classroom | null>(null)
-  const [students,   setStudents]   = useState<StudentRow[]>([])
-  const [loading,    setLoading]    = useState(true)
-  const [copied,     setCopied]     = useState(false)
-  const [sortBy,     setSortBy]     = useState<'rate' | 'name' | 'joined'>('rate')
+
+  // State
+  const [classroom,    setClassroom]    = useState<Classroom | null>(null)
+  const [students,     setStudents]     = useState<StudentRow[]>([])
+  const [assignments,  setAssignments]  = useState<Assignment[]>([])
+  const [resources,    setResources]    = useState<Resource[]>([])
+  const [loading,      setLoading]      = useState(true)
+  const [copied,       setCopied]       = useState(false)
+  const [sortBy,       setSortBy]       = useState<'rate' | 'name' | 'quiz' | 'streak'>('rate')
+  const [filter,       setFilter]       = useState<'all' | 'at-risk' | 'excelling'>('all')
+  const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
+  const [assignOpen,   setAssignOpen]   = useState(false)
 
   const firstName = profile?.full_name?.split(' ')[0] ?? null
   const hour      = new Date().getHours()
@@ -2393,13 +2671,11 @@ function TeacherClassroomDashboard() {
     if (!user) return
     setLoading(true)
     try {
-      // Get or create classroom ---------------------------------------------------
-      const { data: rows } = await supabase
+      // Get or create classroom
+      const { data: clsRows } = await supabase
         .from('classrooms').select('*').eq('teacher_id', user.id).limit(1)
-      let cls: Classroom | null = rows?.[0] ?? null
-
+      let cls: Classroom | null = clsRows?.[0] ?? null
       if (!cls) {
-        // Retry once on code collision
         const tryInsert = async (): Promise<Classroom | null> => {
           const { data, error } = await supabase
             .from('classrooms')
@@ -2413,27 +2689,47 @@ function TeacherClassroomDashboard() {
       if (!cls) return
       setClassroom(cls)
 
-      // Members -------------------------------------------------------------------
+      // Members
       const { data: memberRows } = await supabase
         .from('classroom_members').select('student_id, joined_at').eq('classroom_id', cls.id)
-      if (!memberRows?.length) return
+      if (!memberRows?.length) { setStudents([]); return }
 
       const ids = memberRows.map(m => m.student_id)
 
-      // Profiles + progress in parallel ------------------------------------------
-      const [{ data: profileRows }, { data: progressRows }] = await Promise.all([
-        supabase.from('profiles').select('id, full_name, email').in('id', ids),
-        supabase.from('resource_progress').select('user_id, completed').in('user_id', ids),
-      ])
+      // Parallel fetch: profiles + resource progress + quiz results
+      const [{ data: profileRows }, { data: progressRows }, { data: quizRows }, { data: assignRows }] =
+        await Promise.all([
+          supabase.from('profiles').select('id, full_name, email').in('id', ids),
+          supabase.from('resource_progress').select('user_id, completed').in('user_id', ids),
+          supabase.from('quiz_results').select('user_id, score').in('user_id', ids),
+          supabase.from('assignments').select('*').eq('classroom_id', cls.id).order('created_at', { ascending: false }),
+        ])
+
+      setAssignments(assignRows ?? [])
 
       setStudents(memberRows.map(m => {
-        const p    = profileRows?.find(x => x.id === m.student_id)
-        const prog = progressRows?.filter(x => x.user_id === m.student_id) ?? []
-        const done = prog.filter(x => x.completed).length
+        const p      = profileRows?.find(x => x.id === m.student_id)
+        const prog   = progressRows?.filter(x => x.user_id === m.student_id) ?? []
+        const done   = prog.filter(x => x.completed).length
+        const quizzes = quizRows?.filter(x => x.user_id === m.student_id) ?? []
+        const avgQuiz = quizzes.length
+          ? Math.round(quizzes.reduce((s, q) => s + q.score, 0) / quizzes.length)
+          : null
+
+        // Streak: approximate from updated_at recency — real impl would use a streak table
+        const streak = 0 // placeholder — real data needs a streak tracking table
+
         return {
-          id: m.student_id, name: p?.full_name ?? 'Student', email: p?.email ?? '',
-          joinedAt: m.joined_at, started: prog.length, completed: done,
+          id: m.student_id,
+          name: p?.full_name ?? 'Student',
+          email: p?.email ?? '',
+          joinedAt: m.joined_at,
+          started: prog.length,
+          completed: done,
           rate: prog.length > 0 ? Math.round((done / prog.length) * 100) : 0,
+          streak,
+          quizScore: avgQuiz,
+          pathProgress: {},  // would need path_progress table for real per-path data
         }
       }))
     } finally { setLoading(false) }
@@ -2441,123 +2737,235 @@ function TeacherClassroomDashboard() {
 
   useEffect(() => { loadDashboard() }, [loadDashboard])
 
-  const sorted = [...students].sort((a, b) =>
+  // Load assignable resources once
+  useEffect(() => {
+    api.resources.list({ limit: 60 }).then(r => setResources(r.data)).catch(() => {})
+  }, [])
+
+  const handleAssign = async (item: AssignableItem, dueDate: string, note: string) => {
+    try {
+      const { assignment } = await api.classroom.createAssignment({
+        content_type: item.type,
+        content_id: item.id,
+        title: item.title,
+        note: note || undefined,
+        due_date: dueDate || undefined,
+      })
+      setAssignments(prev => [assignment, ...prev])
+    } catch (e) {
+      console.error('Assign failed', e)
+    }
+  }
+
+  const deleteAssignment = async (id: string) => {
+    try {
+      await api.classroom.deleteAssignment(id)
+      setAssignments(prev => prev.filter(a => a.id !== id))
+    } catch {}
+  }
+
+  // Derived
+  const atRisk     = students.filter(s => s.rate < 20 || s.quizScore != null && s.quizScore < 50)
+  const excelling  = students.filter(s => s.rate >= 80 && (s.quizScore == null || s.quizScore >= 75))
+  const avgRate    = students.length ? Math.round(students.reduce((s, r) => s + r.rate, 0) / students.length) : 0
+  const avgQuiz    = students.filter(s => s.quizScore != null).length
+    ? Math.round(students.filter(s => s.quizScore != null).reduce((s, r) => s + (r.quizScore ?? 0), 0) / students.filter(s => s.quizScore != null).length)
+    : null
+  const totalDone  = students.reduce((s, r) => s + r.completed, 0)
+
+  const filteredStudents = (
+    filter === 'at-risk'   ? atRisk :
+    filter === 'excelling' ? excelling : students
+  ).slice().sort((a, b) =>
     sortBy === 'rate'   ? b.rate - a.rate :
     sortBy === 'name'   ? a.name.localeCompare(b.name) :
-    new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime()
+    sortBy === 'quiz'   ? (b.quizScore ?? -1) - (a.quizScore ?? -1) :
+                          b.streak - a.streak
   )
 
-  const avgRate     = students.length ? Math.round(students.reduce((s, r) => s + r.rate, 0) / students.length) : 0
-  const activeCount = students.filter(s => s.started > 0).length
-  const totalDone   = students.reduce((s, r) => s + r.completed, 0)
+  const selectedStudentData = students.find(s => s.id === selectedStudent) ?? null
+
+  if (selectedStudentData) return (
+    <div className="px-4 lg:px-8 py-6 max-w-5xl mx-auto">
+      <StudentProfile
+        student={selectedStudentData}
+        assignments={assignments}
+        onBack={() => setSelectedStudent(null)}
+      />
+    </div>
+  )
 
   return (
-    <div className="px-4 lg:px-8 py-6 max-w-5xl mx-auto space-y-6 animate-fade-in">
+    <div className="px-4 lg:px-8 py-6 max-w-5xl mx-auto space-y-5 animate-fade-in">
 
-      {/* ── Greeting banner ───────────────────────────────────────── */}
+      {/* Assign modal */}
+      {assignOpen && (
+        <AssignModal
+          resources={resources}
+          onClose={() => setAssignOpen(false)}
+          onAssign={handleAssign}
+        />
+      )}
+
+      {/* ── Greeting banner ──────────────────────────────────────────────────── */}
       <div className="relative rounded-2xl overflow-hidden px-6 py-7"
-        style={{ background: 'linear-gradient(135deg, #0F172A 0%, #14532d 55%, #166534 100%)' }}>
-        <div className="absolute inset-0 opacity-[0.035]"
+        style={{ background: 'linear-gradient(135deg, #0A0A0B 0%, #1A1840 55%, #2D2880 100%)' }}>
+        <div className="absolute inset-0 opacity-[0.03]"
           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 0)', backgroundSize: '22px 22px' }}/>
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-2xs font-semibold text-white/35 uppercase tracking-[0.14em] mb-1.5">{todayStr}</p>
-            <h1 className="text-2xl font-bold text-white tracking-tight mb-1.5">
+            <p className="text-2xs font-semibold text-white/30 uppercase tracking-[0.14em] mb-1.5">{todayStr}</p>
+            <h1 className="text-xl font-bold text-white tracking-tight mb-1.5">
               {greeting}{firstName ? `, ${firstName}` : ''} 🎓
             </h1>
-            <p className="text-sm text-white/50 mb-4 max-w-md">
+            <p className="text-xs text-white/40 mb-4 max-w-md leading-relaxed">
               {students.length > 0
-                ? `${students.length} student${students.length !== 1 ? 's' : ''} in your classroom — ${activeCount} actively learning.`
+                ? `${students.length} student${students.length !== 1 ? 's' : ''} in your classroom${atRisk.length > 0 ? ` · ${atRisk.length} need attention` : ''}.`
                 : 'Your classroom is ready. Share the code below to get started.'}
             </p>
             {classroom && (
               <div className="inline-flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-white/20"
-                  style={{ background: 'rgba(255,255,255,0.08)' }}>
+                  style={{ background: 'rgba(255,255,255,0.07)' }}>
                   <span className="text-2xs font-bold text-white/40 uppercase tracking-widest">Class code</span>
-                  <span className="text-xl font-black text-white tracking-[0.22em]">{classroom.code}</span>
+                  <span className="text-lg font-black text-white tracking-[0.22em]">{classroom.code}</span>
                 </div>
                 <button onClick={() => copyCode(classroom.code)}
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all border',
-                    copied
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                      : 'bg-white/10 text-white/70 hover:bg-white/20 border-white/10'
+                    copied ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                           : 'bg-white/10 text-white/60 hover:bg-white/20 border-white/10'
                   )}>
-                  {copied ? <><Check size={12}/> Copied!</> : <><Target size={12}/> Copy code</>}
+                  {copied ? <><Check size={11}/> Copied!</> : <><Copy size={11}/> Copy code</>}
                 </button>
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             {[
-              { val: students.length, label: 'Students'  },
-              { val: `${avgRate}%`,   label: 'Avg rate'  },
-              { val: totalDone,       label: 'Completed' },
+              { val: students.length,           label: 'Students'  },
+              { val: `${avgRate}%`,             label: 'Avg done'  },
+              { val: avgQuiz != null ? `${avgQuiz}%` : '—', label: 'Avg quiz' },
+              { val: atRisk.length,             label: 'At risk',  danger: atRisk.length > 0 },
             ].map(s => (
-              <div key={s.label} className="px-4 py-3 rounded-xl border border-white/10 text-center min-w-[68px]"
-                style={{ background: 'rgba(255,255,255,0.06)' }}>
-                <p className="text-xl font-bold text-white leading-none mb-0.5">{s.val}</p>
-                <p className="text-2xs text-white/35 font-medium">{s.label}</p>
+              <div key={s.label} className="px-4 py-2.5 rounded-xl border border-white/10 text-center min-w-[62px]"
+                style={{ background: s.danger && atRisk.length > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)' }}>
+                <p className={cn('text-xl font-bold leading-none mb-0.5', s.danger && atRisk.length > 0 ? 'text-red-300' : 'text-white')}>{s.val}</p>
+                <p className="text-2xs text-white/30 font-medium">{s.label}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ── Stats strip ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: 'Total students',     value: students.length },
-          { label: 'Avg completion',     value: `${avgRate}%` },
-          { label: 'Actively learning',  value: activeCount },
-          { label: 'Resources finished', value: totalDone },
-        ].map(s => (
-          <div key={s.label} className="bg-white rounded-2xl p-4" style={{ border:'1px solid var(--border)' }}>
-            <p className="font-extrabold tracking-tight mb-1" style={{ fontSize:22, color:'var(--text-1)' }}>{s.value}</p>
-            <p className="font-medium" style={{ fontSize:12, color:'var(--text-3)' }}>{s.label}</p>
+      {/* ── At-risk alert ─────────────────────────────────────────────────────── */}
+      {atRisk.length > 0 && (
+        <div className="flex items-start gap-3 px-4 py-3 bg-orange-50 border border-orange-200 rounded-xl">
+          <AlertTriangle size={14} className="text-orange-500 flex-shrink-0 mt-0.5"/>
+          <div className="flex-1">
+            <p className="text-xs text-orange-800 leading-relaxed">
+              <strong>{atRisk.slice(0, 3).map(s => s.name.split(' ')[0]).join(', ')}{atRisk.length > 3 ? ` +${atRisk.length - 3} more` : ''}</strong> are below 20% completion or scoring under 50% on quizzes.
+            </p>
           </div>
-        ))}
+          <button onClick={() => setFilter('at-risk')}
+            className="text-2xs font-bold text-orange-700 hover:text-orange-900 transition-colors flex-shrink-0">
+            View →
+          </button>
+        </div>
+      )}
+
+      {/* ── Actions row ───────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <button onClick={() => setAssignOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-[#5855D6] text-white text-xs font-bold rounded-xl hover:bg-[#4744C8] transition-colors shadow-sm">
+          <Plus size={13}/> Assign to class
+        </button>
+        <div className="flex gap-1.5">
+          {(['all', 'at-risk', 'excelling'] as const).map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors',
+                filter === f ? 'bg-zinc-900 text-white' : 'bg-white border border-zinc-200 text-zinc-600 hover:border-zinc-300'
+              )}>
+              {f === 'all' ? `All (${students.length})` : f === 'at-risk' ? `⚠️ At risk (${atRisk.length})` : `✨ Excelling (${excelling.length})`}
+            </button>
+          ))}
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)}
+            className="text-xs text-zinc-600 bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#5855D6]">
+            <option value="rate">Sort: Completion</option>
+            <option value="quiz">Sort: Quiz score</option>
+            <option value="streak">Sort: Streak</option>
+            <option value="name">Sort: Name</option>
+          </select>
+          <button onClick={loadDashboard} title="Refresh"
+            className="p-1.5 rounded-lg bg-white border border-zinc-200 text-zinc-400 hover:text-zinc-600 transition-colors">
+            <RotateCcw size={13}/>
+          </button>
+        </div>
       </div>
 
-      {/* ── Student list ──────────────────────────────────────────── */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-zinc-800 flex items-center gap-2">
-            Students
-            {students.length > 0 && (
-              <span className="px-1.5 py-0.5 bg-zinc-100 text-zinc-500 rounded text-2xs font-bold">{students.length}</span>
-            )}
-          </h2>
-          <div className="flex items-center gap-2">
-            <select value={sortBy} onChange={e => setSortBy(e.target.value as any)}
-              className="text-xs text-zinc-600 bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#5855D6]">
-              <option value="rate">Sort: Completion</option>
-              <option value="name">Sort: Name</option>
-              <option value="joined">Sort: Joined</option>
-            </select>
-            <button onClick={loadDashboard} title="Refresh"
-              className="p-1.5 rounded-lg bg-white border border-zinc-200 text-zinc-400 hover:text-zinc-600 hover:border-zinc-300 transition-colors">
-              <RotateCcw size={13}/>
-            </button>
+      {/* ── Active assignments ────────────────────────────────────────────────── */}
+      {assignments.length > 0 && (
+        <section>
+          <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Active assignments</p>
+          <div className="space-y-2">
+            {assignments.map(a => (
+              <div key={a.id}
+                className="flex items-center gap-3 px-4 py-3 bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 transition-colors">
+                <span className={cn('text-2xs font-bold px-2 py-0.5 rounded flex-shrink-0 capitalize',
+                  a.content_type === 'resource' ? 'bg-blue-50 text-blue-700' :
+                  a.content_type === 'exercise' ? 'bg-amber-50 text-amber-700' :
+                  a.content_type === 'path'     ? 'bg-violet-50 text-violet-700' :
+                                                  'bg-emerald-50 text-emerald-700'
+                )}>{a.content_type}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-zinc-800 truncate">{a.title}</p>
+                  {a.note && <p className="text-2xs text-zinc-400 truncate mt-0.5">{a.note}</p>}
+                </div>
+                {a.due_date && (
+                  <span className="text-2xs text-zinc-400 flex-shrink-0">
+                    Due {new Date(a.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                  </span>
+                )}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <div className="w-16 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#5855D6] rounded-full transition-all"
+                      style={{ width: students.length > 0 ? `${Math.round(((a.completedCount ?? 0) / students.length) * 100)}%` : '0%' }}/>
+                  </div>
+                  <span className="text-2xs font-bold text-zinc-500">{a.completedCount ?? 0}/{students.length}</span>
+                </div>
+                <button onClick={() => deleteAssignment(a.id)}
+                  className="p-1 rounded hover:bg-red-50 text-zinc-300 hover:text-red-400 transition-colors flex-shrink-0">
+                  <X size={12}/>
+                </button>
+              </div>
+            ))}
           </div>
-        </div>
+        </section>
+      )}
+
+      {/* ── Student roster ────────────────────────────────────────────────────── */}
+      <section>
+        <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">
+          {filter === 'all' ? 'All students' : filter === 'at-risk' ? '⚠️ At-risk students' : '✨ Excelling students'} ({filteredStudents.length})
+        </p>
 
         {loading ? (
           <div className="flex items-center justify-center py-16 bg-white border border-zinc-200 rounded-xl">
             <Spinner size={20} className="text-[#5855D6]"/>
           </div>
-        ) : sorted.length === 0 ? (
-          <div className="bg-gradient-to-br from-accent-50 via-white to-ink-50 border border-[#DDDDF8] rounded-xl p-10 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-white shadow-card border border-zinc-200 flex items-center justify-center mx-auto mb-4">
+        ) : students.length === 0 ? (
+          <div className="bg-gradient-to-br from-indigo-50 via-white to-zinc-50 border border-[#DDDDF8] rounded-2xl p-10 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-white shadow-sm border border-zinc-200 flex items-center justify-center mx-auto mb-4">
               <Users size={22} className="text-zinc-400"/>
             </div>
-            <p className="text-sm font-semibold text-zinc-800 mb-1.5">No students yet</p>
+            <p className="text-sm font-bold text-zinc-800 mb-1.5">No students yet</p>
             <p className="text-xs text-zinc-500 max-w-xs mx-auto mb-5 leading-relaxed">
-              Share your class code with students. They can enter it from their dashboard to join your classroom.
+              Share your class code with students — they enter it from their dashboard to join.
             </p>
             {classroom && (
-              <div className="inline-flex items-center gap-3 px-5 py-3 bg-white rounded-xl border border-zinc-200 shadow-card">
+              <div className="inline-flex items-center gap-3 px-5 py-3 bg-white rounded-xl border border-zinc-200">
                 <span className="text-2xs font-bold text-zinc-400 uppercase tracking-widest">Code</span>
                 <span className="text-xl font-black text-zinc-900 tracking-[0.18em]">{classroom.code}</span>
                 <button onClick={() => copyCode(classroom.code)}
@@ -2567,411 +2975,71 @@ function TeacherClassroomDashboard() {
               </div>
             )}
           </div>
+        ) : filteredStudents.length === 0 ? (
+          <div className="bg-white border border-zinc-200 rounded-xl p-8 text-center">
+            <p className="text-sm text-zinc-500">No students in this filter.</p>
+          </div>
         ) : (
-          <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-card">
-            <div className="grid grid-cols-[1fr_80px_80px_160px] gap-4 px-5 py-3 bg-zinc-50 border-b border-zinc-200">
-              <span className="text-2xs font-bold uppercase tracking-widest text-zinc-400">Student</span>
-              <span className="text-2xs font-bold uppercase tracking-widest text-zinc-400 text-center">Started</span>
-              <span className="text-2xs font-bold uppercase tracking-widest text-zinc-400 text-center">Done</span>
-              <span className="text-2xs font-bold uppercase tracking-widest text-zinc-400">Progress</span>
-            </div>
-            <div className="divide-y divide-ink-100">
-              {sorted.map(s => (
-                <div key={s.id} className="grid grid-cols-[1fr_80px_80px_160px] gap-4 px-5 py-3.5 items-center hover:bg-zinc-50/50 transition-colors">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={cn('w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold', avatarColor(s.name))}>
-                      {s.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-zinc-800 truncate">{s.name}</p>
-                      <p className="text-2xs text-zinc-400 truncate">
-                        Joined {new Date(s.joinedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-sm font-semibold text-zinc-700 text-center">{s.started}</p>
-                  <p className={cn('text-sm font-semibold text-center', s.completed > 0 ? 'text-emerald-600' : 'text-zinc-400')}>{s.completed}</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-                      <div className={cn('h-full rounded-full transition-all duration-700', s.rate === 100 ? 'bg-signal-green' : 'bg-[#5855D6]')}
-                        style={{ width: `${s.rate}%` }}/>
-                    </div>
-                    <span className="text-xs font-bold text-zinc-600 w-8 text-right flex-shrink-0">{s.rate}%</span>
-                  </div>
-                </div>
+          <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+            <div className="grid grid-cols-[1fr_60px_64px_70px_140px_80px] gap-3 px-5 py-2.5 bg-zinc-50 border-b border-zinc-200">
+              {['Student', 'Done', 'Streak', 'Quiz', 'Progress', ''].map(h => (
+                <span key={h} className="text-2xs font-bold uppercase tracking-widest text-zinc-400">{h}</span>
               ))}
+            </div>
+            <div className="divide-y divide-zinc-50">
+              {filteredStudents.map(s => {
+                const initials = s.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                const isAtRisk = s.rate < 20 || (s.quizScore != null && s.quizScore < 50)
+                return (
+                  <div key={s.id}
+                    className="grid grid-cols-[1fr_60px_64px_70px_140px_80px] gap-3 px-5 py-3.5 items-center hover:bg-zinc-50/70 transition-colors">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {isAtRisk && <AlertTriangle size={10} className="text-orange-400 flex-shrink-0"/>}
+                      <div className={cn('w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-2xs font-bold', avatarColor(s.name))}>
+                        {initials}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-zinc-800 truncate">{s.name}</p>
+                        <p className="text-2xs text-zinc-400 truncate">
+                          Joined {new Date(s.joinedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                        </p>
+                      </div>
+                    </div>
+                    <p className={cn('text-xs font-bold', s.completed > 0 ? 'text-emerald-600' : 'text-zinc-400')}>
+                      {s.completed}
+                    </p>
+                    <p className={cn('text-xs font-bold', s.streak === 0 ? 'text-red-400' : s.streak >= 7 ? 'text-emerald-600' : 'text-zinc-700')}>
+                      {s.streak > 0 ? `🔥 ${s.streak}` : '—'}
+                    </p>
+                    <p className={cn('text-xs font-bold',
+                      s.quizScore == null ? 'text-zinc-300' :
+                      s.quizScore >= 75 ? 'text-emerald-600' :
+                      s.quizScore < 50  ? 'text-red-500' : 'text-amber-600'
+                    )}>
+                      {s.quizScore != null ? `${s.quizScore}%` : '—'}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                        <div className={cn('h-full rounded-full transition-all duration-700',
+                          s.rate === 100 ? 'bg-emerald-500' :
+                          s.rate >= 60   ? 'bg-[#5855D6]'   : 'bg-amber-400'
+                        )} style={{ width: `${s.rate}%` }}/>
+                      </div>
+                      <span className="text-2xs font-bold text-zinc-500 w-8 text-right">{s.rate}%</span>
+                    </div>
+                    <div className="flex justify-end">
+                      <button onClick={() => setSelectedStudent(s.id)}
+                        className="px-3 py-1 text-2xs font-bold text-[#5855D6] bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 transition-colors">
+                        Profile →
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
       </section>
-
-      {/* ── Teacher quick access ──────────────────────────────────── */}
-      <section>
-        <h2 className="text-sm font-bold text-zinc-800 mb-3 flex items-center gap-2">
-          Teacher resources
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            { label: 'Activities',  href: '/activities',  icon: <Users size={17}/>,         desc: 'Classroom activities',  color: 'text-blue-600',   bg: 'bg-blue-50',    border: 'border-blue-100' },
-            { label: 'Curriculum',  href: '/curriculum',  icon: <GraduationCap size={17}/>, desc: 'CBSE · IGCSE · IB',     color: 'text-emerald-600',bg: 'bg-emerald-50', border: 'border-emerald-100' },
-            { label: 'Workflows',   href: '/workflows',   icon: <GitBranch size={17}/>,     desc: 'AI tool guides',        color: 'text-zinc-500', bg: 'bg-zinc-100', border: 'border-zinc-200' },
-            { label: 'Resources',   href: '/teacher',     icon: <BookOpen size={17}/>,      desc: 'Teacher resources',     color: 'text-zinc-500', bg: 'bg-zinc-100', border: 'border-zinc-200' },
-          ].map(l => (
-            <Link key={l.href} to={l.href}
-              className="group flex flex-col gap-2.5 p-3.5 bg-white rounded-2xl transition-all"
-              style={{ border:'1px solid var(--border)' }}
-              onMouseEnter={e=>(e.currentTarget as HTMLElement).style.borderColor='#C4C2E8'}
-              onMouseLeave={e=>(e.currentTarget as HTMLElement).style.borderColor='var(--border)'}>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 bg-zinc-100 text-zinc-500 group-hover:bg-[#EEEEFF] group-hover:text-[#5855D6] transition-all">{l.icon}</div>
-              <div>
-                <p className="text-xs font-bold text-zinc-800 group-hover:text-[#5855D6] transition-colors">{l.label}</p>
-                <p className="text-2xs text-zinc-400 mt-0.5">{l.desc}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-    </div>
-  )
-}
-
-// ── Student: join classroom widget (sidebar) ──────────────────────────────────
-function JoinClassroomSection({ user }: { user: { id: string } }) {
-  const [code,       setCode]       = useState('')
-  const [joining,    setJoining]    = useState(false)
-  const [error,      setError]      = useState<string | null>(null)
-  // undefined = still loading, null = not in a classroom, object = joined
-  const [membership, setMembership] = useState<{ code: string; name: string } | null | undefined>(undefined)
-
-  useEffect(() => {
-    ;(async () => {
-      try {
-        const { data } = await supabase
-          .from('classroom_members')
-          .select('classroom_id, classrooms(code, name)')
-          .eq('student_id', user.id)
-          .limit(1)
-        const row = data?.[0]
-        const cls = row?.classrooms as any
-        setMembership(cls ? { code: cls.code, name: cls.name } : null)
-      } catch { setMembership(null) }
-    })()
-  }, [user.id])
-
-  const join = async () => {
-    const trimmed = code.toUpperCase().trim()
-    if (trimmed.length !== 6) { setError('Enter the full 6-character code'); return }
-    setJoining(true); setError(null)
-    try {
-      const { data: clsRows } = await supabase
-        .from('classrooms').select('id, name').eq('code', trimmed).limit(1)
-      const cls = clsRows?.[0]
-      if (!cls) { setError('Code not found — check with your teacher'); return }
-      const { error: joinErr } = await supabase
-        .from('classroom_members').insert({ classroom_id: cls.id, student_id: user.id })
-      if (joinErr?.code === '23505') setError("You're already in this classroom")
-      else if (joinErr) setError('Failed to join — please try again')
-      else { setMembership({ code: trimmed, name: cls.name }); setCode('') }
-    } catch { setError('Something went wrong — try again') }
-    finally { setJoining(false) }
-  }
-
-  if (membership === undefined) return null // don't flash the widget while checking
-
-  return (
-    <section>
-      <h2 className="text-sm font-bold text-zinc-800 mb-3 flex items-center gap-2">
-        Classroom
-      </h2>
-      {membership ? (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle2 size={14} className="text-emerald-600 flex-shrink-0"/>
-            <p className="text-xs font-bold text-emerald-700">Joined classroom</p>
-          </div>
-          <p className="text-sm font-semibold text-emerald-900 mb-0.5">{membership.name}</p>
-          <p className="text-2xs font-mono tracking-widest text-emerald-600">{membership.code}</p>
-        </div>
-      ) : (
-        <div className="bg-white border border-zinc-200 rounded-xl p-4">
-          <p className="text-xs text-zinc-500 mb-3 leading-relaxed">
-            Enter your teacher's code to join their classroom and let them track your progress.
-          </p>
-          <div className="flex gap-2 mb-2">
-            <input
-              value={code}
-              onChange={e => { setCode(e.target.value.toUpperCase().slice(0, 6)); setError(null) }}
-              onKeyDown={e => e.key === 'Enter' && join()}
-              placeholder="ABC123"
-              maxLength={6}
-              className="flex-1 px-3 py-2 text-sm font-mono font-bold tracking-[0.2em] text-zinc-800 bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5855D6] focus:bg-white uppercase placeholder:text-zinc-300 placeholder:font-normal placeholder:tracking-normal transition-all"
-            />
-            <button onClick={join} disabled={joining || code.length < 6}
-              className="px-3 py-2 bg-[#5855D6] text-white text-xs font-bold rounded-lg hover:bg-[#4744C8] disabled:opacity-40 transition-colors flex items-center gap-1.5 flex-shrink-0">
-              {joining ? <Spinner size={12} className="text-white"/> : <>Join <ArrowRight size={12}/></>}
-            </button>
-          </div>
-          {error && <p className="text-2xs text-signal-red font-medium mt-1">{error}</p>}
-        </div>
-      )}
-    </section>
-  )
-}
-
-export function DashboardPage() {
-  const { user, profile, loading: authLoading } = useAuth()
-  const { progressMap } = useProgress()
-  const { bookmarkedIds } = useBookmarks()
-  const [bookmarkedResources, setBookmarkedResources] = useState<Resource[]>([])
-  const [inProgress,          setInProgress]          = useState<Resource[]>([])
-  const [paths,                setPaths]               = useState<LearningPath[]>([])
-  const navigate = useNavigate()
-
-  const isTeacher = !!(user && profile?.role === 'teacher')
-
-  const hour      = new Date().getHours()
-  const greeting  = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-  const firstName = profile?.full_name?.split(' ')[0] ?? null
-  const todayStr  = new Date().toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })
-
-  useEffect(() => {
-    if (!user || isTeacher) return  // teachers have their own data pipeline
-    const inProgressIds = Object.entries(progressMap).filter(([, p]) => p > 0 && p < 100).map(([id]) => id)
-    // limit:100 ensures bookmarked IDs are found in the result set (was 30 — bug fixed)
-    api.resources.list({ limit: 100 }).then(all => {
-      const map = Object.fromEntries(all.data.map(r => [r.id, r]))
-      setInProgress(inProgressIds.slice(0, 6).map(id => map[id]).filter(Boolean) as Resource[])
-      setBookmarkedResources(bookmarkedIds.slice(0, 4).map(id => map[id]).filter(Boolean) as Resource[])
-    }).catch(() => {})
-    api.paths.list().then(r => setPaths(r.data.filter(p => !p.board).slice(0, 4))).catch(() => {})
-  }, [user, isTeacher, progressMap, bookmarkedIds])
-
-  // Wait for both session AND profile before branching on role
-  if (authLoading || (user && !profile)) return <PageLoader/>
-
-  if (!user) return (
-    <div className="flex flex-col items-center justify-center h-full py-24 gap-5 px-4 animate-fade-in">
-      <div className="w-16 h-16 rounded-2xl bg-[#EEEEFF] border border-[#DDDDF8] flex items-center justify-center">
-        <Brain size={28} className="text-[#5855D6]"/>
-      </div>
-      <div className="text-center max-w-sm">
-        <h2 className="font-extrabold tracking-tight mb-2" style={{ fontSize:20, color:"var(--text-1)" }}>Track your AI journey</h2>
-        <p className="text-sm text-zinc-500 mb-6 leading-relaxed">Sign in to see your progress, bookmarks, and curated learning paths.</p>
-        <Button onClick={() => navigate('/auth/login')} variant="accent" size="lg" iconRight={<ArrowRight size={15}/>}>
-          Sign in to continue
-        </Button>
-      </div>
-    </div>
-  )
-
-  // Teachers see their classroom dashboard
-  if (isTeacher) return <TeacherClassroomDashboard/>
-
-  // ── Student dashboard ────────────────────────────────────────────────────────
-  const completedCount = Object.values(progressMap).filter(p => p === 100).length
-  const startedCount   = Object.values(progressMap).filter(p => p > 0).length
-  const completionRate = startedCount > 0 ? Math.round((completedCount / startedCount) * 100) : 0
-
-  const quickLinks = [
-    { label: 'Playground',  href: '/playground', icon: <FlaskConical size={17}/>,   desc: 'Hands-on AI experiments' },
-    { label: 'Activities',  href: '/activities',  icon: <Users size={17}/>,          desc: 'Classroom & group work' },
-    { label: 'Assessment',  href: '/assessment',  icon: <Award size={17}/>,          desc: 'Test your knowledge' },
-    { label: 'Curriculum',  href: '/curriculum',  icon: <GraduationCap size={17}/>,  desc: 'CBSE · IGCSE · IB' },
-    { label: 'Browse',      href: '/browse',      icon: <Globe size={17}/>,          desc: 'All resources' },
-    { label: 'AI Chat',     href: '/chat',        icon: <MessageSquare size={17}/>,  desc: 'Ask an AI tutor' },
-  ]
-
-  return (
-    <div className="px-4 lg:px-8 py-6 max-w-5xl mx-auto space-y-6 animate-fade-in">
-
-      {/* ── Hero greeting banner ─────────────────────────────────── */}
-      <div className="relative rounded-2xl overflow-hidden px-7 py-8"
-        style={{ background: 'linear-gradient(135deg, #0A0A0B 0%, #1A1840 55%, #2D2880 100%)' }}>
-        <div className="absolute right-0 top-0 w-2/3 h-full pointer-events-none opacity-25"
-          style={{ background: 'radial-gradient(ellipse at 80% 50%, rgba(139,133,244,0.5) 0%, transparent 70%)' }}/>
-        <div className="relative flex flex-wrap items-center justify-between gap-5">
-          <div>
-            <p className="font-bold mb-2 uppercase" style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em' }}>
-              {todayStr}
-            </p>
-            <h1 className="font-extrabold text-white tracking-tight mb-1.5" style={{ fontSize: 24, lineHeight: 1.2 }}>
-              {greeting}{firstName ? `, ${firstName}` : ''}.
-            </h1>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', maxWidth: 360, lineHeight: 1.6 }}>
-              {completedCount > 0
-                ? `${completedCount} resource${completedCount !== 1 ? 's' : ''} completed — keep going.`
-                : 'Start your first resource to begin your AI literacy journey.'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5 flex-wrap">
-            {[
-              { val: startedCount,        label: 'Started' },
-              { val: completedCount,      label: 'Done' },
-              { val: bookmarkedIds.length, label: 'Saved' },
-            ].map(s => (
-              <div key={s.label} className="px-4 py-3 rounded-xl text-center"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', minWidth: 64 }}>
-                <p className="font-black text-white leading-none mb-0.5" style={{ fontSize: 20 }}>{s.val}</p>
-                <p className="font-medium" style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.3)' }}>{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Stats strip ──────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: 'Resources started', value: startedCount,        icon: <Play size={14}/> },
-          { label: 'Completed',         value: completedCount,       icon: <CheckCircle2 size={14}/> },
-          { label: 'Bookmarked',        value: bookmarkedIds.length, icon: <Star size={14}/> },
-          { label: 'Completion rate',   value: `${completionRate}%`, icon: <TrendingUp size={14}/> },
-        ].map(s => (
-          <div key={s.label} className="bg-white rounded-2xl p-4 transition-all" style={{ border: '1px solid var(--border)' }}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 flex-shrink-0" style={{ background: 'var(--surface-sub)' }}>
-                {s.icon}
-              </div>
-              <p className="font-extrabold tracking-tight" style={{ fontSize: 22, color: 'var(--text-1)' }}>{s.value}</p>
-            </div>
-            <p className="font-medium" style={{ fontSize: 12, color: 'var(--text-3)' }}>{s.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Two-column body ──────────────────────────────────────── */}
-      <div className="grid lg:grid-cols-3 gap-6 items-start">
-
-        {/* ── Left 2/3 ── */}
-        <div className="lg:col-span-2 space-y-6">
-
-          {/* Continue learning */}
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-bold text-zinc-800 flex items-center gap-2">
-                Continue learning
-              </h2>
-              {inProgress.length > 0 && (
-                <Link to="/browse" className="text-xs text-[#5855D6] hover:text-[#4744C8] font-semibold flex items-center gap-1 transition-colors">
-                  Browse all <ChevronRight size={12}/>
-                </Link>
-              )}
-            </div>
-            {inProgress.length > 0 ? (
-              <div className="grid sm:grid-cols-2 gap-3">
-                {inProgress.slice(0, 4).map(r => {
-                  const pct = progressMap[r.id] ?? 0
-                  return (
-                    <Link key={r.id} to={`/content/${r.id}`}
-                      className="group relative bg-white border border-zinc-200 rounded-xl p-4 hover:border-[#C0BFEF] hover:shadow-card-hover transition-all duration-200 overflow-hidden">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="relative flex-shrink-0">
-                          <RingProgress value={pct} size={42} strokeWidth={3}/>
-                          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-zinc-600">{pct}%</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-zinc-800 group-hover:text-[#4744C8] transition-colors line-clamp-2 leading-snug mb-1.5">{r.title}</p>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <Badge variant={r.type as any}/>
-                            <Badge variant={r.difficulty as any}/>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="w-full h-0.5 bg-zinc-100 rounded-full overflow-hidden mb-2">
-                        <div className="h-full rounded-full bg-[#5855D6] transition-all duration-700" style={{ width: `${pct}%` }}/>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        {r.duration ? <span className="text-2xs text-zinc-400 flex items-center gap-1"><Clock size={10}/> {r.duration}</span> : <span/>}
-                        <span className="text-2xs font-bold text-[#5855D6] flex items-center gap-1 group-hover:gap-1.5 transition-all">Continue <ArrowRight size={10}/></span>
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="bg-gradient-to-br from-accent-50 via-white to-ink-50 border border-[#DDDDF8] rounded-xl p-7 text-center">
-                <div className="w-11 h-11 rounded-xl bg-white shadow-card border border-[#DDDDF8] flex items-center justify-center mx-auto mb-3">
-                  <BookOpen size={19} className="text-[#5855D6]"/>
-                </div>
-                <p className="text-sm font-semibold text-zinc-800 mb-1">Nothing in progress yet</p>
-                <p className="text-xs text-zinc-500 mb-4 leading-relaxed max-w-xs mx-auto">Pick any resource and start learning — your progress will appear here.</p>
-                <Link to="/browse" className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#5855D6] text-white text-xs font-bold rounded-lg hover:bg-[#4744C8] transition-colors">
-                  Browse resources <ArrowRight size={12}/>
-                </Link>
-              </div>
-            )}
-          </section>
-
-          {/* Learning paths */}
-          {paths.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold text-zinc-800 flex items-center gap-2">
-                  Learning paths
-                </h2>
-                <Link to="/curriculum" className="text-xs text-[#5855D6] hover:text-[#4744C8] font-semibold flex items-center gap-1 transition-colors">
-                  All paths <ChevronRight size={12}/>
-                </Link>
-              </div>
-              <div className="space-y-2">
-                {paths.map(p => {
-                  const done  = p.resourceIds.filter(id => (progressMap[id] ?? 0) === 100).length
-                  const total = p.resourceIds.length
-                  const pct   = total > 0 ? Math.round((done / total) * 100) : 0
-                  return (
-                    <Link key={p.id} to={`/paths/${p.id}`}
-                      className="flex items-center gap-4 px-4 py-3 bg-white border border-zinc-200 rounded-2xl hover:border-zinc-300 hover:shadow-card-hover transition-all group">
-                      <div className="relative flex-shrink-0">
-                        <RingProgress value={pct} size={44} strokeWidth={3}/>
-                        <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-zinc-600">{pct}%</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-zinc-800 group-hover:text-[#5855D6] transition-colors truncate">{p.title}</p>
-                        <p className="text-xs text-zinc-400 mt-0.5">{done}/{total} resources · {p.estimatedHours}h</p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Badge variant={p.difficulty as any}/>
-                        <ChevronRight size={14} className="text-zinc-300 group-hover:text-[#5855D6] transition-colors"/>
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
-            </section>
-          )}
-        </div>
-
-        {/* ── Right 1/3 sidebar ── */}
-        <div className="space-y-6">
-
-          {/* Quick access */}
-          <section>
-            <p className="font-bold mb-3" style={{ fontSize: 12, color: 'var(--text-3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Quick access</p>
-            <div className="grid grid-cols-2 gap-2">
-              {quickLinks.map(l => (
-                <Link key={l.href} to={l.href}
-                  className="group flex flex-col gap-2.5 p-3 bg-white rounded-xl transition-all duration-150"
-                  style={{ border: '1px solid var(--border)' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#C4C2E8'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.boxShadow = '' }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 group-hover:text-[#5855D6] group-hover:bg-[#EEEEFF] transition-all bg-zinc-100">
-                    {l.icon}
-                  </div>
-                  <div>
-                    <p className="font-bold leading-snug group-hover:text-[#5855D6] transition-colors" style={{ fontSize: 12.5, color: 'var(--text-1)' }}>{l.label}</p>
-                    <p className="leading-relaxed mt-0.5" style={{ fontSize: 11, color: 'var(--text-3)' }}>{l.desc}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          {/* Join classroom */}
-          {user && <JoinClassroomSection user={user}/>}
-
-
-        </div>
-      </div>
     </div>
   )
 }
