@@ -1,5 +1,9 @@
 // Shared helpers used across all page files
-import { useEffect, useState, type ReactNode } from 'react'
+import React, {
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react'
 import { AlertCircle } from 'lucide-react'
 import { cn } from '../ui'
 
