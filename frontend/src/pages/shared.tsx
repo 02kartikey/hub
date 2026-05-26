@@ -86,3 +86,49 @@ export function SectionHeading({
     </div>
   )
 }
+export function PageHeader({
+  eyebrow,
+  eyebrowIcon,
+  eyebrowColor,
+  title,
+  subtitle,
+  action,
+}: {
+  eyebrow?: string
+  eyebrowIcon?: React.ReactNode
+  eyebrowColor?: string
+  title: string
+  subtitle?: string
+  action?: React.ReactNode
+}) {
+  return (
+    <div className="mb-8 flex items-start justify-between gap-4">
+      <div>
+        {eyebrow && (
+          <div
+            className={cn(
+              'mb-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-widest',
+              eyebrowColor ??
+                'border-zinc-200 bg-zinc-100 text-zinc-600',
+            )}
+          >
+            {eyebrowIcon}
+            {eyebrow}
+          </div>
+        )}
+
+        <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900">
+          {title}
+        </h1>
+
+        {subtitle && (
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-zinc-500">
+            {subtitle}
+          </p>
+        )}
+      </div>
+
+      {action}
+    </div>
+  )
+}
