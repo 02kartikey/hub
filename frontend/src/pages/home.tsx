@@ -157,5 +157,3 @@ export function HomePage() {
 
 // Alias — App.tsx routes /dashboard to DashboardPage
 export const DashboardPage = HomePage
-
-export const DashboardPage = HomePage
