@@ -19,7 +19,12 @@ import type { Resource, LearningPath, ClassroomActivity, DeepExercise, Message }
 import type { PathQuiz, QuizQuestion } from '../api'
 import { useAuth, useProgress, useBookmarks, getOnboardingProfile, supabase } from '../auth'
 import { checkAndAward, awardBadge, useBadges, BadgeCard, BADGES, getEarnedBadges, BadgesPage } from '../badges'
-import { useFetch, PageLoader, PageError } from './shared'
+import {
+  useFetch,
+  PageLoader,
+  PageError,
+  PageHeader,
+} from './shared'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
