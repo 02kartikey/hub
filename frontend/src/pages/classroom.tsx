@@ -21,6 +21,226 @@ import { useAuth, useProgress, useBookmarks, getOnboardingProfile, supabase } fr
 import { checkAndAward, awardBadge, useBadges, BadgeCard, BADGES, getEarnedBadges, BadgesPage } from '../badges'
 import { useFetch, PageLoader, PageError } from './shared'
 
+type AssignableItem = {
+  id: string
+  title: string
+  type: 'resource' | 'exercise' | 'path' | 'quiz' | 'video' | 'other'
+}
+
+function generateCode() {
+  return Math.random().toString(36).slice(2, 8).toUpperCase()
+}
+
+function avatarColor(name: string) {
+  const palette = [
+    'bg-indigo-100 text-indigo-700',
+    'bg-emerald-100 text-emerald-700',
+    'bg-amber-100 text-amber-700',
+    'bg-pink-100 text-pink-700',
+    'bg-sky-100 text-sky-700',
+    'bg-violet-100 text-violet-700',
+  ]
+  let hash = 0
+  for (let i = 0; i < name.length; i += 1) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0
+  }
+  return palette[hash % palette.length]
+}
+
+function getResourceTitle(resource: Resource) {
+  const r = resource as unknown as Record<string, unknown>
+  return String(r.title ?? r.name ?? r.label ?? 'Untitled resource')
+}
+
+function getResourceType(resource: Resource): AssignableItem['type'] {
+  const r = resource as unknown as Record<string, unknown>
+  const raw = String(r.type ?? r.content_type ?? 'resource').toLowerCase()
+  if (raw === 'exercise' || raw === 'path' || raw === 'quiz' || raw === 'video') return raw
+  return 'resource'
+}
+
+function AssignModal({
+  resources,
+  onClose,
+  onAssign,
+}: {
+  resources: Resource[]
+  onClose: () => void
+  onAssign: (item: AssignableItem, dueDate: string, note: string) => void
+}) {
+  const [selectedId, setSelectedId] = useState(resources[0]?.id ?? '')
+  const [dueDate, setDueDate] = useState('')
+  const [note, setNote] = useState('')
+
+  const selected = resources.find((r) => r.id === selectedId) ?? resources[0] ?? null
+
+  const handleAssign = () => {
+    if (!selected) return
+    onAssign(
+      {
+        id: selected.id,
+        title: getResourceTitle(selected),
+        type: getResourceType(selected),
+      },
+      dueDate,
+      note,
+    )
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-bold text-zinc-900">Assign to class</h3>
+            <p className="text-xs text-zinc-500">Choose a resource and add an optional note or due date.</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {resources.length === 0 ? (
+          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
+            No assignable resources were found.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold text-zinc-700">Resource</span>
+              <select
+                value={selectedId}
+                onChange={(e) => setSelectedId(e.target.value)}
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5855D6]"
+              >
+                {resources.map((resource) => (
+                  <option key={resource.id} value={resource.id}>
+                    {getResourceTitle(resource)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold text-zinc-700">Due date</span>
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5855D6]"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold text-zinc-700">Note</span>
+                <input
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Optional message for students"
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5855D6]"
+                />
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={onClose}
+                className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAssign}
+                disabled={!selected}
+                className="rounded-xl bg-[#5855D6] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#4744C8] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Assign
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function StudentProfile({
+  student,
+  assignments,
+  onBack,
+}: {
+  student: StudentRow
+  assignments: Assignment[]
+  onBack: () => void
+}) {
+  return (
+    <div className="space-y-5">
+      <button
+        onClick={onBack}
+        className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+      >
+        <ArrowLeft size={13} />
+        Back
+      </button>
+
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className={cn('mb-3 flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-bold', avatarColor(student.name))}>
+              {student.name
+                .split(' ')
+                .map((part) => part[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()}
+            </div>
+            <h2 className="text-xl font-bold text-zinc-900">{student.name}</h2>
+            <p className="text-sm text-zinc-500">{student.email || 'No email provided'}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-xl bg-zinc-50 px-4 py-3 text-center">
+              <p className="text-lg font-bold text-zinc-900">{student.completed}</p>
+              <p className="text-2xs font-semibold uppercase tracking-widest text-zinc-500">Done</p>
+            </div>
+            <div className="rounded-xl bg-zinc-50 px-4 py-3 text-center">
+              <p className="text-lg font-bold text-zinc-900">{student.rate}%</p>
+              <p className="text-2xs font-semibold uppercase tracking-widest text-zinc-500">Progress</p>
+            </div>
+            <div className="rounded-xl bg-zinc-50 px-4 py-3 text-center">
+              <p className="text-lg font-bold text-zinc-900">{student.streak > 0 ? student.streak : '—'}</p>
+              <p className="text-2xs font-semibold uppercase tracking-widest text-zinc-500">Streak</p>
+            </div>
+            <div className="rounded-xl bg-zinc-50 px-4 py-3 text-center">
+              <p className="text-lg font-bold text-zinc-900">{student.quizScore != null ? `${student.quizScore}%` : '—'}</p>
+              <p className="text-2xs font-semibold uppercase tracking-widest text-zinc-500">Quiz</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <h3 className="mb-3 text-sm font-bold uppercase tracking-widest text-zinc-500">Assignments</h3>
+        {assignments.length === 0 ? (
+          <p className="text-sm text-zinc-500">No assignments yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {assignments.map((assignment) => (
+              <div key={assignment.id} className="rounded-xl border border-zinc-200 px-4 py-3">
+                <p className="text-sm font-semibold text-zinc-900">{assignment.title}</p>
+                {assignment.note && <p className="mt-1 text-xs text-zinc-500">{assignment.note}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -477,3 +697,8 @@ You explain: LLMs, transformers, attention, RLHF, hallucination, sycophancy, bia
 
 Rules: Be clear, direct, honest. Never hype AI. Acknowledge uncertainty. Under 200 words unless depth is needed. Encourage critical thinking over AI dependence.`
 }
+
+export default function ClassroomPage() {
+  return <TeacherClassroomDashboard />
+}
+
