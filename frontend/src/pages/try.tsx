@@ -617,7 +617,10 @@ function TryExperienceStep({ experience: exp, onDone, onBack }: {
     if (loading || !exp.userPrompt) return
     setPhase('active')
     setLoading(true)
-    const userMsg = { role: 'user', content: exp.userPrompt }
+    const userMsg: Message = {
+  role: 'user',
+  content: exp.userPrompt,
+  }
     setMessages([userMsg])
     try {
       const data = await api.chat.send([userMsg], exp.systemPrompt ?? '')
