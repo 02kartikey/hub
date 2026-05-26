@@ -698,6 +698,8 @@ You explain: LLMs, transformers, attention, RLHF, hallucination, sycophancy, bia
 Rules: Be clear, direct, honest. Never hype AI. Acknowledge uncertainty. Under 200 words unless depth is needed. Encourage critical thinking over AI dependence.`
 }
 
+export { TeacherClassroomDashboard }
+
 export default function ClassroomPage() {
   return <TeacherClassroomDashboard />
 }
