@@ -19,7 +19,13 @@ import type { Resource, LearningPath, ClassroomActivity, DeepExercise, Message }
 import type { PathQuiz, QuizQuestion } from '../api'
 import { useAuth, useProgress, useBookmarks, getOnboardingProfile, supabase } from '../auth'
 import { checkAndAward, awardBadge, useBadges, BadgeCard, BADGES, getEarnedBadges, BadgesPage } from '../badges'
-import { useFetch, PageLoader, PageError } from './shared'
+import {
+  useFetch,
+  PageLoader,
+  PageError,
+  SectionHeading,
+  PageHeader,
+} from './shared'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PROGRESS PAGE
