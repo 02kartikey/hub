@@ -54,8 +54,24 @@ function getResourceTitle(resource: Resource) {
 
 function getResourceType(resource: Resource): AssignableItem['type'] {
   const r = resource as unknown as Record<string, unknown>
-  const raw = String(r.type ?? r.content_type ?? 'resource').toLowerCase()
-  if (raw === 'exercise' || raw === 'path' || raw === 'quiz' || raw === 'video') return raw
+
+  const raw = String(
+    r.type ?? r.content_type ?? 'resource'
+  ).toLowerCase()
+
+  if (raw === 'exercise') return 'exercise'
+  if (raw === 'path') return 'path'
+
+  // map unsupported backend types → activity
+  if (
+    raw === 'quiz' ||
+    raw === 'video' ||
+    raw === 'other' ||
+    raw === 'activity'
+  ) {
+    return 'activity'
+  }
+
   return 'resource'
 }
 
