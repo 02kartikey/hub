@@ -598,51 +598,90 @@ export function TryPage() {
 }
 
 // ── Experience step — handles all 4 experience types ─────────────────────────
-function TryExperienceStep({ experience: exp, onDone, onBack }: {
+function TryExperienceStep({
+  experience: exp,
+  onDone,
+  onBack,
+}: {
   experience: TryExperience
   onDone: () => void
   onBack: () => void
 }) {
-  const [phase, setPhase]       = useState<'intro'|'active'|'reveal'>('intro')
+  const [phase, setPhase] = useState<'intro' | 'active' | 'reveal'>('intro')
+
   const [messages, setMessages] = useState<Message[]>([])
-  const [loading, setLoading]   = useState(false)
-  const [selected, setSelected] = useState<number|null>(null)
-  const bottomRef               = useRef<HTMLDivElement>(null)
+
+  const [loading, setLoading] = useState(false)
+  const [selected, setSelected] = useState<number | null>(null)
+
+  const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    bottomRef.current?.scrollIntoView({
+      behavior: 'smooth',
+    })
   }, [messages, loading, phase, selected])
 
   const runChat = async () => {
     if (loading || !exp.userPrompt) return
+
     setPhase('active')
     setLoading(true)
+
     const userMsg: Message = {
-  role: 'user',
-  content: exp.userPrompt,
-  }
+      role: 'user',
+      content: exp.userPrompt,
+    }
+
     setMessages([userMsg])
+
     try {
-      const data = await api.chat.send([userMsg], exp.systemPrompt ?? '')
-      setMessages([userMsg, { role: 'assistant', content: data.text }])
+      const data = await api.chat.send(
+        [userMsg],
+        exp.systemPrompt ?? '',
+      )
+
+      setMessages([
+        userMsg,
+        {
+          role: 'assistant',
+          content: data.text,
+        },
+      ])
     } catch {
-      setMessages([userMsg, { role: 'assistant', content: exp.fallbackResponse ?? 'The AI responded.' }])
+      setMessages([
+        userMsg,
+        {
+          role: 'assistant',
+          content:
+            exp.fallbackResponse ?? 'The AI responded.',
+        },
+      ])
     } finally {
       setLoading(false)
-      setTimeout(() => setPhase('reveal'), 700)
+
+      setTimeout(() => {
+        setPhase('reveal')
+      }, 700)
     }
   }
 
   const selectAnswer = (idx: number) => {
     if (selected !== null) return
+
     setSelected(idx)
-    setTimeout(() => setPhase('reveal'), 400)
+
+    setTimeout(() => {
+      setPhase('reveal')
+    }, 400)
   }
 
   return (
     <div>
-      <button onClick={onBack}
-        className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 font-semibold mb-5 transition-colors">
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 font-semibold mb-5 transition-colors"
+      >
         ← Back
       </button>
 
@@ -650,28 +689,47 @@ function TryExperienceStep({ experience: exp, onDone, onBack }: {
       <div className="mb-5">
         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/10 bg-white/5 mb-3">
           <span className="text-2xs font-bold text-white/40 uppercase tracking-wider">
-            {exp.type === 'hallucination' ? '🧪 Live demo' :
-             exp.type === 'sycophancy'    ? '🪞 Live demo' :
-             exp.type === 'quiz'          ? '🧠 Quick question' :
-                                           '⚡ Prompt comparison'}
+            {exp.type === 'hallucination'
+              ? '🧪 Live demo'
+              : exp.type === 'sycophancy'
+              ? '🪞 Live demo'
+              : exp.type === 'quiz'
+              ? '🧠 Quick question'
+              : '⚡ Prompt comparison'}
           </span>
         </div>
-        <h2 className="text-xl font-extrabold text-white tracking-tight mb-2 leading-snug">{exp.headline}</h2>
-        <p className="text-sm text-white/40 leading-relaxed">{exp.sub}</p>
+
+        <h2 className="text-xl font-extrabold text-white tracking-tight mb-2 leading-snug">
+          {exp.headline}
+        </h2>
+
+        <p className="text-sm text-white/40 leading-relaxed">
+          {exp.sub}
+        </p>
       </div>
 
-      {/* ── Chat-based experiences (hallucination, sycophancy, prompt) ─── */}
-      {(exp.type === 'hallucination' || exp.type === 'sycophancy' || exp.type === 'prompt') && (
+      {(exp.type === 'hallucination' ||
+        exp.type === 'sycophancy' ||
+        exp.type === 'prompt') && (
         <>
           {phase === 'intro' && exp.userPrompt && (
             <div className="mb-4">
-              <p className="text-2xs font-bold text-white/30 uppercase tracking-widest mb-2">Prompt being sent</p>
+              <p className="text-2xs font-bold text-white/30 uppercase tracking-widest mb-2">
+                Prompt being sent
+              </p>
+
               <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 mb-4">
-                <p className="text-sm text-white/70 leading-relaxed italic">"{exp.userPrompt}"</p>
+                <p className="text-sm text-white/70 leading-relaxed italic">
+                  "{exp.userPrompt}"
+                </p>
               </div>
-              <button onClick={runChat}
-                className="w-full py-3.5 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#5855D6]/20">
-                <Send size={13}/> Send this to the AI
+
+              <button
+                onClick={runChat}
+                className="w-full py-3.5 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#5855D6]/20"
+              >
+                <Send size={13} />
+                Send this to the AI
               </button>
             </div>
           )}
@@ -680,92 +738,149 @@ function TryExperienceStep({ experience: exp, onDone, onBack }: {
             <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden mb-4">
               <div className="p-4 space-y-3">
                 {messages.map((msg, i) => (
-                  <div key={i} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
-                    <div className={cn(
-                      'max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+                  <div
+                    key={i}
+                    className={cn(
+                      'flex',
                       msg.role === 'user'
-                        ? 'bg-[#5855D6] text-white rounded-br-sm'
-                        : 'bg-white/10 text-white/85 rounded-bl-sm'
-                    )}>
-                      {msg.role === 'assistant' && (
-                        <p className="text-2xs font-bold text-accent-400 mb-1.5 uppercase tracking-wide">AI</p>
+                        ? 'justify-end'
+                        : 'justify-start',
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+                        msg.role === 'user'
+                          ? 'bg-[#5855D6] text-white rounded-br-sm'
+                          : 'bg-white/10 text-white/85 rounded-bl-sm',
                       )}
+                    >
+                      {msg.role === 'assistant' && (
+                        <p className="text-2xs font-bold text-accent-400 mb-1.5 uppercase tracking-wide">
+                          AI
+                        </p>
+                      )}
+
                       {msg.content}
                     </div>
                   </div>
                 ))}
+
                 {loading && (
                   <div className="flex justify-start">
                     <div className="bg-white/10 rounded-2xl rounded-bl-sm px-4 py-3">
-                      <TypingDots/>
+                      <TypingDots />
                     </div>
                   </div>
                 )}
-                <div ref={bottomRef}/>
+
+                <div ref={bottomRef} />
               </div>
             </div>
           )}
         </>
       )}
 
-      {/* ── Quiz experience ─────────────────────────────────────────────── */}
-      {exp.type === 'quiz' && exp.question && exp.options && (
-        <div className="mb-4">
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-3">
-            <p className="text-sm font-semibold text-white/90 leading-snug mb-4">{exp.question}</p>
-            <div className="space-y-2.5">
-              {exp.options.map((opt, i) => {
-                const isSelected = selected === i
-                const isCorrect  = i === exp.correct
-                const revealed   = selected !== null
-                return (
-                  <button key={i} onClick={() => selectAnswer(i)} disabled={revealed}
-                    className={cn(
-                      'w-full flex items-start gap-3 px-4 py-3 rounded-xl border text-left text-sm transition-all',
-                      !revealed              ? 'border-white/10 bg-white/5 hover:border-[#5855D6]/50 hover:bg-[#5855D6]/10 cursor-pointer text-white/80' :
-                      isCorrect              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200' :
-                      isSelected && !isCorrect ? 'border-red-500/40 bg-red-500/10 text-red-200' :
-                                               'border-white/5 bg-white/3 text-white/30 cursor-default'
-                    )}>
-                    <span className={cn(
-                      'w-5 h-5 rounded-full border text-2xs font-bold flex-shrink-0 flex items-center justify-center mt-0.5',
-                      !revealed ? 'border-white/20 text-white/40' :
-                      isCorrect ? 'border-emerald-400 bg-emerald-400 text-white' :
-                      isSelected ? 'border-red-400 bg-red-400 text-white' :
-                                   'border-white/10 text-white/20'
-                    )}>
-                      {revealed && isCorrect ? '✓' : revealed && isSelected ? '✗' : 'ABCD'[i]}
-                    </span>
-                    <span className="leading-snug">{opt}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          {phase === 'reveal' && exp.explanation && (
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mb-3">
-              <p className="text-2xs font-bold text-emerald-400 uppercase tracking-widest mb-2">Why this matters</p>
-              <p className="text-sm text-white/75 leading-relaxed">{exp.explanation}</p>
-            </div>
-          )}
-          <div ref={bottomRef}/>
-        </div>
-      )}
+      {exp.type === 'quiz' &&
+        exp.question &&
+        exp.options && (
+          <div className="mb-4">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-3">
+              <p className="text-sm font-semibold text-white/90 leading-snug mb-4">
+                {exp.question}
+              </p>
 
-      {/* ── Insight + CTA (shown after any experience) ──────────────────── */}
+              <div className="space-y-2.5">
+                {exp.options.map((opt, i) => {
+                  const isSelected = selected === i
+                  const isCorrect = i === exp.correct
+                  const revealed = selected !== null
+
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => selectAnswer(i)}
+                      disabled={revealed}
+                      className={cn(
+                        'w-full flex items-start gap-3 px-4 py-3 rounded-xl border text-left text-sm transition-all',
+                        !revealed
+                          ? 'border-white/10 bg-white/5 hover:border-[#5855D6]/50 hover:bg-[#5855D6]/10 cursor-pointer text-white/80'
+                          : isCorrect
+                          ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+                          : isSelected && !isCorrect
+                          ? 'border-red-500/40 bg-red-500/10 text-red-200'
+                          : 'border-white/5 bg-white/3 text-white/30 cursor-default',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'w-5 h-5 rounded-full border text-2xs font-bold flex-shrink-0 flex items-center justify-center mt-0.5',
+                          !revealed
+                            ? 'border-white/20 text-white/40'
+                            : isCorrect
+                            ? 'border-emerald-400 bg-emerald-400 text-white'
+                            : isSelected
+                            ? 'border-red-400 bg-red-400 text-white'
+                            : 'border-white/10 text-white/20',
+                        )}
+                      >
+                        {revealed && isCorrect
+                          ? '✓'
+                          : revealed && isSelected
+                          ? '✗'
+                          : 'ABCD'[i]}
+                      </span>
+
+                      <span className="leading-snug">
+                        {opt}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {phase === 'reveal' && exp.explanation && (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mb-3">
+                <p className="text-2xs font-bold text-emerald-400 uppercase tracking-widest mb-2">
+                  Why this matters
+                </p>
+
+                <p className="text-sm text-white/75 leading-relaxed">
+                  {exp.explanation}
+                </p>
+              </div>
+            )}
+
+            <div ref={bottomRef} />
+          </div>
+        )}
+
       {phase === 'reveal' && (
         <div className="space-y-3 animate-fade-in">
           <div className="p-4 bg-red-500/8 border border-red-500/20 rounded-2xl">
             <p className="text-xs font-bold text-red-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-              <AlertCircle size={11}/> {exp.insightTitle}
+              <AlertCircle size={11} />
+              {exp.insightTitle}
             </p>
-            <p className="text-sm text-white/75 leading-relaxed mb-3">{exp.insight}</p>
-            <p className="text-xs text-white/40 leading-relaxed font-medium">{exp.takeaway}</p>
+
+            <p className="text-sm text-white/75 leading-relaxed mb-3">
+              {exp.insight}
+            </p>
+
+            <p className="text-xs text-white/40 leading-relaxed font-medium">
+              {exp.takeaway}
+            </p>
           </div>
-          <button onClick={onDone}
-            className="w-full py-4 bg-[#5855D6] text-white text-sm font-bold rounded-2xl hover:bg-[#4744C8] transition-all shadow-lg shadow-[#5855D6]/20 flex items-center justify-center gap-2">
-            {exp.ctaLabel} <ArrowRight size={14}/>
+
+          <button
+            onClick={onDone}
+            className="w-full py-4 bg-[#5855D6] text-white text-sm font-bold rounded-2xl hover:bg-[#4744C8] transition-all shadow-lg shadow-[#5855D6]/20 flex items-center justify-center gap-2"
+          >
+            {exp.ctaLabel}
+            <ArrowRight size={14} />
           </button>
+
           <p className="text-center text-xs text-white/20">
             Free forever · No credit card · Takes 30 seconds
           </p>
@@ -774,8 +889,3 @@ function TryExperienceStep({ experience: exp, onDone, onBack }: {
     </div>
   )
 }
-
-
-// ══════════════════════════════════════════════════════════════════════════════
-// AUTH PAGES
-// ══════════════════════════════════════════════════════════════════════════════
