@@ -604,7 +604,7 @@ function TryExperienceStep({ experience: exp, onDone, onBack }: {
   onBack: () => void
 }) {
   const [phase, setPhase]       = useState<'intro'|'active'|'reveal'>('intro')
-  const [messages, setMessages] = useState<{role:string;content:string}[]>([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading]   = useState(false)
   const [selected, setSelected] = useState<number|null>(null)
   const bottomRef               = useRef<HTMLDivElement>(null)
