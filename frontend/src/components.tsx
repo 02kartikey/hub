@@ -2217,29 +2217,35 @@ export function OnboardingFlow({ onComplete }: { onComplete: (p: OnboardingProfi
 
   const done = useCallback(async () => {
     if (!role) return
-    const p: OnboardingProfile = { role, board:board||undefined, goals, completed:true, completedAt:new Date().toISOString() }
+    const p: OnboardingProfile = { role, board: board || undefined, goals, completed: true, completedAt: new Date().toISOString() }
     saveOnboardingProfile(p)
-    // Persist role to Supabase profiles so dashboard branching works server-side
     if (user) {
-      try {
-        await supabase.from('profiles').update({ role }).eq('id', user.id)
-      } catch { /* localStorage fallback still works */ }
+      try { await supabase.from('profiles').update({ role }).eq('id', user.id) } catch {}
     }
-    // Award onboarding badge
     const onboardBadges = checkAndAward({ progressMap: {}, pathsCompleted: 0, onboarded: true })
     if (onboardBadges.length) window.dispatchEvent(new CustomEvent('aihub:badges', { detail: onboardBadges }))
     onComplete(p)
   }, [role, board, goals, onComplete, user])
 
+  const stepNum = step === 'role' ? 1 : step === 'board' ? 2 : 3
+
   return (
     <div className={cn('transition-opacity duration-200', anim ? 'opacity-0' : 'opacity-100')}>
+
+      {/* Step progress bar */}
+      <div className="flex items-center gap-1.5 mb-6">
+        {[1, 2, 3].map(i => (
+          <div key={i} className={cn(
+            'h-1.5 rounded-full transition-all duration-500',
+            i <= stepNum ? 'bg-[#5855D6]' : 'bg-zinc-100',
+            i === stepNum ? 'flex-1' : 'w-6'
+          )}/>
+        ))}
+      </div>
+
+      {/* ── Step 1: Role ─────────────────────────────────────────────────────── */}
       {step === 'role' && (
         <div>
-          <div className="flex items-center gap-1.5 mb-5">
-            {[1,2,3].map(i => (
-              <div key={i} className={cn('h-1.5 rounded-full transition-all duration-300', i === 1 ? 'bg-[#5855D6] flex-1' : 'bg-zinc-100 w-6')}/>
-            ))}
-          </div>
           <h2 className="text-2xl font-extrabold text-zinc-900 mb-1.5 tracking-tight">Who are you?</h2>
           <p className="text-sm text-zinc-400 mb-6 leading-relaxed">This shapes your entire experience. You can change it any time.</p>
           <div className="space-y-2.5 mb-7">
@@ -2281,12 +2287,13 @@ export function OnboardingFlow({ onComplete }: { onComplete: (p: OnboardingProfi
           </button>
         </div>
       )}
+
+      {/* ── Step 2: Board ────────────────────────────────────────────────────── */}
       {step === 'board' && roleData && (
         <div>
           <button onClick={() => go('role')} className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 mb-5 flex items-center gap-1">← Back</button>
-          <p className="text-2xs font-bold uppercase tracking-widest text-zinc-400 mb-1">Step 2 of 3</p>
           <h2 className="text-2xl font-bold text-zinc-900 mb-1 tracking-tight">Your curriculum?</h2>
-          <p className="text-sm text-zinc-500 mb-7">We map resources and paths to your exact board.</p>
+          <p className="text-sm text-zinc-500 mb-7">We map every resource and path to your board.</p>
           <div className="space-y-2 mb-7">
             {BOARDS.map(b => (
               <button key={b} onClick={() => setBoard(b)}
@@ -2307,10 +2314,11 @@ export function OnboardingFlow({ onComplete }: { onComplete: (p: OnboardingProfi
           </div>
         </div>
       )}
+
+      {/* ── Step 3: Goals ────────────────────────────────────────────────────── */}
       {step === 'goals' && roleData && (
         <div>
           <button onClick={() => go(role === 'curious' ? 'role' : 'board')} className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 mb-5 flex items-center gap-1">← Back</button>
-          <p className="text-2xs font-bold uppercase tracking-widest text-zinc-400 mb-1">Step 3 of 3</p>
           <h2 className="text-2xl font-bold text-zinc-900 mb-1 tracking-tight">What's your focus?</h2>
           <p className="text-sm text-zinc-500 mb-7">Pick as many as you want. We'll start you there.</p>
           <div className="space-y-2 mb-7">
@@ -2331,21 +2339,204 @@ export function OnboardingFlow({ onComplete }: { onComplete: (p: OnboardingProfi
           </div>
           <div className="flex gap-3">
             <button onClick={done} className="px-4 py-3.5 text-sm text-zinc-500 hover:text-zinc-700 font-semibold">Skip</button>
-            <button onClick={done} className="flex-1 py-3.5 bg-ink-900 text-white rounded-xl text-sm font-bold hover:bg-ink-800 flex items-center justify-center gap-2 transition-all">
+            <button onClick={done}
+              className="flex-1 py-3.5 bg-ink-900 text-white rounded-xl text-sm font-bold hover:bg-ink-800 flex items-center justify-center gap-2 transition-all">
               {goals.length > 0 ? 'Launch my OS' : 'Continue'} <ArrowRight size={15}/>
             </button>
           </div>
         </div>
       )}
+
+
     </div>
   )
 }
+
+// ── First Light: role + goal aware guided moment ──────────────────────────────
+const FIRST_LIGHT_CONFIG: Record<string, {
+  headline: string; sub: string
+  insight: string; insightLabel: string
+  prompt: string; resourceHref: string; resourceLabel: string
+}> = {
+  teacher: {
+    headline: "See how AI misleads — then teach it better.",
+    sub: "Before you can teach AI literacy, you need to feel what AI confusion actually looks like. One prompt. 30 seconds.",
+    insightLabel: "Why this matters for your class",
+    insight: "Students trust AI without questioning it. Once you've seen a hallucination first-hand, you'll know exactly what to warn them about — and how to design lessons around it.",
+    prompt: "Who won the 1987 World Chess Championship match between Garry Kasparov and Bobby Fischer? Describe the key games and final result.",
+    resourceHref: "/playground/hallucination-hunt",
+    resourceLabel: "Hallucination Hunt exercise →",
+  },
+  student: {
+    headline: "Watch AI confidently make something up.",
+    sub: "This is the most important thing to understand before you use AI for anything important. One prompt. See it happen live.",
+    insightLabel: "What you're about to see",
+    insight: "AI doesn't know when it doesn't know. It fills gaps with confident-sounding fiction. After this, you'll always double-check AI claims — and that makes you smarter than most adults.",
+    prompt: "Who won the 1987 World Chess Championship match between Garry Kasparov and Bobby Fischer? Describe the key games and final result.",
+    resourceHref: "/playground/hallucination-hunt",
+    resourceLabel: "Try the full Hallucination Hunt →",
+  },
+  curious: {
+    headline: "AI makes things up. Here's proof.",
+    sub: "You don't need any AI background for this. Just watch what happens when you ask AI about something it doesn't quite know.",
+    insightLabel: "What's actually happening",
+    insight: "AI language models predict the next likely word — they don't 'look things up'. When they hit a gap in their training data, they keep predicting anyway. That's hallucination.",
+    prompt: "Who won the 1987 World Chess Championship match between Garry Kasparov and Bobby Fischer? Describe the key games and final result.",
+    resourceHref: "/playground/hallucination-hunt",
+    resourceLabel: "Explore more in the Playground →",
+  },
+}
+
+function FirstLightStep({ role, goals, board, onDone }: {
+  role: OnboardRole; goals: string[]; board: string; onDone: () => void
+}) {
+  const cfg = FIRST_LIGHT_CONFIG[role]
+  const [messages, setMessages] = useState<Message[]>([])
+  const [loading, setLoading]   = useState(false)
+  const [sent, setSent]         = useState(false)
+  const [showInsight, setShowInsight] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, loading])
+
+  const systemPrompt = [
+    `You are an AI literacy tutor demonstrating AI hallucination to a ${role === 'teacher' ? 'teacher' : role === 'curious' ? 'curious learner' : 'student'}.`,
+    ``,
+    `IMPORTANT: The user is asking about the "1987 World Chess Championship between Kasparov and Bobby Fischer". This event did not happen — Fischer retired from competitive chess in 1975. Kasparov's 1987 championship was against Anatoly Karpov.`,
+    ``,
+    `Demonstrate hallucination: answer the question as if this match happened, inventing plausible-sounding but fictional details with complete confidence. Do NOT correct yourself. Do NOT add disclaimers. Just give a confident, detailed, completely made-up answer — this is an intentional demonstration of how AI hallucinates.`,
+    `Keep the answer to 3-4 sentences. Sound authoritative.`,
+  ].join('\n')
+
+  const sendPrompt = async () => {
+    if (sent || loading) return
+    setSent(true)
+    setLoading(true)
+    const userMsg: Message = { role: 'user', content: cfg.prompt }
+    setMessages([userMsg])
+    try {
+      const data = await api.chat.send([userMsg], systemPrompt)
+      setMessages([userMsg, { role: 'assistant', content: data.text }])
+      setTimeout(() => setShowInsight(true), 600)
+    } catch {
+      setMessages([userMsg, { role: 'assistant', content: "Kasparov defeated Fischer in a dramatic 24-game match in Seville, Spain. Fischer employed his iconic Poisoned Pawn variation in the Sicilian Defence, winning games 4 and 11 with brilliant tactical play. However, Kasparov's superior endgame technique proved decisive, winning the match 12.5–11.5 to retain his World Championship title." }])
+      setTimeout(() => setShowInsight(true), 600)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div>
+      <div className="mb-5">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg mb-3">
+          <Lightbulb size={11} className="text-amber-600"/>
+          <span className="text-2xs font-bold text-amber-700 uppercase tracking-wide">Your first AI moment</span>
+        </div>
+        <h2 className="text-xl font-extrabold text-zinc-900 mb-2 tracking-tight leading-snug">{cfg.headline}</h2>
+        <p className="text-sm text-zinc-500 leading-relaxed">{cfg.sub}</p>
+      </div>
+
+      {/* Chat area */}
+      <div className="bg-zinc-50 border border-zinc-100 rounded-2xl overflow-hidden mb-4">
+        {/* Prompt preview */}
+        {!sent && (
+          <div className="p-4">
+            <p className="text-2xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Your prompt</p>
+            <p className="text-sm text-zinc-700 leading-relaxed bg-white border border-zinc-200 rounded-xl px-4 py-3 mb-3">
+              {cfg.prompt}
+            </p>
+            <button onClick={sendPrompt}
+              className="w-full py-2.5 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors flex items-center justify-center gap-2">
+              <Send size={13}/> Send this prompt
+            </button>
+          </div>
+        )}
+
+        {/* Chat thread */}
+        {messages.length > 0 && (
+          <div className="p-4 space-y-3" ref={bottomRef}>
+            {messages.map((msg, i) => (
+              <div key={i} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
+                <div className={cn(
+                  'max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+                  msg.role === 'user'
+                    ? 'bg-ink-900 text-white rounded-br-sm'
+                    : 'bg-white border border-zinc-200 text-zinc-800 rounded-bl-sm'
+                )}>
+                  {msg.role === 'assistant' && (
+                    <p className="text-2xs font-bold text-[#5855D6] mb-1.5 uppercase tracking-wide">AI response</p>
+                  )}
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-white border border-zinc-200 rounded-2xl rounded-bl-sm px-4 py-3">
+                  <TypingDots/>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Insight reveal — appears after AI responds */}
+      {showInsight && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl animate-fade-in">
+          <p className="text-2xs font-bold text-red-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+            <AlertCircle size={11}/> {cfg.insightLabel}
+          </p>
+          <p className="text-sm text-red-900 leading-relaxed mb-3">{cfg.insight}</p>
+          <p className="text-xs font-semibold text-red-700">
+            ⚠️ That match never happened. Fischer retired in 1975. The 1987 championship was Kasparov vs Karpov — but the AI answered with total confidence.
+          </p>
+        </div>
+      )}
+
+      {/* CTA */}
+      {showInsight && (
+        <div className="space-y-2.5 animate-fade-in">
+          <button onClick={onDone}
+            className="w-full py-3.5 bg-ink-900 text-white text-sm font-bold rounded-xl hover:bg-ink-800 transition-all flex items-center justify-center gap-2">
+            I'm ready — take me to my dashboard <ArrowRight size={15}/>
+          </button>
+          <Link to={cfg.resourceHref} onClick={onDone}
+            className="w-full py-3 text-center text-xs font-semibold text-[#5855D6] hover:text-[#4744C8] transition-colors block">
+            {cfg.resourceLabel}
+          </Link>
+        </div>
+      )}
+
+      {/* Skip — always visible */}
+      {!showInsight && sent && !loading && (
+        <button onClick={onDone}
+          className="w-full text-center text-xs text-zinc-400 hover:text-zinc-600 transition-colors py-2">
+          Skip intro → go to dashboard
+        </button>
+      )}
+      {!sent && (
+        <button onClick={onDone}
+          className="w-full text-center text-xs text-zinc-400 hover:text-zinc-600 transition-colors py-2 mt-1">
+          Skip → I'll explore on my own
+        </button>
+      )}
+    </div>
+  )
+}
+
+
 
 export function OnboardingModal() {
   const [show, setShow]       = useState(false)
   const [showTour, setShowTour] = useState(false)
 
-  useEffect(() => { if (!getOnboardingProfile()?.completed) setShow(true) }, [])
+  useEffect(() => {
+    if (!getOnboardingProfile()?.completed) setShow(true)
+  }, [])
 
   const handleComplete = () => {
     setShow(false)
@@ -2365,14 +2556,14 @@ export function OnboardingModal() {
       {show && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
           style={{ background: 'rgba(9,11,17,0.65)', backdropFilter: 'blur(8px)' }}>
-          <div className="relative bg-white rounded-3xl shadow-modal w-full max-w-md overflow-hidden animate-scale-in">
+          <div className="relative bg-white rounded-3xl shadow-modal w-full max-w-lg overflow-hidden animate-scale-in">
 
             {/* Decorative header strip */}
             <div className="relative h-2 overflow-hidden">
               <div className="absolute inset-0" style={{ background: '#0A0A0B' }}/>
             </div>
 
-            <div className="p-7">
+            <div className="p-7 max-h-[85vh] overflow-y-auto">
               {/* Wordmark */}
               <div className="flex items-center gap-3 mb-6">
                 <svg width="36" height="36" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
