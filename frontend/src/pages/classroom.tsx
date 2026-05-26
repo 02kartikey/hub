@@ -24,7 +24,7 @@ import { useFetch, PageLoader, PageError } from './shared'
 type AssignableItem = {
   id: string
   title: string
-  type: 'resource' | 'exercise' | 'path' | 'quiz' | 'video' | 'other'
+  type: 'resource' | 'exercise' | 'path' | 'activity'
 }
 
 function generateCode() {
