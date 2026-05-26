@@ -20,6 +20,7 @@ import type { PathQuiz, QuizQuestion } from '../api'
 import { useAuth, useProgress, useBookmarks, getOnboardingProfile, supabase } from '../auth'
 import { checkAndAward, awardBadge, useBadges, BadgeCard, BADGES, getEarnedBadges, BadgesPage } from '../badges'
 import { useFetch, PageLoader, PageError } from './shared'
+import { HomePage } from './home'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // BROWSE PAGE
