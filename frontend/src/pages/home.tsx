@@ -19,7 +19,7 @@ import type { Resource, LearningPath, ClassroomActivity, DeepExercise, Message }
 import type { PathQuiz, QuizQuestion } from '../api'
 import { useAuth, useProgress, useBookmarks, getOnboardingProfile, supabase } from '../auth'
 import { checkAndAward, awardBadge, useBadges, BadgeCard, BADGES, getEarnedBadges, BadgesPage } from '../badges'
-import { useFetch, PageLoader, PageError } from './shared'
+import { useFetch, PageLoader, PageError, SectionHeading } from './shared'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // HOME PAGE
@@ -272,7 +272,6 @@ export function HomePage() {
     <div className="px-4 lg:px-8 py-6 max-w-6xl mx-auto">
       <OSHero name={userName ?? undefined}/>
       <MyAssignmentsWidget/>
-      <StartHereBannerHome/>
       <ProgressStatBar progressMap={progressMap} paths={paths}/>
       <DailyFocus progressMap={progressMap} paths={paths} resources={allResources}/>
       <CapabilityModules/>
@@ -307,4 +306,3 @@ export function HomePage() {
 // Alias — App.tsx routes /dashboard to DashboardPage
 export const DashboardPage = HomePage
 
-export const DashboardPage = HomePage

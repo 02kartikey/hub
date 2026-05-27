@@ -272,6 +272,13 @@ export function TryPage() {
     navigate(`/playground/${exercise?.id ?? ''}`)
   }
 
+  const goSignup = () => {
+    if (role) localStorage.setItem('aihub_signup_role', role)
+    if (goalId) localStorage.setItem('aihub_signup_goal', goalId)
+    localStorage.setItem('aihub_try_done', '1')
+    navigate('/auth/signup')
+  }
+
   return (
     <div className="min-h-screen bg-ink-950 flex flex-col items-center justify-start px-4 py-8">
 
