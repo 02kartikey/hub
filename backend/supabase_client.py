@@ -1,31 +1,132 @@
-"""supabase_client.py — Supabase client + FastAPI auth dependency"""
+"""
+supabase_client.py — zero extra dependencies.
+Uses httpx (already in requirements.txt) for all Supabase REST/PostgREST calls.
+No 'supabase' pip package needed.
+"""
 from __future__ import annotations
 import os
+from types import SimpleNamespace
 from typing import Any
 
 import httpx
 from fastapi import Header, HTTPException
 import jwt as pyjwt
-from supabase import create_client, Client
 
 _SUPA_URL    = os.getenv("SUPABASE_URL", "")
 _SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 _JWT_SECRET  = os.getenv("SUPABASE_JWT_SECRET", "")
 
+_REST = f"{_SUPA_URL}/rest/v1"
+_SVC_HEADERS = {
+    "apikey":        _SERVICE_KEY,
+    "Authorization": f"Bearer {_SERVICE_KEY}",
+    "Content-Type":  "application/json",
+}
+
+
+# ── Minimal synchronous PostgREST builder ─────────────────────────────────────
+# Mirrors the supabase-py   table("x").select("*").eq("col",val).execute()  API
+# so main.py needs zero changes.
+
+class _Table:
+    """Lazy query builder — nothing hits the network until .execute() is called."""
+
+    def __init__(self, table: str):
+        self._url      = f"{_REST}/{table}"
+        self._h        = dict(_SVC_HEADERS)
+        self._filters: dict[str, str] = {}
+        self._cols     = "*"
+        self._order: str | None = None
+        self._lim:   int | None = None
+        self._op     = "select"        # select | insert | upsert | delete
+        self._body:  dict | None = None
+        self._conflict = "id"
+
+    # ── builder helpers (each returns a fresh copy so chains don't mutate) ────
+
+    def _copy(self) -> "_Table":
+        c = _Table.__new__(_Table)
+        c._url, c._h    = self._url, self._h
+        c._filters      = dict(self._filters)
+        c._cols         = self._cols
+        c._order        = self._order
+        c._lim          = self._lim
+        c._op           = self._op
+        c._body         = self._body
+        c._conflict     = self._conflict
+        return c
+
+    def select(self, cols: str = "*"):
+        c = self._copy(); c._op = "select"; c._cols = cols; return c
+
+    def eq(self, col: str, val: Any):
+        c = self._copy(); c._filters[col] = f"eq.{val}"; return c
+
+    def limit(self, n: int):
+        c = self._copy(); c._lim = n; return c
+
+    def order(self, col: str, desc: bool = False):
+        c = self._copy(); c._order = f"{col}.{'desc' if desc else 'asc'}"; return c
+
+    def insert(self, row: dict):
+        c = self._copy(); c._op = "insert"; c._body = row; return c
+
+    def upsert(self, row: dict, on_conflict: str = "id"):
+        c = self._copy(); c._op = "upsert"; c._body = row; c._conflict = on_conflict; return c
+
+    def delete(self):
+        c = self._copy(); c._op = "delete"; return c
+
+    # ── execute ───────────────────────────────────────────────────────────────
+
+    def execute(self) -> SimpleNamespace:
+        params: dict[str, str] = {**self._filters}
+        if self._order: params["order"] = self._order
+        if self._lim:   params["limit"] = str(self._lim)
+
+        if self._op == "select":
+            params["select"] = self._cols
+            r = httpx.get(self._url, headers=self._h, params=params, timeout=10)
+
+        elif self._op == "insert":
+            h = {**self._h, "Prefer": "return=representation"}
+            r = httpx.post(self._url, headers=h, json=self._body, params=params, timeout=10)
+
+        elif self._op == "upsert":
+            h = {**self._h, "Prefer": "resolution=merge-duplicates,return=representation"}
+            params["on_conflict"] = self._conflict
+            r = httpx.post(self._url, headers=h, json=self._body, params=params, timeout=10)
+
+        elif self._op == "delete":
+            h = {**self._h, "Prefer": "return=representation"}
+            r = httpx.delete(self._url, headers=h, params=params, timeout=10)
+
+        else:
+            raise ValueError(f"Unknown op: {self._op}")
+
+        raw  = r.json() if r.content else []
+        data = raw if isinstance(raw, list) else ([raw] if isinstance(raw, dict) else [])
+        return SimpleNamespace(data=data, error=None if r.is_success else raw)
+
+
+class _SyncClient:
+    """Drop-in replacement for supabase-py's sync Client for server-side DB ops."""
+
+    def table(self, name: str) -> _Table:
+        return _Table(name)
+
+
+# ── Main SupabaseClient ────────────────────────────────────────────────────────
 
 class SupabaseClient:
     def __init__(self):
-        # supabase-py client using the service role key (bypasses RLS, safe server-side only)
-        self.client: Client = create_client(_SUPA_URL, _SERVICE_KEY)
+        # .client mimics supabase-py: sb.client.table("x").select("*").execute()
+        self.client = _SyncClient()
 
-        # Raw httpx client kept for any legacy async helpers
+        # Async httpx client for legacy async helpers (progress, bookmarks, etc.)
         self._c = httpx.AsyncClient(
             base_url=f"{_SUPA_URL}/rest/v1/",
-            headers={
-                "apikey": _SERVICE_KEY,
-                "Authorization": f"Bearer {_SERVICE_KEY}",
-                "Content-Type": "application/json",
-            },
+            headers=_SVC_HEADERS,
             timeout=10.0,
         )
 
@@ -40,7 +141,7 @@ class SupabaseClient:
         except Exception:
             return None
 
-    # ── Async helpers (used by non-classroom routes) ──────────────────────────
+    # ── Async helpers used by non-classroom routes ─────────────────────────────
 
     async def get_progress(self, user_id: str) -> list[dict]:
         r = await self._c.get(f"resource_progress?user_id=eq.{user_id}")
@@ -91,13 +192,12 @@ class SupabaseClient:
     def upsert_quiz_result(self, user_id: str, path_id: str,
                             score: int, passed: bool):
         self.client.table("quiz_results").upsert({
-            "user_id": user_id,
-            "path_id": path_id,
-            "score": score,
-            "passed": passed,
-            "taken_at": "now()",
+            "user_id": user_id, "path_id": path_id,
+            "score": score, "passed": passed,
         }, on_conflict="user_id,path_id").execute()
 
+
+# ── FastAPI auth dependency ────────────────────────────────────────────────────
 
 def get_current_user(authorization: str = Header(default="")) -> str:
     if not authorization.startswith("Bearer "):
