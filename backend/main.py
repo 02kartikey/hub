@@ -355,6 +355,20 @@ class AssignmentCreate(BaseModel):
     note: str | None = None
     due_date: str | None = None
 
+
+@app.patch("/api/classroom/code")
+async def regenerate_code(body: dict, user_id: str = Depends(get_current_user)):
+    """Let a teacher set a new join code for their classroom."""
+    new_code = body.get("code", "")
+    if not new_code or len(new_code) != 6:
+        raise HTTPException(400, "Invalid code")
+    res = sb.client.table("classrooms").select("id").eq("teacher_id", user_id).limit(1).execute()
+    if not res.data:
+        raise HTTPException(404, "No classroom found")
+    classroom_id = res.data[0]["id"]
+    sb.client.table("classrooms").upsert({"id": classroom_id, "code": new_code.upper()}, on_conflict="id").execute()
+    return {"ok": True, "code": new_code.upper()}
+
 @app.get("/api/classroom/assignments")
 async def list_assignments(req: Request, user_id: str = Depends(get_current_user)):
     cls_res = sb.client.table("classrooms").select("id").eq("teacher_id", user_id).limit(1).execute()
