@@ -26,7 +26,7 @@ export interface Assignment {
 }
 
 // ── Base URL — reads from env in production, empty string in local dev ────────
-const BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+export const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
 
 let _token: string | null = null
 
@@ -83,7 +83,7 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     ...(options.headers as Record<string, string>),
   }
   if (_token) headers['Authorization'] = `Bearer ${_token}`
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new Error(body.detail ?? body.error ?? `HTTP ${res.status}`)
@@ -163,7 +163,7 @@ function quizzesApi() {
 function chatApi() {
   return {
     send: async (messages: Message[], systemPrompt?: string): Promise<{ text: string }> => {
-      const res = await fetch(`${BASE_URL}/api/chat`, {
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

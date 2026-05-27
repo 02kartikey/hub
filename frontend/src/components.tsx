@@ -18,7 +18,7 @@ import { useAuth, supabase, useProgress, useBookmarks, getOnboardingProfile,
 import { useBadges, BadgeNotificationManager, checkAndAward, BADGES } from './badges'
 import { buildSearchIndex, search as searchIndex, isIndexReady } from './search'
 import type { SearchResult } from './search'
-import { api } from './api'
+import { api, API_BASE } from './api'
 import type {
   Resource, LearningPath, ExerciseStage, DeepExercise,
   Message, OnboardingProfile, OnboardRole, Perspective, RealWorldCase,
@@ -145,7 +145,7 @@ function AssignmentNavCount() {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session || cancelled) return
-        const res = await fetch('/api/classroom/my-assignments', {
+        const res = await fetch(`${API_BASE}/api/classroom/my-assignments`, {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
         })
         if (res.ok && !cancelled) {
@@ -352,8 +352,8 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   useEffect(() => {
     if (isIndexReady()) return
     Promise.all([
-      fetch('/api/resources?limit=200').then(r => r.json()),
-      fetch('/api/paths').then(r => r.json()),
+      fetch(`${API_BASE}/api/resources?limit=200`).then(r => r.json()),
+      fetch(`${API_BASE}/api/paths`).then(r => r.json()),
     ]).then(([resData, pathData]) => {
       buildSearchIndex(resData.data ?? [], pathData.data ?? [])
     }).catch(() => {})
