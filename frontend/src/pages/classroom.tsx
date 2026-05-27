@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Brain, FlaskConical, Users, Video, Globe, GraduationCap,
@@ -21,247 +21,11 @@ import { useAuth, useProgress, useBookmarks, getOnboardingProfile, supabase } fr
 import { checkAndAward, awardBadge, useBadges, BadgeCard, BADGES, getEarnedBadges, BadgesPage } from '../badges'
 import { useFetch, PageLoader, PageError } from './shared'
 
-type AssignableItem = {
-  id: string
-  title: string
-  type: 'resource' | 'exercise' | 'path' | 'activity'
-}
-
-function generateCode() {
-  return Math.random().toString(36).slice(2, 8).toUpperCase()
-}
-
-function avatarColor(name: string) {
-  const palette = [
-    'bg-indigo-100 text-indigo-700',
-    'bg-emerald-100 text-emerald-700',
-    'bg-amber-100 text-amber-700',
-    'bg-pink-100 text-pink-700',
-    'bg-sky-100 text-sky-700',
-    'bg-violet-100 text-violet-700',
-  ]
-  let hash = 0
-  for (let i = 0; i < name.length; i += 1) {
-    hash = (hash * 31 + name.charCodeAt(i)) >>> 0
-  }
-  return palette[hash % palette.length]
-}
-
-function getResourceTitle(resource: Resource) {
-  const r = resource as unknown as Record<string, unknown>
-  return String(r.title ?? r.name ?? r.label ?? 'Untitled resource')
-}
-
-function getResourceType(resource: Resource): AssignableItem['type'] {
-  const r = resource as unknown as Record<string, unknown>
-
-  const raw = String(
-    r.type ?? r.content_type ?? 'resource'
-  ).toLowerCase()
-
-  if (raw === 'exercise') return 'exercise'
-  if (raw === 'path') return 'path'
-
-  // map unsupported backend types → activity
-  if (
-    raw === 'quiz' ||
-    raw === 'video' ||
-    raw === 'other' ||
-    raw === 'activity'
-  ) {
-    return 'activity'
-  }
-
-  return 'resource'
-}
-
-function AssignModal({
-  resources,
-  onClose,
-  onAssign,
-}: {
-  resources: Resource[]
-  onClose: () => void
-  onAssign: (item: AssignableItem, dueDate: string, note: string) => void
-}) {
-  const [selectedId, setSelectedId] = useState(resources[0]?.id ?? '')
-  const [dueDate, setDueDate] = useState('')
-  const [note, setNote] = useState('')
-
-  const selected = resources.find((r) => r.id === selectedId) ?? resources[0] ?? null
-
-  const handleAssign = () => {
-    if (!selected) return
-    onAssign(
-      {
-        id: selected.id,
-        title: getResourceTitle(selected),
-        type: getResourceType(selected),
-      },
-      dueDate,
-      note,
-    )
-    onClose()
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl">
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-base font-bold text-zinc-900">Assign to class</h3>
-            <p className="text-xs text-zinc-500">Choose a resource and add an optional note or due date.</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
-            aria-label="Close"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        {resources.length === 0 ? (
-          <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-500">
-            No assignable resources were found.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-semibold text-zinc-700">Resource</span>
-              <select
-                value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5855D6]"
-              >
-                {resources.map((resource) => (
-                  <option key={resource.id} value={resource.id}>
-                    {getResourceTitle(resource)}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold text-zinc-700">Due date</span>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5855D6]"
-                />
-              </label>
-
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-semibold text-zinc-700">Note</span>
-                <input
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="Optional message for students"
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5855D6]"
-                />
-              </label>
-            </div>
-
-            <div className="flex items-center justify-end gap-2">
-              <button
-                onClick={onClose}
-                className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAssign}
-                disabled={!selected}
-                className="rounded-xl bg-[#5855D6] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#4744C8] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Assign
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function StudentProfile({
-  student,
-  assignments,
-  onBack,
-}: {
-  student: StudentRow
-  assignments: Assignment[]
-  onBack: () => void
-}) {
-  return (
-    <div className="space-y-5">
-      <button
-        onClick={onBack}
-        className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
-      >
-        <ArrowLeft size={13} />
-        Back
-      </button>
-
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className={cn('mb-3 flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-bold', avatarColor(student.name))}>
-              {student.name
-                .split(' ')
-                .map((part) => part[0])
-                .join('')
-                .slice(0, 2)
-                .toUpperCase()}
-            </div>
-            <h2 className="text-xl font-bold text-zinc-900">{student.name}</h2>
-            <p className="text-sm text-zinc-500">{student.email || 'No email provided'}</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-xl bg-zinc-50 px-4 py-3 text-center">
-              <p className="text-lg font-bold text-zinc-900">{student.completed}</p>
-              <p className="text-2xs font-semibold uppercase tracking-widest text-zinc-500">Done</p>
-            </div>
-            <div className="rounded-xl bg-zinc-50 px-4 py-3 text-center">
-              <p className="text-lg font-bold text-zinc-900">{student.rate}%</p>
-              <p className="text-2xs font-semibold uppercase tracking-widest text-zinc-500">Progress</p>
-            </div>
-            <div className="rounded-xl bg-zinc-50 px-4 py-3 text-center">
-              <p className="text-lg font-bold text-zinc-900">{student.streak > 0 ? student.streak : '—'}</p>
-              <p className="text-2xs font-semibold uppercase tracking-widest text-zinc-500">Streak</p>
-            </div>
-            <div className="rounded-xl bg-zinc-50 px-4 py-3 text-center">
-              <p className="text-lg font-bold text-zinc-900">{student.quizScore != null ? `${student.quizScore}%` : '—'}</p>
-              <p className="text-2xs font-semibold uppercase tracking-widest text-zinc-500">Quiz</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h3 className="mb-3 text-sm font-bold uppercase tracking-widest text-zinc-500">Assignments</h3>
-        {assignments.length === 0 ? (
-          <p className="text-sm text-zinc-500">No assignments yet.</p>
-        ) : (
-          <div className="space-y-2">
-            {assignments.map((assignment) => (
-              <div key={assignment.id} className="rounded-xl border border-zinc-200 px-4 py-3">
-                <p className="text-sm font-semibold text-zinc-900">{assignment.title}</p>
-                {assignment.note && <p className="mt-1 text-xs text-zinc-500">{assignment.note}</p>}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
   )
 }
 
 // ── Main dashboard ────────────────────────────────────────────────────────────
-function TeacherClassroomDashboard() {
+export function TeacherClassroomDashboard() {
   const { user, profile } = useAuth()
 
   // State
@@ -269,6 +33,7 @@ function TeacherClassroomDashboard() {
   const [students,     setStudents]     = useState<StudentRow[]>([])
   const [assignments,  setAssignments]  = useState<Assignment[]>([])
   const [resources,    setResources]    = useState<Resource[]>([])
+  const [paths,        setPaths]        = useState<LearningPath[]>([])
   const [loading,      setLoading]      = useState(true)
   const [copied,       setCopied]       = useState(false)
   const [sortBy,       setSortBy]       = useState<'rate' | 'name' | 'quiz' | 'streak'>('rate')
@@ -290,86 +55,59 @@ function TeacherClassroomDashboard() {
     if (!user) return
     setLoading(true)
     try {
-      // Get or create classroom
-      const { data: clsRows } = await supabase
-        .from('classrooms').select('*').eq('teacher_id', user.id).limit(1)
-      let cls: Classroom | null = clsRows?.[0] ?? null
-      if (!cls) {
-        const tryInsert = async (): Promise<Classroom | null> => {
-          const { data, error } = await supabase
-            .from('classrooms')
-            .insert({ teacher_id: user.id, code: generateCode(), name: 'My Classroom' })
-            .select().single()
-          if (error?.code === '23505') return tryInsert()
-          return data ?? null
-        }
-        cls = await tryInsert()
-      }
-      if (!cls) return
+      const res = await fetch('/api/classroom', {
+        headers: { 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token ?? ''}` }
+      })
+      if (!res.ok) throw new Error(`${res.status}`)
+      const { classroom: cls, students: studs } = await res.json()
       setClassroom(cls)
+      setStudents(studs ?? [])
 
-      // Members
-      const { data: memberRows } = await supabase
-        .from('classroom_members').select('student_id, joined_at').eq('classroom_id', cls.id)
-      if (!memberRows?.length) { setStudents([]); return }
-
-      const ids = memberRows.map(m => m.student_id)
-
-      // Parallel fetch: profiles + resource progress + quiz results
-      const [{ data: profileRows }, { data: progressRows }, { data: quizRows }, { data: assignRows }] =
-        await Promise.all([
-          supabase.from('profiles').select('id, full_name, email').in('id', ids),
-          supabase.from('resource_progress').select('user_id, completed').in('user_id', ids),
-          supabase.from('quiz_results').select('user_id, score').in('user_id', ids),
-          supabase.from('assignments').select('*').eq('classroom_id', cls.id).order('created_at', { ascending: false }),
-        ])
-
-      setAssignments(assignRows ?? [])
-
-      setStudents(memberRows.map(m => {
-        const p      = profileRows?.find(x => x.id === m.student_id)
-        const prog   = progressRows?.filter(x => x.user_id === m.student_id) ?? []
-        const done   = prog.filter(x => x.completed).length
-        const quizzes = quizRows?.filter(x => x.user_id === m.student_id) ?? []
-        const avgQuiz = quizzes.length
-          ? Math.round(quizzes.reduce((s, q) => s + q.score, 0) / quizzes.length)
-          : null
-
-        // Streak: approximate from updated_at recency — real impl would use a streak table
-        const streak = 0 // placeholder — real data needs a streak tracking table
-
-        return {
-          id: m.student_id,
-          name: p?.full_name ?? 'Student',
-          email: p?.email ?? '',
-          joinedAt: m.joined_at,
-          started: prog.length,
-          completed: done,
-          rate: prog.length > 0 ? Math.round((done / prog.length) * 100) : 0,
-          streak,
-          quizScore: avgQuiz,
-          pathProgress: {},  // would need path_progress table for real per-path data
-        }
-      }))
-    } finally { setLoading(false) }
+      // Load assignments separately
+      const aRes = await fetch('/api/classroom/assignments', {
+        headers: { 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token ?? ''}` }
+      })
+      if (aRes.ok) {
+        const { data } = await aRes.json()
+        setAssignments(data ?? [])
+      }
+    } catch (e) {
+      console.error('Classroom load failed:', e)
+    } finally {
+      setLoading(false)
+    }
   }, [user])
 
   useEffect(() => { loadDashboard() }, [loadDashboard])
 
   // Load assignable resources once
   useEffect(() => {
-    api.resources.list({ limit: 60 }).then(r => setResources(r.data)).catch(() => {})
+    fetch('/api/resources?limit=80')
+      .then(r => r.json())
+      .then(d => setResources(d.data ?? []))
+      .catch(() => {})
+    fetch('/api/paths')
+      .then(r => r.json())
+      .then(d => setPaths(d.data ?? []))
+      .catch(() => {})
   }, [])
 
   const handleAssign = async (item: AssignableItem, dueDate: string, note: string) => {
     try {
-      const { assignment } = await api.classroom.createAssignment({
-        content_type: item.type,
-        content_id: item.id,
-        title: item.title,
-        note: note || undefined,
-        due_date: dueDate || undefined,
+      const token = (await supabase.auth.getSession()).data.session?.access_token ?? ''
+      const res = await fetch('/api/classroom/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          content_type: item.type,
+          content_id: item.id,
+          title: item.title,
+          note: note || null,
+          due_date: dueDate || null,
+        }),
       })
+      if (!res.ok) throw new Error(`${res.status}`)
+      const { assignment } = await res.json()
       setAssignments(prev => [assignment, ...prev])
     } catch (e) {
       console.error('Assign failed', e)
@@ -378,7 +116,11 @@ function TeacherClassroomDashboard() {
 
   const deleteAssignment = async (id: string) => {
     try {
-      await api.classroom.deleteAssignment(id)
+      const token = (await supabase.auth.getSession()).data.session?.access_token ?? ''
+      await fetch(`/api/classroom/assignments/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
       setAssignments(prev => prev.filter(a => a.id !== id))
     } catch {}
   }
@@ -421,6 +163,7 @@ function TeacherClassroomDashboard() {
       {assignOpen && (
         <AssignModal
           resources={resources}
+          paths={paths}
           onClose={() => setAssignOpen(false)}
           onAssign={handleAssign}
         />
@@ -713,10 +456,3 @@ You explain: LLMs, transformers, attention, RLHF, hallucination, sycophancy, bia
 
 Rules: Be clear, direct, honest. Never hype AI. Acknowledge uncertainty. Under 200 words unless depth is needed. Encourage critical thinking over AI dependence.`
 }
-
-export { TeacherClassroomDashboard }
-
-export default function ClassroomPage() {
-  return <TeacherClassroomDashboard />
-}
-
