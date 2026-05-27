@@ -21,17 +21,18 @@ from supabase_client import SupabaseClient, get_current_user
 load_dotenv()
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "")
 
-DATA = Path(__file__).parent.parent / "data"
+DATA = Path(__file__).parent.parent / "data"   # root/data/ ← sibling of backend/
 _c: dict[str, Any] = {}
 
 def _load():
-    for name in ("resources","paths","activities","deep-exercises","tools","quizzes"):
+    for name in ("resources","paths","activities","deep-exercises","tools","quizzes","workflows"):
         fp = DATA / f"{name}.json"
         if fp.exists():
             with open(fp, encoding="utf-8") as f:
                 _c[name] = json.load(f)
     print(f"[content] {len(_c.get('resources',[]))} resources | {len(_c.get('paths',[]))} paths | "
-          f"{len(_c.get('activities',[]))} activities | {len(_c.get('deep-exercises',[]))} exercises")
+          f"{len(_c.get('activities',[]))} activities | {len(_c.get('deep-exercises',[]))} exercises | "
+          f"{len(_c.get('workflows',{}).get('workflows',[]))} workflows")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -155,6 +156,15 @@ async def get_walkthrough(wid:str):
     w = next((w for w in walkthroughs if w["id"]==wid), None)
     if not w: raise HTTPException(404,f"Walkthrough '{wid}' not found")
     return w
+
+# ── Workflows ───────────────────────────────────────────────────────────────────
+@app.get("/api/workflows")
+async def list_workflows(category:str|None=None, audience:str|None=None):
+    data = _c.get("workflows",{})
+    items = data.get("workflows",[]) if isinstance(data,dict) else []
+    if category: items = [w for w in items if w.get("category")==category]
+    if audience: items = [w for w in items if audience in w.get("audience",[])]
+    return {"data":items,"total":len(items)}
 
 # ── AI Chat ────────────────────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
