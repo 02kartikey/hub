@@ -1,0 +1,555 @@
+{
+  "workflows": [
+    {
+      "id": "research-to-presentation",
+      "title": "Research → Summarise → Present",
+      "tagline": "Turn any topic into a polished presentation using 3 AI tools in sequence",
+      "difficulty": "beginner",
+      "duration": "45–60 min",
+      "tools": ["Perplexity", "NotebookLM", "Gamma"],
+      "category": "Academic",
+      "audience": ["student", "teacher"],
+      "prerequisites": ["perplexity-basics", "notebooklm-basics"],
+      "whatYouBuild": "A fully sourced, well-structured presentation on any topic — research verified, key ideas extracted, slides generated",
+      "realWorldUse": "CBSE/IGCSE project submissions, college applications, debate prep, teacher lesson materials",
+      "phases": [
+        {
+          "id": "phase-1",
+          "title": "Find and verify sources with Perplexity",
+          "tool": "Perplexity",
+          "duration": "15 min",
+          "objective": "Use Perplexity's cited search to gather 5–8 verified, sourced facts on your topic — not AI-generated claims, actual citations you can open.",
+          "steps": [
+            {
+              "id": "s1",
+              "title": "Ask with intent, not just keywords",
+              "content": "Don't type 'climate change'. Type: 'What are the three most significant peer-reviewed findings on climate change impacts in South Asia in the last 5 years?' Perplexity returns cited answers — every claim links to its source.",
+              "prompt": "What are the most significant documented impacts of climate change on agricultural yield in South Asia between 2018–2023? Cite peer-reviewed studies or government reports.",
+              "tip": "The more specific your question, the more citable the answer. Vague questions return vague, hard-to-cite responses."
+            },
+            {
+              "id": "s2",
+              "title": "Open and verify every source",
+              "content": "Click every citation Perplexity gives you. Open the actual page. Check that the claim in the source matches what Perplexity said. This is the step 95% of students skip — and it's the step that separates a good submission from a failing one.",
+              "warning": "Perplexity occasionally misattributes quotes or slightly misrepresents what a source says. Always verify. This is not a bug — it's a fundamental property of all AI systems."
+            },
+            {
+              "id": "s3",
+              "title": "Build your source list",
+              "content": "Copy the 5–8 facts you've verified (with their source URLs) into a simple document. Label each one clearly. This is your verified research base — everything you build next comes from this list only.",
+              "tip": "Format each entry as: [FACT] | [SOURCE URL] | [Why relevant]. This makes the next phases much faster."
+            }
+          ],
+          "output": "A document with 5–8 verified, cited facts on your topic"
+        },
+        {
+          "id": "phase-2",
+          "title": "Extract structure and key ideas with NotebookLM",
+          "tool": "NotebookLM",
+          "duration": "15 min",
+          "objective": "Upload your verified source documents to NotebookLM. Use it to identify structure, find patterns across sources, and generate an outline — all grounded in your actual documents, not AI hallucinations.",
+          "steps": [
+            {
+              "id": "s4",
+              "title": "Upload your sources as a Notebook",
+              "content": "Create a new NotebookLM notebook. Upload the documents from Phase 1 (or paste the verified content directly). NotebookLM only knows what you give it — it cannot hallucinate facts from outside your sources.",
+              "tip": "This is the key difference from ChatGPT or Claude: NotebookLM is grounded. Every answer it gives cites page numbers from your uploaded documents."
+            },
+            {
+              "id": "s5",
+              "title": "Ask for an outline, not content",
+              "content": "Ask: 'Based on these documents, what are the 4–5 most important themes? Suggest a logical presentation structure.' You want a skeleton, not filled-in content — you'll write the actual content yourself in Phase 3.",
+              "prompt": "Based on the documents I've uploaded, identify the 4 most important themes and suggest a logical flow for a 10-slide presentation. For each theme, note which document/section it comes from."
+            },
+            {
+              "id": "s6",
+              "title": "Generate your talking points",
+              "content": "For each theme in your outline, ask NotebookLM: 'Give me 2–3 specific, citable talking points for this section, with source references.' These become your slide content — grounded in documents, not invented.",
+              "tip": "If NotebookLM can't find support for a talking point in your documents, that's important information. It means that point isn't in your sources and you'd need to find more evidence."
+            }
+          ],
+          "output": "A 4–5 point outline with cited talking points for each section"
+        },
+        {
+          "id": "phase-3",
+          "title": "Build the presentation with Gamma",
+          "tool": "Gamma",
+          "duration": "15 min",
+          "objective": "Feed your outline and talking points into Gamma to generate a polished, structured slide deck. Then edit it — AI generates the shell, you add the judgment.",
+          "steps": [
+            {
+              "id": "s7",
+              "title": "Paste your outline into Gamma",
+              "content": "Open Gamma. Click 'Generate'. Paste your full outline with talking points. Specify: number of slides (8–12), audience (students/teachers/examiner), and tone (academic/professional). Gamma generates a complete deck in under 30 seconds.",
+              "prompt": "Create an 8-slide academic presentation on [your topic]. Audience: CBSE Class 12 examiner. Tone: formal and evidence-based. Slides: Title, Introduction, [4 theme slides], Conclusion, References."
+            },
+            {
+              "id": "s8",
+              "title": "Edit with judgment — not more AI",
+              "content": "Now you do the work AI cannot do. Review every slide: Does the data match your verified sources? Is the narrative logical? Does slide 4 actually follow from slide 3? Add speaker notes, adjust phrasing, ensure the argument builds. The AI gave you a starting point — you make it yours.",
+              "warning": "Never submit a Gamma deck without reading every word. Gamma occasionally writes confident-sounding sentences that are subtly wrong or don't match your source material."
+            },
+            {
+              "id": "s9",
+              "title": "Add your references slide",
+              "content": "Manually create a final References slide with all your verified source URLs from Phase 1. AI-generated presentations frequently omit or fabricate citations. Yours won't — because you're adding them from the verified list you built yourself.",
+              "tip": "A references slide is what separates an AI-assisted presentation from an AI-generated one. Examiners notice the difference."
+            }
+          ],
+          "output": "A polished, fully cited presentation you can submit or present"
+        }
+      ],
+      "keyTakeaway": "The most powerful AI workflows keep humans in control of verification and judgment. AI accelerates the mechanical work — finding, structuring, formatting — while you own the critical work: verifying facts, building the argument, adding citations. This workflow scales to any topic, any subject, any level."
+    },
+    {
+      "id": "ai-assisted-study",
+      "title": "The Deep Study Loop",
+      "tagline": "Use Claude + Khanmigo + Quizlet AI to go from confused to exam-ready on any concept",
+      "difficulty": "beginner",
+      "duration": "60–90 min",
+      "tools": ["Claude", "Khanmigo", "Quizlet AI"],
+      "category": "Exam Prep",
+      "audience": ["student"],
+      "prerequisites": ["claude-basics"],
+      "whatYouBuild": "A full understanding of one concept — explained, tested, and retained using spaced repetition",
+      "realWorldUse": "CBSE Code 417 exam prep, IGCSE Computer Science, IB AI units, any conceptually dense topic",
+      "phases": [
+        {
+          "id": "phase-1",
+          "title": "Break down the concept with Claude",
+          "tool": "Claude",
+          "duration": "20 min",
+          "objective": "Get a precise, level-appropriate explanation of the concept — then use Claude to probe until there are no remaining gaps.",
+          "steps": [
+            {
+              "id": "s1",
+              "title": "Ask for a layered explanation",
+              "content": "Don't ask 'explain neural networks'. Ask: 'Explain neural networks to a CBSE Class 11 student who understands basic maths but has never coded. Start with an analogy, then explain the actual mechanism, then tell me what the most common misconception is.'",
+              "prompt": "Explain [concept] to a [your level] student. Structure it as: (1) An everyday analogy that captures the core idea, (2) The actual technical mechanism in simple terms, (3) The most common misconception students have, (4) One exam-style question that tests real understanding (not memorisation)."
+            },
+            {
+              "id": "s2",
+              "title": "Attack every part you didn't understand",
+              "content": "Read Claude's explanation. Identify the one sentence that confused you most. Ask: 'You said [exact quote]. I don't understand the [specific part]. Explain that part only, using a different analogy.' Repeat until the concept is completely clear.",
+              "tip": "The temptation is to move on when something 'kind of' makes sense. Resist it. The exam will test exactly the part you were almost-but-not-quite sure about."
+            },
+            {
+              "id": "s3",
+              "title": "Generate your own explanation",
+              "content": "Close Claude. Write a 3-sentence explanation of the concept in your own words — as if explaining to a younger sibling who knows nothing. Then paste it back to Claude and ask: 'What did I get wrong or oversimplify?' This reveals gaps you didn't know you had.",
+              "warning": "If you can't write the 3 sentences without looking at notes, you don't understand it yet. The feeling of understanding after reading an explanation is not the same as actually understanding it."
+            }
+          ],
+          "output": "A clear, gap-free understanding of the concept with your own explanation verified"
+        },
+        {
+          "id": "phase-2",
+          "title": "Go deeper with Khanmigo",
+          "tool": "Khanmigo",
+          "duration": "20 min",
+          "objective": "Use Khanmigo's Socratic teaching style to test whether you actually understand — not just whether you can repeat the explanation back.",
+          "steps": [
+            {
+              "id": "s4",
+              "title": "Switch from answers to questions",
+              "content": "Open Khanmigo. Tell it: 'I think I understand [concept]. Ask me questions that test whether I truly understand it — not recall, but application and reasoning. Don't give me answers until I've tried.' Khanmigo is specifically designed to teach through questions rather than explanations.",
+              "tip": "Khanmigo will often refuse to give you the answer directly — it will guide you there instead. This is intentional and it's exactly what makes understanding stick."
+            },
+            {
+              "id": "s5",
+              "title": "Work through application problems",
+              "content": "Ask Khanmigo: 'Give me a problem where I have to apply [concept] — not just define it. I want a scenario-based question, not a fill-in-the-blank.' Work through it step by step. If you get stuck, ask for a hint, not the answer.",
+              "prompt": "Give me an application problem for [concept] that would appear in a CBSE/IGCSE exam. Don't give me the answer — give me the first hint if I ask for it."
+            }
+          ],
+          "output": "Verified ability to apply the concept — not just define it"
+        },
+        {
+          "id": "phase-3",
+          "title": "Lock it in with Quizlet AI",
+          "tool": "Quizlet AI",
+          "duration": "20 min",
+          "objective": "Create a targeted flashcard set from your study session and begin spaced repetition so the concept stays in memory for the actual exam.",
+          "steps": [
+            {
+              "id": "s6",
+              "title": "Generate cards from your own notes",
+              "content": "Open Quizlet. Use 'Create with AI'. Paste your verified 3-sentence explanation + any key definitions from Phase 1. Ask it to create 8–10 flashcards: definitions, key distinctions, and one application example. Review every card — edit anything that's slightly off.",
+              "tip": "The best flashcards are written in your own words, not copied from explanations. Quizlet AI will often generate overly formal definitions — simplify them so you can recall them under exam pressure."
+            },
+            {
+              "id": "s7",
+              "title": "First review session",
+              "content": "Do one full run through the deck immediately. Mark cards as 'still learning' honestly — don't mark something as known because you recognised it. Recognition ≠ recall. The exam gives you a blank page, not multiple choice.",
+              "warning": "The most common study mistake is reviewing cards too soon after creating them. Your brain still has the explanation in short-term memory. Come back to the deck in 24 hours for genuine testing."
+            },
+            {
+              "id": "s8",
+              "title": "Schedule your spaced sessions",
+              "content": "Set Quizlet to remind you to review this deck in 1 day, 3 days, and 7 days. Spaced repetition is the only proven technique for moving information from short-term to long-term memory. Everything else is just practice with forgetting.",
+              "tip": "If you have an exam in 2 weeks, start this loop now — not the night before. The spacing is what makes it work."
+            }
+          ],
+          "output": "A flashcard deck on spaced repetition schedule — concept retained for exam"
+        }
+      ],
+      "keyTakeaway": "Understanding and memorisation are different skills that require different tools. Use Claude to build genuine understanding. Use Khanmigo to verify it through application. Use Quizlet to retain it over time. Each tool does one job — the power is in the sequence."
+    },
+    {
+      "id": "classroom-content-pipeline",
+      "title": "Lesson Plan → Materials → Assessment",
+      "tagline": "A teacher's complete content pipeline using Claude, Canva AI, and one assessment tool",
+      "difficulty": "intermediate",
+      "duration": "60–90 min",
+      "tools": ["Claude", "Canva AI", "Quizlet AI"],
+      "category": "Teaching",
+      "audience": ["teacher"],
+      "prerequisites": ["claude-for-teachers"],
+      "whatYouBuild": "A complete lesson: structured plan, visual teaching materials, and a differentiated assessment — ready to deliver",
+      "realWorldUse": "CBSE/IGCSE AI units, any new topic introduction, substituting for a colleague, preparing a demo class",
+      "phases": [
+        {
+          "id": "phase-1",
+          "title": "Build a structured lesson plan with Claude",
+          "tool": "Claude",
+          "duration": "20 min",
+          "objective": "Use Claude to generate a detailed, board-aligned lesson plan with learning objectives, timing, and differentiation built in.",
+          "steps": [
+            {
+              "id": "s1",
+              "title": "Write a precise teaching prompt",
+              "content": "The quality of your lesson plan depends entirely on the specificity of your brief. Don't write 'make a lesson plan about AI'. Write the full context: board, class level, prior knowledge, duration, and what you need differentiated.",
+              "prompt": "Create a 45-minute lesson plan for CBSE Class 10 students on the topic of supervised vs unsupervised learning. Prior knowledge: students know what AI is and have seen basic examples. Learning objectives: (1) distinguish the two types with real examples, (2) identify which type applies to a given problem. Include: timing breakdown, 2 class activities (one individual, one group), 3 discussion questions, and a differentiation note for students who are ahead."
+            },
+            {
+              "id": "s2",
+              "title": "Iterate on weak sections",
+              "content": "Read the lesson plan. The activities section is usually the weakest — too abstract, not classroom-realistic. Ask Claude to improve specific sections: 'The group activity isn't workable in a 45-person classroom. Redesign it for large groups with no technology access.'",
+              "tip": "Claude doesn't know your classroom. You do. The iteration step — where you push back on what's not realistic — is where teacher expertise transforms AI output into actual teachable material."
+            },
+            {
+              "id": "s3",
+              "title": "Extract the key concepts list",
+              "content": "Ask Claude: 'From this lesson plan, list the 5–7 key concepts students must understand by the end. For each, write one sentence that defines it at the right level for a Class 10 student.' This list drives the next two phases.",
+              "output": "A 5–7 item key concepts list with student-appropriate definitions"
+            }
+          ],
+          "output": "A complete, board-aligned lesson plan ready for classroom use"
+        },
+        {
+          "id": "phase-2",
+          "title": "Create visual materials with Canva AI",
+          "tool": "Canva AI",
+          "duration": "20 min",
+          "objective": "Turn your key concepts list into visual teaching materials — slides, an infographic, or a classroom poster — using Canva AI's generation and design tools.",
+          "steps": [
+            {
+              "id": "s4",
+              "title": "Generate a slide deck skeleton",
+              "content": "Open Canva. Use Magic Design or the AI presentation tool. Paste your key concepts list and lesson objectives. Specify: academic style, your school colours if known, and slide count (1 per concept + title + summary). Canva generates a visual shell in under a minute.",
+              "tip": "Don't try to generate perfect slides — generate a useful starting point. The AI picks good layouts but often chooses generic images. Replace images with your own or CC-licensed images relevant to your class."
+            },
+            {
+              "id": "s5",
+              "title": "Build one strong visual per concept",
+              "content": "For each key concept, the slide should have: a headline (the concept name), a visual (diagram or relevant image), and one sentence maximum. If you're putting more than one sentence on a slide, you're writing notes, not teaching. Move the extra text to your speaker notes.",
+              "warning": "Canva AI often generates slides with too much text. This is the most common presentation mistake. Slides are for visual anchoring — you provide the explanation verbally."
+            },
+            {
+              "id": "s6",
+              "title": "Export your speaker notes",
+              "content": "Use Claude with your key concepts list to generate speaker notes for each slide: 'For a teacher explaining [concept] to Class 10 students verbally, write 3–4 sentences of clear explanation that go alongside this slide.' Add these as Canva speaker notes. You now have a complete teaching package."
+            }
+          ],
+          "output": "A visual slide deck with speaker notes for every slide"
+        },
+        {
+          "id": "phase-3",
+          "title": "Build a differentiated assessment with Quizlet AI",
+          "tool": "Quizlet AI",
+          "duration": "20 min",
+          "objective": "Create a post-lesson assessment that tests real understanding — not just recall — with questions differentiated for different ability levels.",
+          "steps": [
+            {
+              "id": "s7",
+              "title": "Generate 3 tiers of questions",
+              "content": "Open Quizlet. Ask Claude first (not Quizlet) to generate questions at 3 levels: (1) Recall — define the term, (2) Application — given a scenario, identify which concept applies, (3) Analysis — explain why this matters or what would happen if it changed. Aim for 3 questions per tier.",
+              "prompt": "Generate 9 assessment questions on [topic] for CBSE Class 10. Three recall questions (just define/identify), three application questions (given a scenario, apply the concept), three analysis questions (explain reasoning or implications). Mark the correct answer and a one-sentence explanation for each."
+            },
+            {
+              "id": "s8",
+              "title": "Import into Quizlet as a teacher set",
+              "content": "Create a Quizlet class. Import your questions as a study set. Share the link with students before the next lesson — they can self-test, and you can see class-wide performance data to know where to spend time in your follow-up lesson.",
+              "tip": "Quizlet's class analytics show you which terms the whole class got wrong. This is more useful than marking individual papers — you see the conceptual gaps, not just the score."
+            },
+            {
+              "id": "s9",
+              "title": "Save your pipeline as a template",
+              "content": "Save your Claude prompts from Phase 1, your Canva template, and your Quizlet question format. Next time you teach a new topic, you have a repeatable pipeline. The first time takes 90 minutes. The second time takes 30.",
+              "tip": "The biggest productivity gain from AI in teaching isn't any single tool — it's having a repeatable workflow that you own and refine over time."
+            }
+          ],
+          "output": "A 9-question differentiated assessment with answer keys, imported into Quizlet"
+        }
+      ],
+      "keyTakeaway": "AI doesn't replace teacher expertise — it removes the mechanical work that consumes teacher time. The hardest parts of this workflow (knowing what your students actually need, identifying which activity will work in your classroom, deciding what to differentiate) are still yours. The AI handles the first draft of everything else."
+    },
+    {
+      "id": "podcast-to-brief",
+      "title": "Podcast / Video → Research Brief",
+      "tagline": "Turn any long-form audio or video into a structured, searchable research document using AI",
+      "difficulty": "intermediate",
+      "duration": "30–45 min",
+      "tools": ["Otter.ai", "NotebookLM", "Claude"],
+      "category": "Research",
+      "audience": ["student", "teacher", "curious"],
+      "prerequisites": ["notebooklm-basics"],
+      "whatYouBuild": "A structured, searchable research brief from any podcast, lecture, or interview — with key claims, quotes, and your own analysis",
+      "realWorldUse": "Lecture notes, podcast research, interview analysis, documentary study, academic research",
+      "phases": [
+        {
+          "id": "phase-1",
+          "title": "Transcribe and timestamp with Otter.ai",
+          "tool": "Otter.ai",
+          "duration": "10 min",
+          "objective": "Convert your audio or video into a searchable, timestamped transcript. Never rely on auto-generated YouTube captions — Otter.ai is more accurate and gives you a format you can work with.",
+          "steps": [
+            {
+              "id": "s1",
+              "title": "Import your media",
+              "content": "Upload your MP3, MP4, or paste a YouTube/podcast URL directly into Otter.ai. It transcribes with speaker identification and timestamps. For a 1-hour podcast, transcription takes about 3–5 minutes.",
+              "tip": "If you're transcribing a lecture or interview, let Otter.ai identify speakers from the start. Correct it once — it improves automatically for future sessions with the same speakers."
+            },
+            {
+              "id": "s2",
+              "title": "Highlight key moments in the transcript",
+              "content": "Read through the transcript. Highlight (or star) every moment where: a specific claim is made, a surprising fact appears, or an argument is developed. These become your source material. Don't take notes yet — just mark the moments.",
+              "warning": "Transcription is ~95% accurate. Always check timestamps before quoting anyone — occasionally Otter.ai mishears words in ways that change meaning significantly."
+            }
+          ],
+          "output": "A timestamped transcript with key moments highlighted"
+        },
+        {
+          "id": "phase-2",
+          "title": "Extract structure with NotebookLM",
+          "tool": "NotebookLM",
+          "duration": "15 min",
+          "objective": "Upload the transcript to NotebookLM and use it to find themes, extract key claims, and identify what the source actually argues.",
+          "steps": [
+            {
+              "id": "s3",
+              "title": "Upload and ask for the argument structure",
+              "content": "Paste the transcript (or the highlighted sections) into NotebookLM as a source. Ask: 'What is the central argument of this source? What are the 3–4 main supporting points? What evidence does the speaker use for each?'",
+              "prompt": "Based on this transcript, identify: (1) The central thesis or main argument, (2) The 3–4 main supporting claims, (3) The evidence or examples used for each claim, (4) Any significant limitations or counterarguments acknowledged by the speaker."
+            },
+            {
+              "id": "s4",
+              "title": "Extract direct quotes with timestamps",
+              "content": "For each key claim NotebookLM identified, ask: 'Find the exact quote from the transcript where the speaker makes this point, and give me the approximate timestamp.' These become citable quotes in your brief.",
+              "tip": "NotebookLM is grounded in your uploaded document — it won't invent quotes. If it can't find a quote, it means the claim might have been a paraphrase, not a direct statement."
+            }
+          ],
+          "output": "A structured argument map with direct quotes and timestamps"
+        },
+        {
+          "id": "phase-3",
+          "title": "Write the research brief with Claude",
+          "tool": "Claude",
+          "duration": "15 min",
+          "objective": "Use Claude to synthesise your extracted material into a professional research brief — with your own critical analysis added.",
+          "steps": [
+            {
+              "id": "s5",
+              "title": "Generate the brief structure",
+              "content": "Paste your NotebookLM output into Claude. Ask it to format it as a research brief: executive summary, key claims, supporting evidence, direct quotes, and a critical questions section. Claude structures; you haven't written anything yet.",
+              "prompt": "Format this extracted content as a research brief with: (1) Executive summary (2 sentences), (2) Key claims (bullet points), (3) Supporting evidence for each claim, (4) 2–3 notable direct quotes, (5) A 'critical questions' section — things this source doesn't address or that should be verified against other sources."
+            },
+            {
+              "id": "s6",
+              "title": "Add your own analysis",
+              "content": "This is the step that makes the brief yours. For each key claim, add one sentence of your own analysis: Do you find the evidence convincing? What would strengthen or weaken this argument? What does this mean for your specific context (your essay, your project, your class)?",
+              "warning": "A research brief without your analysis is a summary, not research. The analysis section — which AI cannot write for you — is what demonstrates understanding to an examiner or employer."
+            }
+          ],
+          "output": "A complete research brief with structured summary, quotes, and your critical analysis"
+        }
+      ],
+      "keyTakeaway": "Long-form audio and video are among the richest research sources available — and among the most underused, because they're hard to reference and search. This workflow makes them as usable as a written article. The human judgment that makes it valuable is in step 6: your analysis."
+    },
+    {
+      "id": "idea-to-prototype",
+      "title": "Idea → Prototype → Pitch",
+      "tagline": "Go from raw idea to a working prototype and a pitch deck using Claude, Replit, and Gamma",
+      "difficulty": "advanced",
+      "duration": "3–4 hours",
+      "tools": ["Claude", "Replit", "Gamma"],
+      "category": "Building",
+      "audience": ["student", "curious"],
+      "prerequisites": ["claude-basics", "replit-basics"],
+      "whatYouBuild": "A working (basic) prototype of your idea and a 10-slide pitch deck explaining what it does and why it matters",
+      "realWorldUse": "School project showcases, hackathons, college application portfolios, startup ideas, science fairs",
+      "phases": [
+        {
+          "id": "phase-1",
+          "title": "Define and validate the idea with Claude",
+          "tool": "Claude",
+          "duration": "30–45 min",
+          "objective": "Before writing a line of code, use Claude to stress-test your idea, define exactly what to build, and produce a technical specification a coder (or Replit AI) can follow.",
+          "steps": [
+            {
+              "id": "s1",
+              "title": "Stress-test the idea",
+              "content": "Tell Claude your idea in one sentence. Then ask: 'What are the 3 most likely reasons this idea fails? What assumptions am I making that might be wrong? What's the simplest possible version of this that proves the core concept works?' This question — what's the simplest version — is the most important thing you'll do in this workflow.",
+              "prompt": "My idea: [your idea in one sentence]. What are the 3 most likely failure modes? What's the riskiest assumption? And what's the minimum version I could build in one sitting that would prove the core concept works or doesn't?"
+            },
+            {
+              "id": "s2",
+              "title": "Write the technical specification",
+              "content": "Ask Claude: 'Write a technical specification for the minimum version. Include: what inputs it takes, what it outputs, the step-by-step logic, and what tech stack would be fastest to build this in for someone with beginner-intermediate coding skills.' This spec is what you'll give to Replit.",
+              "tip": "The goal of Phase 1 is to arrive at a specification so clear that you could explain it to a 10-year-old. If you can't explain it that clearly, it's not ready to build yet."
+            }
+          ],
+          "output": "A one-page technical specification for your minimum prototype"
+        },
+        {
+          "id": "phase-2",
+          "title": "Build the prototype with Replit",
+          "tool": "Replit",
+          "duration": "90–120 min",
+          "objective": "Use Replit's AI assistant to turn your specification into working code — iterating rapidly, testing as you go, and staying focused on the minimum version.",
+          "steps": [
+            {
+              "id": "s3",
+              "title": "Start a new Repl and paste your spec",
+              "content": "Open Replit. Choose the language Claude recommended. Use Replit AI (the chat panel): paste your full technical specification and say 'Build this step by step, starting with the simplest working version. Explain each step as you go.' Run the code after every step — don't let errors accumulate.",
+              "warning": "The biggest mistake in AI-assisted coding is generating 200 lines of code and then trying to debug everything at once. Build one function at a time, test it, then continue."
+            },
+            {
+              "id": "s4",
+              "title": "Debug by describing the symptom",
+              "content": "When something breaks, don't paste the error code into Replit AI and ask 'fix this'. Describe what you expected to happen and what happened instead: 'When I input X, I expected Y but got Z. The error is [paste error]. What's wrong?' This produces better fixes than just dumping errors.",
+              "tip": "If you've been stuck on the same bug for 20 minutes, copy your entire code and the error into Claude (not Replit AI) and ask for a fresh perspective. Different AI models sometimes spot different things."
+            },
+            {
+              "id": "s5",
+              "title": "Test with real inputs",
+              "content": "Once the prototype runs, test it with 5 real inputs — including at least one that should break it. Document what works and what doesn't. A prototype that works on demo inputs but fails on real ones is a prototype that will embarrass you in a presentation."
+            }
+          ],
+          "output": "A working prototype with documented test results"
+        },
+        {
+          "id": "phase-3",
+          "title": "Build the pitch deck with Gamma",
+          "tool": "Gamma",
+          "duration": "30–45 min",
+          "objective": "Create a 10-slide pitch deck that explains what you built, why it matters, and what's next — in a format that works for a demo presentation, a submission, or a portfolio.",
+          "steps": [
+            {
+              "id": "s6",
+              "title": "Write your pitch narrative first",
+              "content": "Before opening Gamma, write a 10-bullet outline: problem, your solution, how it works, who it's for, what you built, how you built it (tools), what works and what doesn't, what you learned, what would make it better, and why this matters. Honesty about limitations is a strength, not a weakness.",
+              "tip": "The best technical presentations are honest about what doesn't work yet. 'It currently can't handle X, and here's why' shows deeper understanding than pretending it works perfectly."
+            },
+            {
+              "id": "s7",
+              "title": "Generate and customise in Gamma",
+              "content": "Paste your outline into Gamma. Generate a 10-slide deck. Then: add a screenshot of your actual prototype on the 'how it works' slide, replace any stock images with relevant ones, and make sure every slide has a clear, single-sentence takeaway at the top.",
+              "warning": "Do not put code on slides. If you want to show code, show a screenshot of it running with the output visible. The audience cannot read code on a slide — they can see it working."
+            },
+            {
+              "id": "s8",
+              "title": "Do a 3-minute run-through",
+              "content": "Present the deck to yourself or a friend, timing it. If it takes more than 3 minutes for 10 slides, you're talking too much per slide. Cut one bullet from every slide that has more than 3 bullets. Then do it again.",
+              "tip": "The most powerful line in any technical presentation is: 'Let me show you the actual thing working.' Have your Replit prototype open in another tab, ready to demo live. Live demos beat slides every time."
+            }
+          ],
+          "output": "A 10-slide pitch deck with live demo ready"
+        }
+      ],
+      "keyTakeaway": "The difference between a project that looks like AI did it and one that looks like you used AI well is judgment: knowing what to build, testing honestly, acknowledging limits, and explaining your thinking. AI accelerates execution. You supply the idea, the test cases, the honest assessment, and the narrative."
+    },
+    {
+      "id": "misinformation-investigator",
+      "title": "The Misinformation Investigator",
+      "tagline": "Use Perplexity, Claude, and Consensus to fact-check any claim — systematically, not just intuitively",
+      "difficulty": "intermediate",
+      "duration": "45–60 min",
+      "tools": ["Perplexity", "Claude", "Consensus"],
+      "category": "Critical Thinking",
+      "audience": ["student", "curious", "teacher"],
+      "prerequisites": [],
+      "whatYouBuild": "A systematic fact-check of a specific claim, with a verdict and evidence trail that you could show to anyone",
+      "realWorldUse": "WhatsApp forwards, news articles, exam essay claims, social media, research papers",
+      "phases": [
+        {
+          "id": "phase-1",
+          "title": "Isolate the exact claim with Claude",
+          "tool": "Claude",
+          "duration": "10 min",
+          "objective": "Before you search for anything, use Claude to break down what exactly is being claimed — because most misleading content is misleading through imprecision, not outright fabrication.",
+          "steps": [
+            {
+              "id": "s1",
+              "title": "Extract the specific claims",
+              "content": "Paste the article, post, or statement into Claude. Ask: 'Identify every specific, verifiable claim in this text. List them as separate, testable statements. Ignore opinions and predictions — only list claims that could be true or false.' Most viral misinformation contains 1 true claim, 1 misleading implication, and 1 outright fabrication. Separating them is step one.",
+              "prompt": "Read this text and list every specific, factual claim that could be independently verified. Format each as: [CLAIM] — [what would need to be true for this to be accurate]. Ignore opinions, predictions, and assertions."
+            },
+            {
+              "id": "s2",
+              "title": "Rank by checkability",
+              "content": "Ask Claude: 'Which of these claims is most important to verify, and which is most likely to be wrong based on how it's phrased?' Claims that use vague quantities ('studies show', 'experts say', 'many people believe') are almost always the weakest. Claims with specific numbers, dates, or names are the most verifiable.",
+              "tip": "'Studies show' without a citation is not evidence. It is an assertion dressed as evidence. Treat it as unverified until you find the study."
+            }
+          ],
+          "output": "A list of specific, testable claims ranked by importance"
+        },
+        {
+          "id": "phase-2",
+          "title": "Find cited evidence with Perplexity",
+          "tool": "Perplexity",
+          "duration": "20 min",
+          "objective": "For each key claim, use Perplexity to find cited, verifiable sources — then open every source and read the relevant section.",
+          "steps": [
+            {
+              "id": "s3",
+              "title": "Search for the claim, not confirmation",
+              "content": "Don't search for 'evidence that [claim] is true'. Search for '[claim] evidence', '[claim] peer-reviewed', and '[claim] debunked'. You want sources on both sides. If only one side appears in search results, that's information too.",
+              "warning": "Confirmation bias is the biggest risk in fact-checking. If you search for confirmation, you'll find it — regardless of whether the claim is true. Always search for counter-evidence as deliberately as you search for supporting evidence."
+            },
+            {
+              "id": "s4",
+              "title": "Read the primary source",
+              "content": "For every source Perplexity cites, open it. Find the sentence or paragraph that actually supports the claim. Read it in context. Ask: Does the source actually say what the article claims it says? Sources are frequently cited accurately in extraction but misrepresented in what they imply.",
+              "tip": "The most common form of misleading citation is: article says 'X causes Y', source actually says 'X correlates with Y in one specific population'. The claim is technically sourced but substantively misleading."
+            }
+          ],
+          "output": "Evidence for and against each claim, with verified source URLs"
+        },
+        {
+          "id": "phase-3",
+          "title": "Check the scientific consensus with Consensus",
+          "tool": "Consensus",
+          "duration": "15 min",
+          "objective": "For health, science, or research claims, use Consensus to find what the peer-reviewed literature actually says — not what one study says, but what the body of evidence shows.",
+          "steps": [
+            {
+              "id": "s5",
+              "title": "Search for the scientific consensus",
+              "content": "Open Consensus (consensus.app). Type your claim as a question: 'Does [claim]?' Consensus searches peer-reviewed papers and shows you: what percentage of papers support, oppose, or are inconclusive on the claim, and what the highest-cited papers say.",
+              "tip": "Consensus is specifically for scientific and health claims. Don't use it for political, historical, or current-events fact-checking — use Perplexity for those."
+            },
+            {
+              "id": "s6",
+              "title": "Write your verdict",
+              "content": "Return to Claude. Paste all your evidence — from Perplexity and Consensus. Ask: 'Based on this evidence, write a 3-sentence verdict: is this claim true, false, misleading, or unverifiable? Cite the specific evidence that determines the verdict.' This is your conclusion — grounded in sources, not instinct.",
+              "prompt": "Based on this evidence: [paste your findings]. Write a fact-check verdict: (1) The original claim in one sentence, (2) The verdict (true/false/misleading/unverifiable), (3) The single strongest piece of evidence determining the verdict, (4) One important nuance or limitation of this verdict."
+            }
+          ],
+          "output": "A written fact-check verdict with evidence trail"
+        }
+      ],
+      "keyTakeaway": "Most misinformation isn't completely fabricated — it's true claims with false implications, or real statistics without context. Systematic fact-checking doesn't ask 'is this true?' It asks 'what exactly is being claimed, where does that claim come from, and what does the evidence actually show?' That's a skill that makes you harder to mislead, regardless of what AI tool you're using."
+    }
+  ]
+}
