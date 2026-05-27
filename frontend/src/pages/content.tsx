@@ -349,7 +349,7 @@ export function PathPage() {
             <Award size={16} className="text-amber-400"/>
             <span className="text-xs font-semibold text-amber-400 uppercase tracking-wide">Assessment available</span>
           </div>
-          <h3 className="text-lg font-extrabold text-zinc-900 mb-1 tracking-tight">{quiz.title}</h3>
+          <h3 className="text-lg font-extrabold text-white mb-1 tracking-tight">{quiz.title}</h3>
           <p className="text-sm text-white/60 mb-4">{quiz.questions.length} questions · Pass at {quiz.passingScore}%</p>
           <button onClick={() => navigate(`/assessment/${id}`)}
             className="inline-flex items-center gap-2 px-4 py-2 bg-white text-zinc-900 rounded-lg text-sm font-semibold hover:bg-zinc-100 transition-colors">
