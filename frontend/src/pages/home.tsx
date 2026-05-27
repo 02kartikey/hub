@@ -389,10 +389,10 @@ export function HomePage() {
             <p className="text-sm font-bold text-[#4744C8] mb-0.5">Your classroom</p>
             <p className="text-xs text-zinc-500">Manage students, assignments, and track progress.</p>
           </div>
-          <a href="/classroom"
+          <Link to="/classroom"
             className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 bg-[#5855D6] text-white text-xs font-bold rounded-xl hover:bg-[#4744C8] transition-colors">
             Open Classroom →
-          </a>
+          </Link>
         </div>
       )}
       <ProgressStatBar progressMap={progressMap} paths={paths}/>
