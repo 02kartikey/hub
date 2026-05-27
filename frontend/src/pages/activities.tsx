@@ -13,7 +13,7 @@ import {
   StageChat, StageProgress, DeepAnalysis, OnboardingModal,
   OnboardingFlow, ResourceAssistant, SmartThumbnail, ResourceBanner,
   ToolLettermark, SpotlightTour, CONCEPT_TOPICS} from '../components'
-import { api } from '../api'
+import { api, API_BASE } from '../api'
 import type { Assignment, StudentRow, Classroom } from '../api'
 import type { Resource, LearningPath, ClassroomActivity, DeepExercise, Message } from '../types'
 import type { PathQuiz, QuizQuestion } from '../api'
@@ -255,7 +255,7 @@ export function AssessmentPage() {
       try {
         const token = (await supabase.auth.getSession()).data.session?.access_token
         if (!token) return
-        const res = await fetch('/api/quiz-results', { headers: { 'Authorization': `Bearer ${token}` } })
+        const res = await fetch(`${API_BASE}/api/quiz-results`, { headers: { 'Authorization': `Bearer ${token}` } })
         if (!res.ok) return
         const { data } = await res.json() as { data: { path_id: string; score: number }[] }
         if (!Array.isArray(data) || !data.length) return
@@ -400,9 +400,14 @@ export function AssessmentPage() {
 type QuizState = 'intro'|'active'|'results'
 
 export function QuizPage() {
-  const { id } = useParams<{ id: string }>()
+  // Route is /assessment/:pathId — must destructure as pathId, not id
+  const { pathId } = useParams<{ pathId: string }>()
   const navigate = useNavigate()
-  const { data: quiz, loading, error } = useFetch(() => api.quizzes.get(id!), [id])
+  // Guard: never call the API until pathId is known — prevents /api/quizzes/undefined
+  const { data: quiz, loading, error } = useFetch(
+    () => pathId ? api.quizzes.get(pathId) : Promise.reject(new Error('No path ID')),
+    [pathId]
+  )
   const { progressMap } = useProgress()
 
   // Adaptive state
@@ -526,7 +531,7 @@ export function QuizPage() {
           className="flex-1 py-3 bg-zinc-100 text-zinc-700 text-sm font-bold rounded-xl hover:bg-zinc-200 transition-colors">
           Retry
         </button>
-        <button onClick={() => navigate(passed ? '/curriculum' : `/paths/${quiz.pathId}`)}
+        <button onClick={() => navigate(passed ? '/curriculum' : `/paths/${pathId}`)}
           className="flex-1 py-3 bg-ink-900 text-white text-sm font-bold rounded-xl hover:bg-ink-800 transition-colors flex items-center justify-center gap-2">
           {passed ? 'Next path' : 'Review path'} <ArrowRight size={14}/>
         </button>

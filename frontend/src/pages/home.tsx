@@ -105,8 +105,9 @@ function JoinClassroomWidget() {
     const check = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.access_token) return   // no valid session — skip silently
         const res = await fetch(`${API_BASE}/api/classroom/my-assignments`, {
-          headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}` }
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
         })
         if (res.ok) {
           const { data } = await res.json()
@@ -129,9 +130,10 @@ function JoinClassroomWidget() {
     setStatus('loading')
     try {
       const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) { setStatus('error'); return }
       const res = await fetch(`${API_BASE}/api/classroom/join`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({ code: code.trim().toUpperCase() })
       })
       const json = await res.json()
@@ -212,7 +214,8 @@ function MyAssignmentsWidget() {
     const load = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        const token = session?.access_token ?? ''
+        if (!session?.access_token) { setLoading(false); return }
+        const token = session.access_token
         const res = await fetch(`${API_BASE}/api/classroom/my-assignments`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
@@ -230,7 +233,8 @@ function MyAssignmentsWidget() {
     setMarking(assignmentId)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token ?? ''
+      if (!session?.access_token) return
+      const token = session.access_token
       await fetch(`${API_BASE}/api/classroom/assignments/${assignmentId}/complete`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
