@@ -69,7 +69,7 @@ function StudentProfile({ student, assignments, onBack }: {
   student: StudentRow; assignments: Assignment[]
   onBack: () => void
 }) {
-  const initials = student.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+  const initials = student.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -112,26 +112,29 @@ function StudentProfile({ student, assignments, onBack }: {
             <div className="space-y-3">
               {Object.entries(student.pathProgress).length === 0 ? (
                 <p className="text-xs text-zinc-400">No path progress recorded yet.</p>
-              ) : Object.entries(student.pathProgress).map(([pathId, pct]) => (
+              ) : Object.entries(student.pathProgress).map(([pathId, pct]) => {
+                const p = pct as number
+                return (
                 <div key={pathId} className="flex items-center gap-3">
                   <div className="relative flex-shrink-0">
-                    <RingProgress value={pct} size={38} strokeWidth={3}/>
+                    <RingProgress value={p} size={38} strokeWidth={3}/>
                     <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-zinc-600">
-                      {pct}%
+                      {p}%
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-zinc-800 truncate mb-1">{pathId}</p>
                     <div className="h-1 bg-zinc-100 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, background: pct === 100 ? '#10B981' : '#5855D6' }}/>
+                        style={{ width: `${p}%`, background: p === 100 ? '#10B981' : '#5855D6' }}/>
                     </div>
                   </div>
-                  {pct === 0   && <span className="text-2xs text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded flex-shrink-0">Not started</span>}
-                  {pct > 0 && pct < 100 && <span className="text-2xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded flex-shrink-0">In progress</span>}
-                  {pct === 100 && <span className="text-2xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded flex-shrink-0">✓ Done</span>}
+                  {p === 0   && <span className="text-2xs text-zinc-400 bg-zinc-100 px-2 py-0.5 rounded flex-shrink-0">Not started</span>}
+                  {p > 0 && p < 100 && <span className="text-2xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded flex-shrink-0">In progress</span>}
+                  {p === 100 && <span className="text-2xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded flex-shrink-0">✓ Done</span>}
                 </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
@@ -352,7 +355,7 @@ export function TeacherClassroomDashboard() {
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
       <GraduationCap size={32} className="text-zinc-300 mb-4"/>
       <p className="text-sm font-semibold text-zinc-600 mb-4">Sign in to access your classroom</p>
-      <a href="/auth/login" className="px-5 py-2.5 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors">Sign in</a>
+      <Link to="/auth/login" className="px-5 py-2.5 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors">Sign in</Link>
     </div>
   )
 
@@ -366,10 +369,10 @@ export function TeacherClassroomDashboard() {
       <p className="text-sm text-zinc-500 leading-relaxed mb-6">
         The classroom dashboard lets teachers manage students, assign work, and track progress. Change your role to <strong>Teacher</strong> in Settings to unlock it.
       </p>
-      <a href="/settings"
+      <Link to="/settings"
         className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors">
         Go to Settings →
-      </a>
+      </Link>
     </div>
   )
 
@@ -391,6 +394,35 @@ function TeacherClassroomDashboardInner() {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null)
   const [assignOpen,   setAssignOpen]   = useState(false)
 
+  const [creating, setCreating] = useState(false)
+
+  const createClassroom = async () => {
+    setCreating(true)
+    try {
+      const session = (await supabase.auth.getSession()).data.session
+      if (!session?.access_token) return
+      // GET /api/classroom auto-creates — just reload the dashboard
+      await loadDashboard()
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const regenerateCode = async () => {
+    if (!classroom) return
+    try {
+      const session = (await supabase.auth.getSession()).data.session
+      if (!session?.access_token) return
+      const newCode = generateCode()
+      const res = await fetch(`${API_BASE}/api/classroom/code`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ code: newCode }),
+      })
+      if (res.ok) setClassroom(prev => prev ? { ...prev, code: newCode } : prev)
+    } catch {}
+  }
+
   const firstName = profile?.full_name?.split(' ')[0] ?? null
   const hour      = new Date().getHours()
   const greeting  = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -405,8 +437,10 @@ function TeacherClassroomDashboardInner() {
     if (!user) return
     setLoading(true)
     try {
+      const session = (await supabase.auth.getSession()).data.session
+      if (!session?.access_token) { setLoading(false); return }
       const res = await fetch(`${API_BASE}/api/classroom`, {
-        headers: { 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token ?? ''}` }
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
       })
       if (!res.ok) throw new Error(`${res.status}`)
       const { classroom: cls, students: studs } = await res.json()
@@ -415,7 +449,7 @@ function TeacherClassroomDashboardInner() {
 
       // Load assignments separately
       const aRes = await fetch(`${API_BASE}/api/classroom/assignments`, {
-        headers: { 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token ?? ''}` }
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
       })
       if (aRes.ok) {
         const { data } = await aRes.json()
@@ -444,7 +478,9 @@ function TeacherClassroomDashboardInner() {
 
   const handleAssign = async (item: AssignableItem, dueDate: string, note: string) => {
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token ?? ''
+      const session2 = (await supabase.auth.getSession()).data.session
+      if (!session2?.access_token) return
+      const token = session2.access_token
       const res = await fetch(`${API_BASE}/api/classroom/assignments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -466,7 +502,9 @@ function TeacherClassroomDashboardInner() {
 
   const deleteAssignment = async (id: string) => {
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token ?? ''
+      const s3 = (await supabase.auth.getSession()).data.session
+      if (!s3?.access_token) return
+      const token = s3.access_token
       await fetch(`${API_BASE}/api/classroom/assignments/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
@@ -503,6 +541,23 @@ function TeacherClassroomDashboardInner() {
         assignments={assignments}
         onBack={() => setSelectedStudent(null)}
       />
+    </div>
+  )
+
+
+  if (!loading && !classroom) return (
+    <div className="px-4 lg:px-8 py-16 max-w-lg mx-auto text-center">
+      <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-[#DDDDF8] flex items-center justify-center mx-auto mb-5">
+        <GraduationCap size={28} className="text-[#5855D6]"/>
+      </div>
+      <h2 className="text-xl font-bold text-zinc-900 mb-2">Set up your classroom</h2>
+      <p className="text-sm text-zinc-500 leading-relaxed mb-7 max-w-xs mx-auto">
+        Create your classroom to get a shareable join code. Students enter it from their dashboard to join.
+      </p>
+      <button onClick={createClassroom} disabled={creating}
+        className="inline-flex items-center gap-2 px-6 py-3 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors disabled:opacity-60">
+        {creating ? 'Creating…' : <><Plus size={15}/> Create my classroom</>}
+      </button>
     </div>
   )
 
@@ -549,6 +604,11 @@ function TeacherClassroomDashboardInner() {
                            : 'bg-white/10 text-white/60 hover:bg-white/20 border-white/10'
                   )}>
                   {copied ? <><Check size={11}/> Copied!</> : <><Copy size={11}/> Copy code</>}
+                </button>
+                <button onClick={regenerateCode}
+                  title="Generate a new join code"
+                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold border bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60 border-white/10 transition-all">
+                  <RotateCcw size={11}/> New code
                 </button>
               </div>
             )}
@@ -700,7 +760,7 @@ function TeacherClassroomDashboardInner() {
             </div>
             <div className="divide-y divide-zinc-50">
               {filteredStudents.map(s => {
-                const initials = s.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                const initials = s.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
                 const isAtRisk = s.rate < 20 || (s.quizScore != null && s.quizScore < 50)
                 return (
                   <div key={s.id}
