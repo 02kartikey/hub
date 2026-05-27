@@ -7,10 +7,6 @@ import type {
   Message, ListResponse,
 } from './types'
 
-// Use the backend URL from Vite env, or fall back to localhost for dev.
-const API_BASE =
-  import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
 // ── Classroom / assignment types ──────────────────────────────────────────────
 export interface Classroom {
   id: string; teacher_id: string; code: string; name: string; created_at: string
@@ -29,6 +25,9 @@ export interface Assignment {
   completedCount?: number; totalStudents?: number
 }
 
+// ── Base URL — reads from env in production, empty string in local dev ────────
+const BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+
 let _token: string | null = null
 
 function classroomApi() {
@@ -41,8 +40,7 @@ function classroomApi() {
       content_type: Assignment['content_type']
       content_id: string; title: string; note?: string; due_date?: string
     }) => apiFetch<{ assignment: Assignment }>('/api/classroom/assignments', {
-      method: 'POST',
-      body: JSON.stringify(body),
+      method: 'POST', body: JSON.stringify(body),
     }),
 
     getAssignments: () => apiFetch<{ data: Assignment[] }>('/api/classroom/assignments'),
@@ -84,27 +82,19 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   }
-
   if (_token) headers['Authorization'] = `Bearer ${_token}`
-
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  })
-
+  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new Error(body.detail ?? body.error ?? `HTTP ${res.status}`)
   }
-
   return res.json()
 }
 
 function qs(p: Record<string, string | number | boolean | undefined>): string {
   const s = new URLSearchParams()
-  for (const [k, v] of Object.entries(p)) {
+  for (const [k, v] of Object.entries(p))
     if (v !== undefined && v !== null && v !== '') s.set(k, String(v))
-  }
   const r = s.toString()
   return r ? `?${r}` : ''
 }
@@ -173,7 +163,7 @@ function quizzesApi() {
 function chatApi() {
   return {
     send: async (messages: Message[], systemPrompt?: string): Promise<{ text: string }> => {
-      const res = await fetch(`${API_BASE}/api/chat`, {
+      const res = await fetch(`${BASE_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
