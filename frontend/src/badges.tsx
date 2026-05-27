@@ -7,7 +7,7 @@
  * Supabase persistence when the user is signed in.
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { CheckCircle2, X, Link } from 'react-router-dom'
 import { cn } from './ui'
 
 // ── Badge definitions ─────────────────────────────────────────────────────────
@@ -23,6 +23,18 @@ export interface BadgeDef {
   icon:        React.ReactNode // SVG element
   condition:   string          // human-readable unlock hint
   hidden?:     boolean         // shows as ??? until unlocked
+  category?:   'Learning' | 'Assessment' | 'Mastery' | 'Reasoning' | 'Habit' | 'Secret'
+  signal?:     string          // what this signals to teachers / employers
+}
+
+// What each badge category signals to teachers and employers
+export const BADGE_CATEGORY_SIGNAL: Record<string, string> = {
+  Assessment: 'Demonstrates knowledge under test conditions — not just passive consumption.',
+  Mastery:    'Systematic, structured completion of a full topic — not scattered browsing.',
+  Reasoning:  'Critical thinking skills beyond surface-level AI awareness.',
+  Learning:   'Genuine depth of engagement — not just time on platform.',
+  Habit:      'Consistency over time — the strongest predictor of long-term knowledge retention.',
+  Secret:     'Discovered through exploration and curiosity.',
 }
 
 // ── SVG badge art ─────────────────────────────────────────────────────────────
@@ -217,6 +229,7 @@ export const BADGES: BadgeDef[] = [
     rarity: 'common',
     icon: SvgBadge.spark,
     condition: 'Complete any resource',
+    category: 'Learning', signal: 'Started building an AI mental model — not just reading about it.',
   },
   {
     id: 'first_light',
@@ -226,6 +239,7 @@ export const BADGES: BadgeDef[] = [
     rarity: 'common',
     icon: SvgBadge.firstLight,
     condition: 'Just show up',
+    category: 'Learning', signal: 'Showed up. That is always the first step.',
   },
   {
     id: 'curious',
@@ -298,6 +312,7 @@ export const BADGES: BadgeDef[] = [
     rarity: 'secret',
     icon: SvgBadge.nightOwl,
     condition: 'Complete a resource after 10pm',
+    category: 'Habit', signal: 'Learns outside structured hours — intrinsically motivated.',
     hidden: true,
   },
   {
@@ -521,6 +536,7 @@ export function useBadges() {
 export function BadgesPage() {
   const earned = getEarnedBadges()
   const earnedSet = new Set(earned)
+  const [selected, setSelected] = useState<BadgeDef | null>(null)
 
   const byRarity: Record<BadgeRarity, BadgeDef[]> = {
     common: [], uncommon: [], rare: [], legendary: [], secret: [],
@@ -585,7 +601,10 @@ export function BadgesPage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {badges.map(b => (
-                <BadgeCard key={b.id} badge={b} earned={earnedSet.has(b.id)} size="md"/>
+                <button key={b.id} onClick={() => setSelected(selected?.id === b.id ? null : b)}
+                  className={cn('text-left transition-all rounded-2xl', selected?.id === b.id ? 'ring-2 ring-[#5855D6]' : '')}>
+                  <BadgeCard badge={b} earned={earnedSet.has(b.id)} size="md"/>
+                </button>
               ))}
             </div>
           </section>
@@ -601,6 +620,54 @@ export function BadgesPage() {
             className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors">
             Start earning →
           </Link>
+        </div>
+      )}
+
+      {/* Badge detail drawer */}
+      {selected && (
+        <div className="fixed inset-x-0 bottom-0 z-50 lg:inset-auto lg:fixed lg:right-6 lg:bottom-6 lg:w-80 animate-fade-in">
+          <div className="bg-white border border-zinc-200 rounded-2xl rounded-b-none lg:rounded-2xl shadow-2xl p-5">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 flex-shrink-0">{selected.icon}</div>
+                <div>
+                  <p className="text-sm font-bold text-zinc-900">{selected.name}</p>
+                  <span className={cn('text-2xs font-bold px-2 py-0.5 rounded-full', RARITY_CONFIG[selected.rarity].label && 'capitalize')}>
+                    <span style={{ color: RARITY_CONFIG[selected.rarity].text.replace('text-','') }}>
+                      {RARITY_CONFIG[selected.rarity].label}
+                    </span>
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => setSelected(null)} className="p-1 text-zinc-400 hover:text-zinc-700">
+                <X size={16}/>
+              </button>
+            </div>
+            <p className="text-xs text-zinc-600 leading-relaxed mb-3">{selected.description}</p>
+            <p className="text-2xs text-zinc-400 italic mb-4">{selected.flavour}</p>
+            {selected.signal && selected.category && (
+              <div className="p-3 bg-[#EEEEFF] border border-[#C0BFEF] rounded-xl mb-3">
+                <p className="text-2xs font-bold text-[#5855D6] uppercase tracking-widest mb-1.5">
+                  Signal to teachers &amp; employers
+                </p>
+                <p className="text-xs text-[#4744C8] leading-relaxed">
+                  {BADGE_CATEGORY_SIGNAL[selected.category] ?? selected.signal}
+                </p>
+              </div>
+            )}
+            {!earnedSet.has(selected.id) && (
+              <div className="p-3 bg-zinc-50 border border-zinc-100 rounded-xl">
+                <p className="text-2xs font-bold text-zinc-400 uppercase tracking-widest mb-1.5">How to earn</p>
+                <p className="text-xs text-zinc-600">{selected.hidden ? '🔒 Keep exploring...' : selected.condition}</p>
+              </div>
+            )}
+            {earnedSet.has(selected.id) && (
+              <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0"/>
+                <p className="text-xs font-semibold text-emerald-800">You have this badge</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
