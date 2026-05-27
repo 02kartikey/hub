@@ -21,18 +21,17 @@ from supabase_client import SupabaseClient, get_current_user
 load_dotenv()
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "")
 
-DATA = Path(__file__).parent.parent / "data"   # root/data/ ← sibling of backend/
+DATA = Path(__file__).parent.parent / "data"
 _c: dict[str, Any] = {}
 
 def _load():
-    for name in ("resources","paths","activities","deep-exercises","tools","quizzes","workflows"):
+    for name in ("resources","paths","activities","deep-exercises","tools","quizzes"):
         fp = DATA / f"{name}.json"
         if fp.exists():
             with open(fp, encoding="utf-8") as f:
                 _c[name] = json.load(f)
     print(f"[content] {len(_c.get('resources',[]))} resources | {len(_c.get('paths',[]))} paths | "
-          f"{len(_c.get('activities',[]))} activities | {len(_c.get('deep-exercises',[]))} exercises | "
-          f"{len(_c.get('workflows',{}).get('workflows',[]))} workflows")
+          f"{len(_c.get('activities',[]))} activities | {len(_c.get('deep-exercises',[]))} exercises")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -157,15 +156,6 @@ async def get_walkthrough(wid:str):
     if not w: raise HTTPException(404,f"Walkthrough '{wid}' not found")
     return w
 
-# ── Workflows ───────────────────────────────────────────────────────────────────
-@app.get("/api/workflows")
-async def list_workflows(category:str|None=None, audience:str|None=None):
-    data = _c.get("workflows",{})
-    items = data.get("workflows",[]) if isinstance(data,dict) else []
-    if category: items = [w for w in items if w.get("category")==category]
-    if audience: items = [w for w in items if audience in w.get("audience",[])]
-    return {"data":items,"total":len(items)}
-
 # ── AI Chat ────────────────────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     messages: list[dict]
@@ -248,37 +238,15 @@ async def stripe_webhook(req:Request):
 @app.get("/api/quizzes")
 async def list_quizzes():
     quizzes_data = _c.get("quizzes", [])
-
-    safe_quizzes = []
-
-    for quiz in quizzes_data:
-        safe_questions = [
-            {
-                k: v
-                for k, v in q.items()
-                if k != "answer" and k != "explanation"
-            }
-            for q in quiz.get("questions", [])
-        ]
-
-        safe_quizzes.append({
-            **quiz,
-            "questions": safe_questions
-        })
-
-    return {
-        "data": safe_quizzes,
-        "total": len(safe_quizzes)
-    }
+    # Return full quiz data including answer/explanation — client needs them for feedback
+    return {"data": list(quizzes_data), "total": len(quizzes_data)}
 
 @app.get("/api/quizzes/{path_id}")
 async def get_quiz(path_id: str):
     quizzes_data = _c.get("quizzes", [])
     q = next((q for q in quizzes_data if q.get("pathId") == path_id), None)
     if not q: raise HTTPException(404, f"No quiz for path '{path_id}'")
-    # Don't expose answers in the list
-    safe = {**q, "questions": [{k:v for k,v in qn.items() if k != "answer" and k != "explanation"} for qn in q["questions"]]}
-    return safe
+    return q
 
 class QuizSubmission(BaseModel):
     pathId: str
