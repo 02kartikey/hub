@@ -336,11 +336,14 @@ export function SettingsPage() {
 
   const saveRole = async () => {
     setSaving(true); setError(null); setSaved(false)
-    try {
-      await updateRole(role)
-      setSaved(true); setTimeout(() => setSaved(false), 2500)
-    } catch { setError('Failed to save — please try again') }
-    finally { setSaving(false) }
+    const { error: err } = await updateRole(role)
+    setSaving(false)
+    if (err) {
+      setError('Failed to save role — please try again')
+    } else {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    }
   }
 
   return (

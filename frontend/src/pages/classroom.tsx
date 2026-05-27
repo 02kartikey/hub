@@ -335,9 +335,50 @@ function AssignModal({ resources, paths, onClose, onAssign }: {
 // ── Main dashboard ────────────────────────────────────────────────────────────
 
 export function TeacherClassroomDashboard() {
-  const { user, profile } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
 
-  // State
+  // Wait for auth to resolve before showing anything
+  if (authLoading) return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 rounded-full border-2 border-[#5855D6] border-t-transparent animate-spin"/>
+        <p className="text-sm text-zinc-400">Loading…</p>
+      </div>
+    </div>
+  )
+
+  // Not signed in
+  if (!user) return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+      <GraduationCap size={32} className="text-zinc-300 mb-4"/>
+      <p className="text-sm font-semibold text-zinc-600 mb-4">Sign in to access your classroom</p>
+      <a href="/auth/login" className="px-5 py-2.5 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors">Sign in</a>
+    </div>
+  )
+
+  // Not a teacher
+  if (profile?.role !== 'teacher') return (
+    <div className="px-4 lg:px-8 py-12 max-w-lg mx-auto text-center">
+      <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-[#DDDDF8] flex items-center justify-center mx-auto mb-5">
+        <GraduationCap size={28} className="text-[#5855D6]"/>
+      </div>
+      <h2 className="text-xl font-bold text-zinc-900 mb-2">This is for teachers</h2>
+      <p className="text-sm text-zinc-500 leading-relaxed mb-6">
+        The classroom dashboard lets teachers manage students, assign work, and track progress. Change your role to <strong>Teacher</strong> in Settings to unlock it.
+      </p>
+      <a href="/settings"
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors">
+        Go to Settings →
+      </a>
+    </div>
+  )
+
+  // Confirmed teacher — render the real dashboard
+  return <TeacherClassroomDashboardInner/>
+}
+
+function TeacherClassroomDashboardInner() {
+  const { user, profile } = useAuth()
   const [classroom,    setClassroom]    = useState<Classroom | null>(null)
   const [students,     setStudents]     = useState<StudentRow[]>([])
   const [assignments,  setAssignments]  = useState<Assignment[]>([])

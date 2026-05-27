@@ -372,11 +372,25 @@ export function HomePage() {
 
   const hasProgress = Object.values(progressMap).some(v => v > 0)
 
+  const isTeacher = profile?.role === 'teacher'
+
   return (
     <div className="px-4 lg:px-8 py-6 max-w-6xl mx-auto">
       <OSHero name={userName ?? undefined}/>
-      <JoinClassroomWidget/>
-      <MyAssignmentsWidget/>
+      {!isTeacher && <JoinClassroomWidget/>}
+      {!isTeacher && <MyAssignmentsWidget/>}
+      {isTeacher && (
+        <div className="mb-6 p-4 bg-indigo-50 border border-[#DDDDF8] rounded-2xl flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold text-[#4744C8] mb-0.5">Your classroom</p>
+            <p className="text-xs text-zinc-500">Manage students, assignments, and track progress.</p>
+          </div>
+          <a href="/classroom"
+            className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 bg-[#5855D6] text-white text-xs font-bold rounded-xl hover:bg-[#4744C8] transition-colors">
+            Open Classroom →
+          </a>
+        </div>
+      )}
       <ProgressStatBar progressMap={progressMap} paths={paths}/>
       <DailyFocus progressMap={progressMap} paths={paths} resources={allResources}/>
       <CapabilityModules/>
