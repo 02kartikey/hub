@@ -91,6 +91,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [loadProfile])
 
+  // ── Realtime: reflect profile/role changes made directly in Supabase ─────────
+  // Without this, a role change in the Supabase dashboard only shows after
+  // the next token refresh (~1 hour) or a full sign-out/sign-in.
+  useEffect(() => {
+    if (!user) return
+
+    const channel = supabase
+      .channel(`profile-realtime:${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
+        (payload) => {
+          // DB row changed — update local state immediately, no refetch needed
+          const row = payload.new as { full_name?: string | null; avatar_url?: string | null; role?: string | null }
+          setProfile(prev => ({
+            full_name:  row.full_name  ?? prev?.full_name  ?? null,
+            avatar_url: row.avatar_url ?? prev?.avatar_url ?? null,
+            role:       row.role       ?? prev?.role       ?? 'student',
+          }))
+        }
+      )
+      .subscribe()
+
+    // ── Focus fallback: re-fetch profile when user switches back to the tab ──
+    // Catches cases where Realtime isn't enabled or the WS dropped.
+    const onFocus = () => loadProfile(user)
+    window.addEventListener('focus', onFocus)
+
+    return () => {
+      supabase.removeChannel(channel)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [user?.id, loadProfile])
+
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error }
