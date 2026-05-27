@@ -166,15 +166,6 @@ function AssignmentNavCount() {
   )
 }
 
-  if (count === 0) return null
-  return (
-    <span className="flex-shrink-0 text-white font-bold rounded-full flex items-center justify-center"
-      style={{ fontSize:10, minWidth:17, height:17, background:'#5855D6', padding:'0 4px' }}>
-      {count}
-    </span>
-  )
-}
-
 // Tour trigger button — shown at bottom of sidebar
 export function TourTrigger({ onStart }: { onStart: () => void }) {
   return (
