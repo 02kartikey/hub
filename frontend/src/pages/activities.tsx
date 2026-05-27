@@ -235,6 +235,52 @@ export function ActivityDetailPage() {
   )
 }
 
+// ── Fill-in-the-blank input component ────────────────────────────────────────
+function FillBlankInput({
+  blank, answer, revealed, onSubmit,
+}: { blank: string; question: string; answer: any; revealed: boolean; onSubmit: (val: string) => void }) {
+  const [val, setVal] = useState('')
+  const norm = (s: string) => s.trim().toLowerCase()
+  const submitted = revealed
+  const correct = submitted && norm(val) === norm(String(answer))
+
+  return (
+    <div className="space-y-3">
+      {blank && (
+        <p className="text-sm text-zinc-500 italic">
+          Fill in: <span className="font-semibold text-zinc-700">{blank}</span>
+        </p>
+      )}
+      <div className="flex gap-2">
+        <input
+          type="text" value={val} disabled={submitted}
+          onChange={e => setVal(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && val.trim() && !submitted) onSubmit(val) }}
+          placeholder="Type your answer…"
+          className={cn(
+            'flex-1 px-4 py-3 rounded-xl border text-sm transition-all outline-none',
+            !submitted ? 'border-zinc-200 focus:border-[#5855D6] focus:ring-1 focus:ring-[#5855D6]' :
+            correct    ? 'border-emerald-300 bg-emerald-50 text-emerald-900' :
+                         'border-red-300 bg-red-50 text-red-900'
+          )}
+        />
+        {!submitted && (
+          <button onClick={() => val.trim() && onSubmit(val)}
+            disabled={!val.trim()}
+            className="px-4 py-3 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors disabled:opacity-40">
+            Submit
+          </button>
+        )}
+      </div>
+      {submitted && (
+        <p className={cn('text-xs font-semibold', correct ? 'text-emerald-700' : 'text-red-700')}>
+          {correct ? '✓ Correct!' : `✗ Answer: ${answer}`}
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // ASSESSMENT PAGE — topic picker
 // ══════════════════════════════════════════════════════════════════════════════
@@ -436,8 +482,12 @@ export function QuizPage() {
 
   const pool   = useMemo(() => grouped[difficulty] ?? quiz?.questions ?? [], [grouped, difficulty, quiz])
   const q      = pool[qIndex % Math.max(pool.length, 1)]
-  const isAnswered = q && answered[q.id] !== undefined
-  const wasCorrect = isAnswered && answered[q.id] === q.answer
+  const isAnswered = q ? answered[q.id] !== undefined : false
+  const wasCorrect = isAnswered && (
+    q?.type === 'fill'
+      ? answered[q.id] === q.answer   // fill stores answer string or -1
+      : answered[q.id] === q?.answer  // mcq/truefalse: compare index/val
+  )
 
   if (loading) return <PageLoader/>
   if (error || !quiz) return <PageError msg={error ?? 'Quiz not found'}/>
@@ -580,34 +630,81 @@ export function QuizPage() {
             <span className="text-2xs text-zinc-400">Question {history.length + 1}</span>
           </div>
           <p className="text-base font-semibold text-zinc-900 leading-snug mb-5">{q.question}</p>
-          <div className="space-y-2.5">
-            {q.options.map((opt: string, i: number) => {
-              const sel      = answered[q.id] === i
-              const correct  = i === q.answer
-              const revealed = isAnswered
-              return (
-                <button key={i} onClick={() => selectAnswer(i)} disabled={revealed}
-                  className={cn(
-                    'w-full flex items-center gap-3 p-3.5 rounded-xl border text-left text-sm transition-all',
-                    !revealed               ? 'bg-white border-zinc-200 hover:border-[#5855D6] hover:bg-indigo-50 cursor-pointer' :
-                    correct                 ? 'bg-emerald-50 border-emerald-300 text-emerald-900' :
-                    sel && !correct         ? 'bg-red-50 border-red-300 text-red-900' :
-                                              'bg-white border-zinc-100 text-zinc-400 cursor-default'
-                  )}>
-                  <span className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center text-2xs font-bold flex-shrink-0 border',
-                    !revealed               ? 'border-zinc-300 text-zinc-500' :
-                    correct                 ? 'bg-emerald-500 border-emerald-500 text-white' :
-                    sel                     ? 'bg-red-500 border-red-500 text-white' :
-                                              'border-zinc-200 text-zinc-300'
-                  )}>
-                    {revealed && correct ? '✓' : revealed && sel ? '✗' : 'ABCD'[i]}
-                  </span>
-                  {opt}
-                </button>
-              )
-            })}
-          </div>
+
+          {/* ── MCQ ─────────────────────────────────────────────────────── */}
+          {q.type === 'mcq' && Array.isArray(q.options) && (
+            <div className="space-y-2.5">
+              {q.options.map((opt: string, i: number) => {
+                const sel      = answered[q.id] === i
+                const correct  = i === q.answer
+                const revealed = isAnswered
+                return (
+                  <button key={i} onClick={() => selectAnswer(i)} disabled={revealed}
+                    className={cn(
+                      'w-full flex items-center gap-3 p-3.5 rounded-xl border text-left text-sm transition-all',
+                      !revealed               ? 'bg-white border-zinc-200 hover:border-[#5855D6] hover:bg-indigo-50 cursor-pointer' :
+                      correct                 ? 'bg-emerald-50 border-emerald-300 text-emerald-900' :
+                      sel && !correct         ? 'bg-red-50 border-red-300 text-red-900' :
+                                                'bg-white border-zinc-100 text-zinc-400 cursor-default'
+                    )}>
+                    <span className={cn(
+                      'w-6 h-6 rounded-full flex items-center justify-center text-2xs font-bold flex-shrink-0 border',
+                      !revealed               ? 'border-zinc-300 text-zinc-500' :
+                      correct                 ? 'bg-emerald-500 border-emerald-500 text-white' :
+                      sel                     ? 'bg-red-500 border-red-500 text-white' :
+                                                'border-zinc-200 text-zinc-300'
+                    )}>
+                      {revealed && correct ? '✓' : revealed && sel ? '✗' : 'ABCD'[i]}
+                    </span>
+                    {opt}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* ── True / False ─────────────────────────────────────────────── */}
+          {q.type === 'truefalse' && (
+            <div className="flex gap-3">
+              {[{ label: 'True', val: 1 }, { label: 'False', val: 0 }].map(({ label, val }) => {
+                const sel      = answered[q.id] === val
+                const correct  = val === q.answer
+                const revealed = isAnswered
+                return (
+                  <button key={label} onClick={() => selectAnswer(val)} disabled={revealed}
+                    className={cn(
+                      'flex-1 py-3.5 rounded-xl border text-sm font-bold transition-all',
+                      !revealed               ? 'bg-white border-zinc-200 hover:border-[#5855D6] hover:bg-indigo-50' :
+                      correct                 ? 'bg-emerald-50 border-emerald-300 text-emerald-900' :
+                      sel && !correct         ? 'bg-red-50 border-red-300 text-red-900' :
+                                                'bg-white border-zinc-100 text-zinc-400'
+                    )}>
+                    {revealed && correct ? '✓ ' : revealed && sel ? '✗ ' : ''}{label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* ── Fill in the blank ────────────────────────────────────────── */}
+          {q.type === 'fill' && (
+            <FillBlankInput
+              blank={q.blank ?? ''}
+              question={q.question}
+              answer={q.answer}
+              revealed={isAnswered}
+              onSubmit={(val) => {
+                // Normalise: trim + lowercase for comparison
+                const norm = (s: string) => s.trim().toLowerCase()
+                const correct = norm(val) === norm(String(q.answer))
+                setAnswered(prev => ({ ...prev, [q.id]: correct ? q.answer : -1 }))
+                setShowExp(true)
+                const newStreak = correct ? streak + 1 : 0
+                setStreak(newStreak)
+                setHistory(prev => [...prev, { qIdx: qIndex, correct, difficulty }])
+              }}
+            />
+          )}
         </div>
       )}
 
@@ -625,7 +722,13 @@ export function QuizPage() {
           </p>
           {!wasCorrect && (
             <p className={cn('mt-2 text-xs font-semibold text-amber-700')}>
-              Correct answer: {q.options[q.answer]}
+              Correct answer: {
+                q.type === 'mcq' && Array.isArray(q.options)
+                  ? q.options[q.answer]
+                  : q.type === 'truefalse'
+                    ? (q.answer === 1 || q.answer === true ? 'True' : 'False')
+                    : String(q.answer)
+              }
             </p>
           )}
         </div>
