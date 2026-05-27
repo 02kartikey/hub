@@ -2,15 +2,25 @@
   "workflows": [
     {
       "id": "research-to-presentation",
-      "title": "Research → Summarise → Present",
+      "title": "Research \u2192 Summarise \u2192 Present",
       "tagline": "Turn any topic into a polished presentation using 3 AI tools in sequence",
       "difficulty": "beginner",
-      "duration": "45–60 min",
-      "tools": ["Perplexity", "NotebookLM", "Gamma"],
+      "duration": "45\u201360 min",
+      "tools": [
+        "Perplexity",
+        "NotebookLM",
+        "Gamma"
+      ],
       "category": "Academic",
-      "audience": ["student", "teacher"],
-      "prerequisites": ["perplexity-basics", "notebooklm-basics"],
-      "whatYouBuild": "A fully sourced, well-structured presentation on any topic — research verified, key ideas extracted, slides generated",
+      "audience": [
+        "student",
+        "teacher"
+      ],
+      "prerequisites": [
+        "perplexity-basics",
+        "notebooklm-basics"
+      ],
+      "whatYouBuild": "A fully sourced, well-structured presentation on any topic \u2014 research verified, key ideas extracted, slides generated",
       "realWorldUse": "CBSE/IGCSE project submissions, college applications, debate prep, teacher lesson materials",
       "phases": [
         {
@@ -18,100 +28,108 @@
           "title": "Find and verify sources with Perplexity",
           "tool": "Perplexity",
           "duration": "15 min",
-          "objective": "Use Perplexity's cited search to gather 5–8 verified, sourced facts on your topic — not AI-generated claims, actual citations you can open.",
+          "objective": "Use Perplexity's cited search to gather 5\u20138 verified, sourced facts on your topic \u2014 not AI-generated claims, actual citations you can open.",
           "steps": [
             {
               "id": "s1",
               "title": "Ask with intent, not just keywords",
-              "content": "Don't type 'climate change'. Type: 'What are the three most significant peer-reviewed findings on climate change impacts in South Asia in the last 5 years?' Perplexity returns cited answers — every claim links to its source.",
-              "prompt": "What are the most significant documented impacts of climate change on agricultural yield in South Asia between 2018–2023? Cite peer-reviewed studies or government reports.",
+              "content": "Don't type 'climate change'. Type: 'What are the three most significant peer-reviewed findings on climate change impacts in South Asia in the last 5 years?' Perplexity returns cited answers \u2014 every claim links to its source.",
+              "prompt": "What are the most significant documented impacts of climate change on agricultural yield in South Asia between 2018\u20132023? Cite peer-reviewed studies or government reports.",
               "tip": "The more specific your question, the more citable the answer. Vague questions return vague, hard-to-cite responses."
             },
             {
               "id": "s2",
               "title": "Open and verify every source",
-              "content": "Click every citation Perplexity gives you. Open the actual page. Check that the claim in the source matches what Perplexity said. This is the step 95% of students skip — and it's the step that separates a good submission from a failing one.",
-              "warning": "Perplexity occasionally misattributes quotes or slightly misrepresents what a source says. Always verify. This is not a bug — it's a fundamental property of all AI systems."
+              "content": "Click every citation Perplexity gives you. Open the actual page. Check that the claim in the source matches what Perplexity said. This is the step 95% of students skip \u2014 and it's the step that separates a good submission from a failing one.",
+              "warning": "Perplexity occasionally misattributes quotes or slightly misrepresents what a source says. Always verify. This is not a bug \u2014 it's a fundamental property of all AI systems."
             },
             {
               "id": "s3",
               "title": "Build your source list",
-              "content": "Copy the 5–8 facts you've verified (with their source URLs) into a simple document. Label each one clearly. This is your verified research base — everything you build next comes from this list only.",
+              "content": "Copy the 5\u20138 facts you've verified (with their source URLs) into a simple document. Label each one clearly. This is your verified research base \u2014 everything you build next comes from this list only.",
               "tip": "Format each entry as: [FACT] | [SOURCE URL] | [Why relevant]. This makes the next phases much faster."
             }
           ],
-          "output": "A document with 5–8 verified, cited facts on your topic"
+          "output": "A document with 5\u20138 verified, cited facts on your topic"
         },
         {
           "id": "phase-2",
           "title": "Extract structure and key ideas with NotebookLM",
           "tool": "NotebookLM",
           "duration": "15 min",
-          "objective": "Upload your verified source documents to NotebookLM. Use it to identify structure, find patterns across sources, and generate an outline — all grounded in your actual documents, not AI hallucinations.",
+          "objective": "Upload your verified source documents to NotebookLM. Use it to identify structure, find patterns across sources, and generate an outline \u2014 all grounded in your actual documents, not AI hallucinations.",
           "steps": [
             {
               "id": "s4",
               "title": "Upload your sources as a Notebook",
-              "content": "Create a new NotebookLM notebook. Upload the documents from Phase 1 (or paste the verified content directly). NotebookLM only knows what you give it — it cannot hallucinate facts from outside your sources.",
+              "content": "Create a new NotebookLM notebook. Upload the documents from Phase 1 (or paste the verified content directly). NotebookLM only knows what you give it \u2014 it cannot hallucinate facts from outside your sources.",
               "tip": "This is the key difference from ChatGPT or Claude: NotebookLM is grounded. Every answer it gives cites page numbers from your uploaded documents."
             },
             {
               "id": "s5",
               "title": "Ask for an outline, not content",
-              "content": "Ask: 'Based on these documents, what are the 4–5 most important themes? Suggest a logical presentation structure.' You want a skeleton, not filled-in content — you'll write the actual content yourself in Phase 3.",
+              "content": "Ask: 'Based on these documents, what are the 4\u20135 most important themes? Suggest a logical presentation structure.' You want a skeleton, not filled-in content \u2014 you'll write the actual content yourself in Phase 3.",
               "prompt": "Based on the documents I've uploaded, identify the 4 most important themes and suggest a logical flow for a 10-slide presentation. For each theme, note which document/section it comes from."
             },
             {
               "id": "s6",
               "title": "Generate your talking points",
-              "content": "For each theme in your outline, ask NotebookLM: 'Give me 2–3 specific, citable talking points for this section, with source references.' These become your slide content — grounded in documents, not invented.",
+              "content": "For each theme in your outline, ask NotebookLM: 'Give me 2\u20133 specific, citable talking points for this section, with source references.' These become your slide content \u2014 grounded in documents, not invented.",
               "tip": "If NotebookLM can't find support for a talking point in your documents, that's important information. It means that point isn't in your sources and you'd need to find more evidence."
             }
           ],
-          "output": "A 4–5 point outline with cited talking points for each section"
+          "output": "A 4\u20135 point outline with cited talking points for each section"
         },
         {
           "id": "phase-3",
           "title": "Build the presentation with Gamma",
           "tool": "Gamma",
           "duration": "15 min",
-          "objective": "Feed your outline and talking points into Gamma to generate a polished, structured slide deck. Then edit it — AI generates the shell, you add the judgment.",
+          "objective": "Feed your outline and talking points into Gamma to generate a polished, structured slide deck. Then edit it \u2014 AI generates the shell, you add the judgment.",
           "steps": [
             {
               "id": "s7",
               "title": "Paste your outline into Gamma",
-              "content": "Open Gamma. Click 'Generate'. Paste your full outline with talking points. Specify: number of slides (8–12), audience (students/teachers/examiner), and tone (academic/professional). Gamma generates a complete deck in under 30 seconds.",
+              "content": "Open Gamma. Click 'Generate'. Paste your full outline with talking points. Specify: number of slides (8\u201312), audience (students/teachers/examiner), and tone (academic/professional). Gamma generates a complete deck in under 30 seconds.",
               "prompt": "Create an 8-slide academic presentation on [your topic]. Audience: CBSE Class 12 examiner. Tone: formal and evidence-based. Slides: Title, Introduction, [4 theme slides], Conclusion, References."
             },
             {
               "id": "s8",
-              "title": "Edit with judgment — not more AI",
-              "content": "Now you do the work AI cannot do. Review every slide: Does the data match your verified sources? Is the narrative logical? Does slide 4 actually follow from slide 3? Add speaker notes, adjust phrasing, ensure the argument builds. The AI gave you a starting point — you make it yours.",
+              "title": "Edit with judgment \u2014 not more AI",
+              "content": "Now you do the work AI cannot do. Review every slide: Does the data match your verified sources? Is the narrative logical? Does slide 4 actually follow from slide 3? Add speaker notes, adjust phrasing, ensure the argument builds. The AI gave you a starting point \u2014 you make it yours.",
               "warning": "Never submit a Gamma deck without reading every word. Gamma occasionally writes confident-sounding sentences that are subtly wrong or don't match your source material."
             },
             {
               "id": "s9",
               "title": "Add your references slide",
-              "content": "Manually create a final References slide with all your verified source URLs from Phase 1. AI-generated presentations frequently omit or fabricate citations. Yours won't — because you're adding them from the verified list you built yourself.",
+              "content": "Manually create a final References slide with all your verified source URLs from Phase 1. AI-generated presentations frequently omit or fabricate citations. Yours won't \u2014 because you're adding them from the verified list you built yourself.",
               "tip": "A references slide is what separates an AI-assisted presentation from an AI-generated one. Examiners notice the difference."
             }
           ],
           "output": "A polished, fully cited presentation you can submit or present"
         }
       ],
-      "keyTakeaway": "The most powerful AI workflows keep humans in control of verification and judgment. AI accelerates the mechanical work — finding, structuring, formatting — while you own the critical work: verifying facts, building the argument, adding citations. This workflow scales to any topic, any subject, any level."
+      "keyTakeaway": "The most powerful AI workflows keep humans in control of verification and judgment. AI accelerates the mechanical work \u2014 finding, structuring, formatting \u2014 while you own the critical work: verifying facts, building the argument, adding citations. This workflow scales to any topic, any subject, any level."
     },
     {
       "id": "ai-assisted-study",
       "title": "The Deep Study Loop",
       "tagline": "Use Claude + Khanmigo + Quizlet AI to go from confused to exam-ready on any concept",
       "difficulty": "beginner",
-      "duration": "60–90 min",
-      "tools": ["Claude", "Khanmigo", "Quizlet AI"],
+      "duration": "60\u201390 min",
+      "tools": [
+        "Claude",
+        "Khanmigo",
+        "Quizlet AI"
+      ],
       "category": "Exam Prep",
-      "audience": ["student"],
-      "prerequisites": ["claude-basics"],
-      "whatYouBuild": "A full understanding of one concept — explained, tested, and retained using spaced repetition",
+      "audience": [
+        "student"
+      ],
+      "prerequisites": [
+        "claude-basics"
+      ],
+      "whatYouBuild": "A full understanding of one concept \u2014 explained, tested, and retained using spaced repetition",
       "realWorldUse": "CBSE Code 417 exam prep, IGCSE Computer Science, IB AI units, any conceptually dense topic",
       "phases": [
         {
@@ -119,7 +137,7 @@
           "title": "Break down the concept with Claude",
           "tool": "Claude",
           "duration": "20 min",
-          "objective": "Get a precise, level-appropriate explanation of the concept — then use Claude to probe until there are no remaining gaps.",
+          "objective": "Get a precise, level-appropriate explanation of the concept \u2014 then use Claude to probe until there are no remaining gaps.",
           "steps": [
             {
               "id": "s1",
@@ -136,7 +154,7 @@
             {
               "id": "s3",
               "title": "Generate your own explanation",
-              "content": "Close Claude. Write a 3-sentence explanation of the concept in your own words — as if explaining to a younger sibling who knows nothing. Then paste it back to Claude and ask: 'What did I get wrong or oversimplify?' This reveals gaps you didn't know you had.",
+              "content": "Close Claude. Write a 3-sentence explanation of the concept in your own words \u2014 as if explaining to a younger sibling who knows nothing. Then paste it back to Claude and ask: 'What did I get wrong or oversimplify?' This reveals gaps you didn't know you had.",
               "warning": "If you can't write the 3 sentences without looking at notes, you don't understand it yet. The feeling of understanding after reading an explanation is not the same as actually understanding it."
             }
           ],
@@ -147,22 +165,22 @@
           "title": "Go deeper with Khanmigo",
           "tool": "Khanmigo",
           "duration": "20 min",
-          "objective": "Use Khanmigo's Socratic teaching style to test whether you actually understand — not just whether you can repeat the explanation back.",
+          "objective": "Use Khanmigo's Socratic teaching style to test whether you actually understand \u2014 not just whether you can repeat the explanation back.",
           "steps": [
             {
               "id": "s4",
               "title": "Switch from answers to questions",
-              "content": "Open Khanmigo. Tell it: 'I think I understand [concept]. Ask me questions that test whether I truly understand it — not recall, but application and reasoning. Don't give me answers until I've tried.' Khanmigo is specifically designed to teach through questions rather than explanations.",
-              "tip": "Khanmigo will often refuse to give you the answer directly — it will guide you there instead. This is intentional and it's exactly what makes understanding stick."
+              "content": "Open Khanmigo. Tell it: 'I think I understand [concept]. Ask me questions that test whether I truly understand it \u2014 not recall, but application and reasoning. Don't give me answers until I've tried.' Khanmigo is specifically designed to teach through questions rather than explanations.",
+              "tip": "Khanmigo will often refuse to give you the answer directly \u2014 it will guide you there instead. This is intentional and it's exactly what makes understanding stick."
             },
             {
               "id": "s5",
               "title": "Work through application problems",
-              "content": "Ask Khanmigo: 'Give me a problem where I have to apply [concept] — not just define it. I want a scenario-based question, not a fill-in-the-blank.' Work through it step by step. If you get stuck, ask for a hint, not the answer.",
-              "prompt": "Give me an application problem for [concept] that would appear in a CBSE/IGCSE exam. Don't give me the answer — give me the first hint if I ask for it."
+              "content": "Ask Khanmigo: 'Give me a problem where I have to apply [concept] \u2014 not just define it. I want a scenario-based question, not a fill-in-the-blank.' Work through it step by step. If you get stuck, ask for a hint, not the answer.",
+              "prompt": "Give me an application problem for [concept] that would appear in a CBSE/IGCSE exam. Don't give me the answer \u2014 give me the first hint if I ask for it."
             }
           ],
-          "output": "Verified ability to apply the concept — not just define it"
+          "output": "Verified ability to apply the concept \u2014 not just define it"
         },
         {
           "id": "phase-3",
@@ -174,38 +192,46 @@
             {
               "id": "s6",
               "title": "Generate cards from your own notes",
-              "content": "Open Quizlet. Use 'Create with AI'. Paste your verified 3-sentence explanation + any key definitions from Phase 1. Ask it to create 8–10 flashcards: definitions, key distinctions, and one application example. Review every card — edit anything that's slightly off.",
-              "tip": "The best flashcards are written in your own words, not copied from explanations. Quizlet AI will often generate overly formal definitions — simplify them so you can recall them under exam pressure."
+              "content": "Open Quizlet. Use 'Create with AI'. Paste your verified 3-sentence explanation + any key definitions from Phase 1. Ask it to create 8\u201310 flashcards: definitions, key distinctions, and one application example. Review every card \u2014 edit anything that's slightly off.",
+              "tip": "The best flashcards are written in your own words, not copied from explanations. Quizlet AI will often generate overly formal definitions \u2014 simplify them so you can recall them under exam pressure."
             },
             {
               "id": "s7",
               "title": "First review session",
-              "content": "Do one full run through the deck immediately. Mark cards as 'still learning' honestly — don't mark something as known because you recognised it. Recognition ≠ recall. The exam gives you a blank page, not multiple choice.",
+              "content": "Do one full run through the deck immediately. Mark cards as 'still learning' honestly \u2014 don't mark something as known because you recognised it. Recognition \u2260 recall. The exam gives you a blank page, not multiple choice.",
               "warning": "The most common study mistake is reviewing cards too soon after creating them. Your brain still has the explanation in short-term memory. Come back to the deck in 24 hours for genuine testing."
             },
             {
               "id": "s8",
               "title": "Schedule your spaced sessions",
               "content": "Set Quizlet to remind you to review this deck in 1 day, 3 days, and 7 days. Spaced repetition is the only proven technique for moving information from short-term to long-term memory. Everything else is just practice with forgetting.",
-              "tip": "If you have an exam in 2 weeks, start this loop now — not the night before. The spacing is what makes it work."
+              "tip": "If you have an exam in 2 weeks, start this loop now \u2014 not the night before. The spacing is what makes it work."
             }
           ],
-          "output": "A flashcard deck on spaced repetition schedule — concept retained for exam"
+          "output": "A flashcard deck on spaced repetition schedule \u2014 concept retained for exam"
         }
       ],
-      "keyTakeaway": "Understanding and memorisation are different skills that require different tools. Use Claude to build genuine understanding. Use Khanmigo to verify it through application. Use Quizlet to retain it over time. Each tool does one job — the power is in the sequence."
+      "keyTakeaway": "Understanding and memorisation are different skills that require different tools. Use Claude to build genuine understanding. Use Khanmigo to verify it through application. Use Quizlet to retain it over time. Each tool does one job \u2014 the power is in the sequence."
     },
     {
       "id": "classroom-content-pipeline",
-      "title": "Lesson Plan → Materials → Assessment",
+      "title": "Lesson Plan \u2192 Materials \u2192 Assessment",
       "tagline": "A teacher's complete content pipeline using Claude, Canva AI, and one assessment tool",
       "difficulty": "intermediate",
-      "duration": "60–90 min",
-      "tools": ["Claude", "Canva AI", "Quizlet AI"],
+      "duration": "60\u201390 min",
+      "tools": [
+        "Claude",
+        "Canva AI",
+        "Quizlet AI"
+      ],
       "category": "Teaching",
-      "audience": ["teacher"],
-      "prerequisites": ["claude-for-teachers"],
-      "whatYouBuild": "A complete lesson: structured plan, visual teaching materials, and a differentiated assessment — ready to deliver",
+      "audience": [
+        "teacher"
+      ],
+      "prerequisites": [
+        "claude-for-teachers"
+      ],
+      "whatYouBuild": "A complete lesson: structured plan, visual teaching materials, and a differentiated assessment \u2014 ready to deliver",
       "realWorldUse": "CBSE/IGCSE AI units, any new topic introduction, substituting for a colleague, preparing a demo class",
       "phases": [
         {
@@ -224,14 +250,14 @@
             {
               "id": "s2",
               "title": "Iterate on weak sections",
-              "content": "Read the lesson plan. The activities section is usually the weakest — too abstract, not classroom-realistic. Ask Claude to improve specific sections: 'The group activity isn't workable in a 45-person classroom. Redesign it for large groups with no technology access.'",
-              "tip": "Claude doesn't know your classroom. You do. The iteration step — where you push back on what's not realistic — is where teacher expertise transforms AI output into actual teachable material."
+              "content": "Read the lesson plan. The activities section is usually the weakest \u2014 too abstract, not classroom-realistic. Ask Claude to improve specific sections: 'The group activity isn't workable in a 45-person classroom. Redesign it for large groups with no technology access.'",
+              "tip": "Claude doesn't know your classroom. You do. The iteration step \u2014 where you push back on what's not realistic \u2014 is where teacher expertise transforms AI output into actual teachable material."
             },
             {
               "id": "s3",
               "title": "Extract the key concepts list",
-              "content": "Ask Claude: 'From this lesson plan, list the 5–7 key concepts students must understand by the end. For each, write one sentence that defines it at the right level for a Class 10 student.' This list drives the next two phases.",
-              "output": "A 5–7 item key concepts list with student-appropriate definitions"
+              "content": "Ask Claude: 'From this lesson plan, list the 5\u20137 key concepts students must understand by the end. For each, write one sentence that defines it at the right level for a Class 10 student.' This list drives the next two phases.",
+              "output": "A 5\u20137 item key concepts list with student-appropriate definitions"
             }
           ],
           "output": "A complete, board-aligned lesson plan ready for classroom use"
@@ -241,24 +267,24 @@
           "title": "Create visual materials with Canva AI",
           "tool": "Canva AI",
           "duration": "20 min",
-          "objective": "Turn your key concepts list into visual teaching materials — slides, an infographic, or a classroom poster — using Canva AI's generation and design tools.",
+          "objective": "Turn your key concepts list into visual teaching materials \u2014 slides, an infographic, or a classroom poster \u2014 using Canva AI's generation and design tools.",
           "steps": [
             {
               "id": "s4",
               "title": "Generate a slide deck skeleton",
               "content": "Open Canva. Use Magic Design or the AI presentation tool. Paste your key concepts list and lesson objectives. Specify: academic style, your school colours if known, and slide count (1 per concept + title + summary). Canva generates a visual shell in under a minute.",
-              "tip": "Don't try to generate perfect slides — generate a useful starting point. The AI picks good layouts but often chooses generic images. Replace images with your own or CC-licensed images relevant to your class."
+              "tip": "Don't try to generate perfect slides \u2014 generate a useful starting point. The AI picks good layouts but often chooses generic images. Replace images with your own or CC-licensed images relevant to your class."
             },
             {
               "id": "s5",
               "title": "Build one strong visual per concept",
               "content": "For each key concept, the slide should have: a headline (the concept name), a visual (diagram or relevant image), and one sentence maximum. If you're putting more than one sentence on a slide, you're writing notes, not teaching. Move the extra text to your speaker notes.",
-              "warning": "Canva AI often generates slides with too much text. This is the most common presentation mistake. Slides are for visual anchoring — you provide the explanation verbally."
+              "warning": "Canva AI often generates slides with too much text. This is the most common presentation mistake. Slides are for visual anchoring \u2014 you provide the explanation verbally."
             },
             {
               "id": "s6",
               "title": "Export your speaker notes",
-              "content": "Use Claude with your key concepts list to generate speaker notes for each slide: 'For a teacher explaining [concept] to Class 10 students verbally, write 3–4 sentences of clear explanation that go alongside this slide.' Add these as Canva speaker notes. You now have a complete teaching package."
+              "content": "Use Claude with your key concepts list to generate speaker notes for each slide: 'For a teacher explaining [concept] to Class 10 students verbally, write 3\u20134 sentences of clear explanation that go alongside this slide.' Add these as Canva speaker notes. You now have a complete teaching package."
             }
           ],
           "output": "A visual slide deck with speaker notes for every slide"
@@ -268,43 +294,53 @@
           "title": "Build a differentiated assessment with Quizlet AI",
           "tool": "Quizlet AI",
           "duration": "20 min",
-          "objective": "Create a post-lesson assessment that tests real understanding — not just recall — with questions differentiated for different ability levels.",
+          "objective": "Create a post-lesson assessment that tests real understanding \u2014 not just recall \u2014 with questions differentiated for different ability levels.",
           "steps": [
             {
               "id": "s7",
               "title": "Generate 3 tiers of questions",
-              "content": "Open Quizlet. Ask Claude first (not Quizlet) to generate questions at 3 levels: (1) Recall — define the term, (2) Application — given a scenario, identify which concept applies, (3) Analysis — explain why this matters or what would happen if it changed. Aim for 3 questions per tier.",
+              "content": "Open Quizlet. Ask Claude first (not Quizlet) to generate questions at 3 levels: (1) Recall \u2014 define the term, (2) Application \u2014 given a scenario, identify which concept applies, (3) Analysis \u2014 explain why this matters or what would happen if it changed. Aim for 3 questions per tier.",
               "prompt": "Generate 9 assessment questions on [topic] for CBSE Class 10. Three recall questions (just define/identify), three application questions (given a scenario, apply the concept), three analysis questions (explain reasoning or implications). Mark the correct answer and a one-sentence explanation for each."
             },
             {
               "id": "s8",
               "title": "Import into Quizlet as a teacher set",
-              "content": "Create a Quizlet class. Import your questions as a study set. Share the link with students before the next lesson — they can self-test, and you can see class-wide performance data to know where to spend time in your follow-up lesson.",
-              "tip": "Quizlet's class analytics show you which terms the whole class got wrong. This is more useful than marking individual papers — you see the conceptual gaps, not just the score."
+              "content": "Create a Quizlet class. Import your questions as a study set. Share the link with students before the next lesson \u2014 they can self-test, and you can see class-wide performance data to know where to spend time in your follow-up lesson.",
+              "tip": "Quizlet's class analytics show you which terms the whole class got wrong. This is more useful than marking individual papers \u2014 you see the conceptual gaps, not just the score."
             },
             {
               "id": "s9",
               "title": "Save your pipeline as a template",
               "content": "Save your Claude prompts from Phase 1, your Canva template, and your Quizlet question format. Next time you teach a new topic, you have a repeatable pipeline. The first time takes 90 minutes. The second time takes 30.",
-              "tip": "The biggest productivity gain from AI in teaching isn't any single tool — it's having a repeatable workflow that you own and refine over time."
+              "tip": "The biggest productivity gain from AI in teaching isn't any single tool \u2014 it's having a repeatable workflow that you own and refine over time."
             }
           ],
           "output": "A 9-question differentiated assessment with answer keys, imported into Quizlet"
         }
       ],
-      "keyTakeaway": "AI doesn't replace teacher expertise — it removes the mechanical work that consumes teacher time. The hardest parts of this workflow (knowing what your students actually need, identifying which activity will work in your classroom, deciding what to differentiate) are still yours. The AI handles the first draft of everything else."
+      "keyTakeaway": "AI doesn't replace teacher expertise \u2014 it removes the mechanical work that consumes teacher time. The hardest parts of this workflow (knowing what your students actually need, identifying which activity will work in your classroom, deciding what to differentiate) are still yours. The AI handles the first draft of everything else."
     },
     {
       "id": "podcast-to-brief",
-      "title": "Podcast / Video → Research Brief",
+      "title": "Podcast / Video \u2192 Research Brief",
       "tagline": "Turn any long-form audio or video into a structured, searchable research document using AI",
       "difficulty": "intermediate",
-      "duration": "30–45 min",
-      "tools": ["Otter.ai", "NotebookLM", "Claude"],
+      "duration": "30\u201345 min",
+      "tools": [
+        "Otter.ai",
+        "NotebookLM",
+        "Claude"
+      ],
       "category": "Research",
-      "audience": ["student", "teacher", "curious"],
-      "prerequisites": ["notebooklm-basics"],
-      "whatYouBuild": "A structured, searchable research brief from any podcast, lecture, or interview — with key claims, quotes, and your own analysis",
+      "audience": [
+        "student",
+        "teacher",
+        "curious"
+      ],
+      "prerequisites": [
+        "notebooklm-basics"
+      ],
+      "whatYouBuild": "A structured, searchable research brief from any podcast, lecture, or interview \u2014 with key claims, quotes, and your own analysis",
       "realWorldUse": "Lecture notes, podcast research, interview analysis, documentary study, academic research",
       "phases": [
         {
@@ -312,19 +348,19 @@
           "title": "Transcribe and timestamp with Otter.ai",
           "tool": "Otter.ai",
           "duration": "10 min",
-          "objective": "Convert your audio or video into a searchable, timestamped transcript. Never rely on auto-generated YouTube captions — Otter.ai is more accurate and gives you a format you can work with.",
+          "objective": "Convert your audio or video into a searchable, timestamped transcript. Never rely on auto-generated YouTube captions \u2014 Otter.ai is more accurate and gives you a format you can work with.",
           "steps": [
             {
               "id": "s1",
               "title": "Import your media",
-              "content": "Upload your MP3, MP4, or paste a YouTube/podcast URL directly into Otter.ai. It transcribes with speaker identification and timestamps. For a 1-hour podcast, transcription takes about 3–5 minutes.",
-              "tip": "If you're transcribing a lecture or interview, let Otter.ai identify speakers from the start. Correct it once — it improves automatically for future sessions with the same speakers."
+              "content": "Upload your MP3, MP4, or paste a YouTube/podcast URL directly into Otter.ai. It transcribes with speaker identification and timestamps. For a 1-hour podcast, transcription takes about 3\u20135 minutes.",
+              "tip": "If you're transcribing a lecture or interview, let Otter.ai identify speakers from the start. Correct it once \u2014 it improves automatically for future sessions with the same speakers."
             },
             {
               "id": "s2",
               "title": "Highlight key moments in the transcript",
-              "content": "Read through the transcript. Highlight (or star) every moment where: a specific claim is made, a surprising fact appears, or an argument is developed. These become your source material. Don't take notes yet — just mark the moments.",
-              "warning": "Transcription is ~95% accurate. Always check timestamps before quoting anyone — occasionally Otter.ai mishears words in ways that change meaning significantly."
+              "content": "Read through the transcript. Highlight (or star) every moment where: a specific claim is made, a surprising fact appears, or an argument is developed. These become your source material. Don't take notes yet \u2014 just mark the moments.",
+              "warning": "Transcription is ~95% accurate. Always check timestamps before quoting anyone \u2014 occasionally Otter.ai mishears words in ways that change meaning significantly."
             }
           ],
           "output": "A timestamped transcript with key moments highlighted"
@@ -339,14 +375,14 @@
             {
               "id": "s3",
               "title": "Upload and ask for the argument structure",
-              "content": "Paste the transcript (or the highlighted sections) into NotebookLM as a source. Ask: 'What is the central argument of this source? What are the 3–4 main supporting points? What evidence does the speaker use for each?'",
-              "prompt": "Based on this transcript, identify: (1) The central thesis or main argument, (2) The 3–4 main supporting claims, (3) The evidence or examples used for each claim, (4) Any significant limitations or counterarguments acknowledged by the speaker."
+              "content": "Paste the transcript (or the highlighted sections) into NotebookLM as a source. Ask: 'What is the central argument of this source? What are the 3\u20134 main supporting points? What evidence does the speaker use for each?'",
+              "prompt": "Based on this transcript, identify: (1) The central thesis or main argument, (2) The 3\u20134 main supporting claims, (3) The evidence or examples used for each claim, (4) Any significant limitations or counterarguments acknowledged by the speaker."
             },
             {
               "id": "s4",
               "title": "Extract direct quotes with timestamps",
               "content": "For each key claim NotebookLM identified, ask: 'Find the exact quote from the transcript where the speaker makes this point, and give me the approximate timestamp.' These become citable quotes in your brief.",
-              "tip": "NotebookLM is grounded in your uploaded document — it won't invent quotes. If it can't find a quote, it means the claim might have been a paraphrase, not a direct statement."
+              "tip": "NotebookLM is grounded in your uploaded document \u2014 it won't invent quotes. If it can't find a quote, it means the claim might have been a paraphrase, not a direct statement."
             }
           ],
           "output": "A structured argument map with direct quotes and timestamps"
@@ -356,36 +392,46 @@
           "title": "Write the research brief with Claude",
           "tool": "Claude",
           "duration": "15 min",
-          "objective": "Use Claude to synthesise your extracted material into a professional research brief — with your own critical analysis added.",
+          "objective": "Use Claude to synthesise your extracted material into a professional research brief \u2014 with your own critical analysis added.",
           "steps": [
             {
               "id": "s5",
               "title": "Generate the brief structure",
               "content": "Paste your NotebookLM output into Claude. Ask it to format it as a research brief: executive summary, key claims, supporting evidence, direct quotes, and a critical questions section. Claude structures; you haven't written anything yet.",
-              "prompt": "Format this extracted content as a research brief with: (1) Executive summary (2 sentences), (2) Key claims (bullet points), (3) Supporting evidence for each claim, (4) 2–3 notable direct quotes, (5) A 'critical questions' section — things this source doesn't address or that should be verified against other sources."
+              "prompt": "Format this extracted content as a research brief with: (1) Executive summary (2 sentences), (2) Key claims (bullet points), (3) Supporting evidence for each claim, (4) 2\u20133 notable direct quotes, (5) A 'critical questions' section \u2014 things this source doesn't address or that should be verified against other sources."
             },
             {
               "id": "s6",
               "title": "Add your own analysis",
               "content": "This is the step that makes the brief yours. For each key claim, add one sentence of your own analysis: Do you find the evidence convincing? What would strengthen or weaken this argument? What does this mean for your specific context (your essay, your project, your class)?",
-              "warning": "A research brief without your analysis is a summary, not research. The analysis section — which AI cannot write for you — is what demonstrates understanding to an examiner or employer."
+              "warning": "A research brief without your analysis is a summary, not research. The analysis section \u2014 which AI cannot write for you \u2014 is what demonstrates understanding to an examiner or employer."
             }
           ],
           "output": "A complete research brief with structured summary, quotes, and your critical analysis"
         }
       ],
-      "keyTakeaway": "Long-form audio and video are among the richest research sources available — and among the most underused, because they're hard to reference and search. This workflow makes them as usable as a written article. The human judgment that makes it valuable is in step 6: your analysis."
+      "keyTakeaway": "Long-form audio and video are among the richest research sources available \u2014 and among the most underused, because they're hard to reference and search. This workflow makes them as usable as a written article. The human judgment that makes it valuable is in step 6: your analysis."
     },
     {
       "id": "idea-to-prototype",
-      "title": "Idea → Prototype → Pitch",
+      "title": "Idea \u2192 Prototype \u2192 Pitch",
       "tagline": "Go from raw idea to a working prototype and a pitch deck using Claude, Replit, and Gamma",
       "difficulty": "advanced",
-      "duration": "3–4 hours",
-      "tools": ["Claude", "Replit", "Gamma"],
+      "duration": "3\u20134 hours",
+      "tools": [
+        "Claude",
+        "Replit",
+        "Gamma"
+      ],
       "category": "Building",
-      "audience": ["student", "curious"],
-      "prerequisites": ["claude-basics", "replit-basics"],
+      "audience": [
+        "student",
+        "curious"
+      ],
+      "prerequisites": [
+        "claude-basics",
+        "replit-basics"
+      ],
       "whatYouBuild": "A working (basic) prototype of your idea and a 10-slide pitch deck explaining what it does and why it matters",
       "realWorldUse": "School project showcases, hackathons, college application portfolios, startup ideas, science fairs",
       "phases": [
@@ -393,13 +439,13 @@
           "id": "phase-1",
           "title": "Define and validate the idea with Claude",
           "tool": "Claude",
-          "duration": "30–45 min",
+          "duration": "30\u201345 min",
           "objective": "Before writing a line of code, use Claude to stress-test your idea, define exactly what to build, and produce a technical specification a coder (or Replit AI) can follow.",
           "steps": [
             {
               "id": "s1",
               "title": "Stress-test the idea",
-              "content": "Tell Claude your idea in one sentence. Then ask: 'What are the 3 most likely reasons this idea fails? What assumptions am I making that might be wrong? What's the simplest possible version of this that proves the core concept works?' This question — what's the simplest version — is the most important thing you'll do in this workflow.",
+              "content": "Tell Claude your idea in one sentence. Then ask: 'What are the 3 most likely reasons this idea fails? What assumptions am I making that might be wrong? What's the simplest possible version of this that proves the core concept works?' This question \u2014 what's the simplest version \u2014 is the most important thing you'll do in this workflow.",
               "prompt": "My idea: [your idea in one sentence]. What are the 3 most likely failure modes? What's the riskiest assumption? And what's the minimum version I could build in one sitting that would prove the core concept works or doesn't?"
             },
             {
@@ -415,13 +461,13 @@
           "id": "phase-2",
           "title": "Build the prototype with Replit",
           "tool": "Replit",
-          "duration": "90–120 min",
-          "objective": "Use Replit's AI assistant to turn your specification into working code — iterating rapidly, testing as you go, and staying focused on the minimum version.",
+          "duration": "90\u2013120 min",
+          "objective": "Use Replit's AI assistant to turn your specification into working code \u2014 iterating rapidly, testing as you go, and staying focused on the minimum version.",
           "steps": [
             {
               "id": "s3",
               "title": "Start a new Repl and paste your spec",
-              "content": "Open Replit. Choose the language Claude recommended. Use Replit AI (the chat panel): paste your full technical specification and say 'Build this step by step, starting with the simplest working version. Explain each step as you go.' Run the code after every step — don't let errors accumulate.",
+              "content": "Open Replit. Choose the language Claude recommended. Use Replit AI (the chat panel): paste your full technical specification and say 'Build this step by step, starting with the simplest working version. Explain each step as you go.' Run the code after every step \u2014 don't let errors accumulate.",
               "warning": "The biggest mistake in AI-assisted coding is generating 200 lines of code and then trying to debug everything at once. Build one function at a time, test it, then continue."
             },
             {
@@ -433,7 +479,7 @@
             {
               "id": "s5",
               "title": "Test with real inputs",
-              "content": "Once the prototype runs, test it with 5 real inputs — including at least one that should break it. Document what works and what doesn't. A prototype that works on demo inputs but fails on real ones is a prototype that will embarrass you in a presentation."
+              "content": "Once the prototype runs, test it with 5 real inputs \u2014 including at least one that should break it. Document what works and what doesn't. A prototype that works on demo inputs but fails on real ones is a prototype that will embarrass you in a presentation."
             }
           ],
           "output": "A working prototype with documented test results"
@@ -442,8 +488,8 @@
           "id": "phase-3",
           "title": "Build the pitch deck with Gamma",
           "tool": "Gamma",
-          "duration": "30–45 min",
-          "objective": "Create a 10-slide pitch deck that explains what you built, why it matters, and what's next — in a format that works for a demo presentation, a submission, or a portfolio.",
+          "duration": "30\u201345 min",
+          "objective": "Create a 10-slide pitch deck that explains what you built, why it matters, and what's next \u2014 in a format that works for a demo presentation, a submission, or a portfolio.",
           "steps": [
             {
               "id": "s6",
@@ -455,7 +501,7 @@
               "id": "s7",
               "title": "Generate and customise in Gamma",
               "content": "Paste your outline into Gamma. Generate a 10-slide deck. Then: add a screenshot of your actual prototype on the 'how it works' slide, replace any stock images with relevant ones, and make sure every slide has a clear, single-sentence takeaway at the top.",
-              "warning": "Do not put code on slides. If you want to show code, show a screenshot of it running with the output visible. The audience cannot read code on a slide — they can see it working."
+              "warning": "Do not put code on slides. If you want to show code, show a screenshot of it running with the output visible. The audience cannot read code on a slide \u2014 they can see it working."
             },
             {
               "id": "s8",
@@ -472,12 +518,20 @@
     {
       "id": "misinformation-investigator",
       "title": "The Misinformation Investigator",
-      "tagline": "Use Perplexity, Claude, and Consensus to fact-check any claim — systematically, not just intuitively",
+      "tagline": "Use Perplexity, Claude, and Consensus to fact-check any claim \u2014 systematically, not just intuitively",
       "difficulty": "intermediate",
-      "duration": "45–60 min",
-      "tools": ["Perplexity", "Claude", "Consensus"],
+      "duration": "45\u201360 min",
+      "tools": [
+        "Perplexity",
+        "Claude",
+        "Consensus"
+      ],
       "category": "Critical Thinking",
-      "audience": ["student", "curious", "teacher"],
+      "audience": [
+        "student",
+        "curious",
+        "teacher"
+      ],
       "prerequisites": [],
       "whatYouBuild": "A systematic fact-check of a specific claim, with a verdict and evidence trail that you could show to anyone",
       "realWorldUse": "WhatsApp forwards, news articles, exam essay claims, social media, research papers",
@@ -487,13 +541,13 @@
           "title": "Isolate the exact claim with Claude",
           "tool": "Claude",
           "duration": "10 min",
-          "objective": "Before you search for anything, use Claude to break down what exactly is being claimed — because most misleading content is misleading through imprecision, not outright fabrication.",
+          "objective": "Before you search for anything, use Claude to break down what exactly is being claimed \u2014 because most misleading content is misleading through imprecision, not outright fabrication.",
           "steps": [
             {
               "id": "s1",
               "title": "Extract the specific claims",
-              "content": "Paste the article, post, or statement into Claude. Ask: 'Identify every specific, verifiable claim in this text. List them as separate, testable statements. Ignore opinions and predictions — only list claims that could be true or false.' Most viral misinformation contains 1 true claim, 1 misleading implication, and 1 outright fabrication. Separating them is step one.",
-              "prompt": "Read this text and list every specific, factual claim that could be independently verified. Format each as: [CLAIM] — [what would need to be true for this to be accurate]. Ignore opinions, predictions, and assertions."
+              "content": "Paste the article, post, or statement into Claude. Ask: 'Identify every specific, verifiable claim in this text. List them as separate, testable statements. Ignore opinions and predictions \u2014 only list claims that could be true or false.' Most viral misinformation contains 1 true claim, 1 misleading implication, and 1 outright fabrication. Separating them is step one.",
+              "prompt": "Read this text and list every specific, factual claim that could be independently verified. Format each as: [CLAIM] \u2014 [what would need to be true for this to be accurate]. Ignore opinions, predictions, and assertions."
             },
             {
               "id": "s2",
@@ -509,13 +563,13 @@
           "title": "Find cited evidence with Perplexity",
           "tool": "Perplexity",
           "duration": "20 min",
-          "objective": "For each key claim, use Perplexity to find cited, verifiable sources — then open every source and read the relevant section.",
+          "objective": "For each key claim, use Perplexity to find cited, verifiable sources \u2014 then open every source and read the relevant section.",
           "steps": [
             {
               "id": "s3",
               "title": "Search for the claim, not confirmation",
               "content": "Don't search for 'evidence that [claim] is true'. Search for '[claim] evidence', '[claim] peer-reviewed', and '[claim] debunked'. You want sources on both sides. If only one side appears in search results, that's information too.",
-              "warning": "Confirmation bias is the biggest risk in fact-checking. If you search for confirmation, you'll find it — regardless of whether the claim is true. Always search for counter-evidence as deliberately as you search for supporting evidence."
+              "warning": "Confirmation bias is the biggest risk in fact-checking. If you search for confirmation, you'll find it \u2014 regardless of whether the claim is true. Always search for counter-evidence as deliberately as you search for supporting evidence."
             },
             {
               "id": "s4",
@@ -531,25 +585,598 @@
           "title": "Check the scientific consensus with Consensus",
           "tool": "Consensus",
           "duration": "15 min",
-          "objective": "For health, science, or research claims, use Consensus to find what the peer-reviewed literature actually says — not what one study says, but what the body of evidence shows.",
+          "objective": "For health, science, or research claims, use Consensus to find what the peer-reviewed literature actually says \u2014 not what one study says, but what the body of evidence shows.",
           "steps": [
             {
               "id": "s5",
               "title": "Search for the scientific consensus",
               "content": "Open Consensus (consensus.app). Type your claim as a question: 'Does [claim]?' Consensus searches peer-reviewed papers and shows you: what percentage of papers support, oppose, or are inconclusive on the claim, and what the highest-cited papers say.",
-              "tip": "Consensus is specifically for scientific and health claims. Don't use it for political, historical, or current-events fact-checking — use Perplexity for those."
+              "tip": "Consensus is specifically for scientific and health claims. Don't use it for political, historical, or current-events fact-checking \u2014 use Perplexity for those."
             },
             {
               "id": "s6",
               "title": "Write your verdict",
-              "content": "Return to Claude. Paste all your evidence — from Perplexity and Consensus. Ask: 'Based on this evidence, write a 3-sentence verdict: is this claim true, false, misleading, or unverifiable? Cite the specific evidence that determines the verdict.' This is your conclusion — grounded in sources, not instinct.",
+              "content": "Return to Claude. Paste all your evidence \u2014 from Perplexity and Consensus. Ask: 'Based on this evidence, write a 3-sentence verdict: is this claim true, false, misleading, or unverifiable? Cite the specific evidence that determines the verdict.' This is your conclusion \u2014 grounded in sources, not instinct.",
               "prompt": "Based on this evidence: [paste your findings]. Write a fact-check verdict: (1) The original claim in one sentence, (2) The verdict (true/false/misleading/unverifiable), (3) The single strongest piece of evidence determining the verdict, (4) One important nuance or limitation of this verdict."
             }
           ],
           "output": "A written fact-check verdict with evidence trail"
         }
       ],
-      "keyTakeaway": "Most misinformation isn't completely fabricated — it's true claims with false implications, or real statistics without context. Systematic fact-checking doesn't ask 'is this true?' It asks 'what exactly is being claimed, where does that claim come from, and what does the evidence actually show?' That's a skill that makes you harder to mislead, regardless of what AI tool you're using."
+      "keyTakeaway": "Most misinformation isn't completely fabricated \u2014 it's true claims with false implications, or real statistics without context. Systematic fact-checking doesn't ask 'is this true?' It asks 'what exactly is being claimed, where does that claim come from, and what does the evidence actually show?' That's a skill that makes you harder to mislead, regardless of what AI tool you're using."
+    },
+    {
+      "id": "essay-argument-builder",
+      "title": "Argument -> Draft -> Distinction",
+      "tagline": "Build an essay that actually argues something \u2014 not one that just summarises \u2014 using Claude, Consensus, and Hemingway Editor",
+      "difficulty": "intermediate",
+      "duration": "90-120 min",
+      "tools": [
+        "Claude",
+        "Consensus",
+        "Hemingway Editor"
+      ],
+      "category": "Academic Writing",
+      "audience": [
+        "student",
+        "teacher"
+      ],
+      "prerequisites": [
+        "claude-basics"
+      ],
+      "whatYouBuild": "A fully argued, evidence-backed essay on any topic \u2014 with a clear thesis, structured reasoning, and every claim supported by peer-reviewed sources",
+      "realWorldUse": "IB Extended Essay, IGCSE English/History/Economics coursework, university application essays, UPSC answer writing, competitive debate prep",
+      "phases": [
+        {
+          "id": "phase-1",
+          "title": "Build the argument before you write a word",
+          "tool": "Claude",
+          "duration": "30 min",
+          "objective": "Most weak essays fail before a word is written \u2014 they describe instead of argue. Use Claude to stress-test your thesis until it is genuinely arguable, not just a topic statement.",
+          "steps": [
+            {
+              "id": "s1",
+              "title": "Test whether you have a thesis or just a topic",
+              "content": "Paste your essay question into Claude. Ask: 'Is my current thesis actually arguable, or is it just a topic description? What would someone who disagrees with me say?' A thesis is only real if someone reasonable could disagree with it. 'Climate change is bad' is a topic. 'Climate change disproportionately harms low-income nations that contributed least to it, making current international climate finance morally insufficient' is a thesis.",
+              "prompt": "Here is my essay question: [paste question]. Here is my current thesis: [paste thesis]. Is this genuinely arguable \u2014 could a thoughtful person reasonably disagree? If not, sharpen it into a claim that takes a specific, defensible position. Give me 3 alternative thesis versions, ranked from weakest to strongest argument.",
+              "tip": "The best theses make a claim about causation, moral weight, or relative importance \u2014 not just the existence of a problem. 'X exists' is a topic. 'X causes Y because Z' is a thesis."
+            },
+            {
+              "id": "s2",
+              "title": "Map your argument structure",
+              "content": "Ask Claude: 'Give me a 4-paragraph argument map for this thesis. Each paragraph should make one distinct claim that supports the thesis \u2014 not just introduce a new topic. Show me how each paragraph's claim logically builds on the previous one.' The key word is builds. Each paragraph should make the next paragraph's argument possible.",
+              "prompt": "For this thesis: [your thesis]. Create an argument map with 4 supporting claims. For each claim: (1) state the claim in one sentence, (2) name the strongest type of evidence that would prove it (statistic, case study, expert consensus, historical precedent), (3) explain in one sentence how this claim supports the overall thesis."
+            },
+            {
+              "id": "s3",
+              "title": "Steelman the counterargument",
+              "content": "Ask Claude: 'What is the strongest possible argument against my thesis? Not a weak objection \u2014 the most sophisticated version of the disagreement.' Write this out in full. The best essays acknowledge and then answer the strongest counterargument \u2014 not the easiest one. This is what separates distinction-level work from merit-level.",
+              "warning": "If your counterargument section says 'some people believe X, but they are wrong because Y' \u2014 you have not engaged with the argument. You have dismissed it. Examiners reward essays that take the opposing view seriously before refuting it."
+            }
+          ],
+          "output": "A thesis statement, 4-claim argument map, and one steelmanned counterargument"
+        },
+        {
+          "id": "phase-2",
+          "title": "Find peer-reviewed evidence with Consensus",
+          "tool": "Consensus",
+          "duration": "30 min",
+          "objective": "For each claim in your argument map, find what the academic literature actually says \u2014 not what websites say, not what one study says, but the weight of peer-reviewed evidence.",
+          "steps": [
+            {
+              "id": "s4",
+              "title": "Turn each claim into a Consensus search",
+              "content": "Open Consensus (consensus.app). For each of your 4 argument claims, rephrase it as a yes/no question and search. Consensus shows you: the percentage of papers supporting or opposing the claim, the top-cited papers, and a consensus meter. This tells you whether your argument is with or against the scholarly evidence.",
+              "tip": "If Consensus shows weak or mixed evidence for a claim you thought was solid, that is critical information \u2014 not a problem. Either find a more defensible version of the claim, or find a different claim entirely. An argument built on weak evidence is a liability in any serious essay."
+            },
+            {
+              "id": "s5",
+              "title": "Extract citable evidence for each claim",
+              "content": "For each claim, note the top 2 papers Consensus surfaces. Click through to the abstract. Copy: the author names, year, journal, and the one sentence from the abstract that most directly supports your claim. Build a mini evidence file: Claim -> Evidence -> Citation. This is your essay's skeleton.",
+              "warning": "Do not cite papers you have not read the abstract of. Citing a paper based solely on Consensus's summary is the academic equivalent of citing Wikipedia instead of the source \u2014 your teacher will notice the mismatch between your claim and what the paper actually shows."
+            }
+          ],
+          "output": "Evidence file: 4 claims, each with 2 peer-reviewed citations and the specific finding that supports the claim"
+        },
+        {
+          "id": "phase-3",
+          "title": "Draft and tighten with Claude and Hemingway Editor",
+          "tool": "Hemingway Editor",
+          "duration": "30-60 min",
+          "objective": "Write the draft with Claude's structural help, then use Hemingway Editor to strip it of the wordiness that makes academic writing unreadable \u2014 and unremarkable.",
+          "steps": [
+            {
+              "id": "s6",
+              "title": "Draft paragraph by paragraph, not all at once",
+              "content": "Give Claude your argument map and evidence file. Ask it to draft one paragraph at a time. For each paragraph, specify: the claim it must make, the evidence it must cite, and the connection it must draw to the thesis. Do not ask for the full essay at once \u2014 paragraph-by-paragraph drafting produces better structure and is easier to review.",
+              "prompt": "Draft paragraph 2 of my essay. Claim to make: [your claim]. Evidence to cite: [author, year \u2014 specific finding]. Connection to thesis: [how this advances the overall argument]. Tone: formal academic. Length: 150-200 words. End with a sentence that sets up paragraph 3."
+            },
+            {
+              "id": "s7",
+              "title": "Run every paragraph through Hemingway Editor",
+              "content": "Paste each paragraph into Hemingway Editor (hemingwayapp.com). Target Grade 10 or below \u2014 academic writing that scores Grade 14+ reads as bloated, not sophisticated. Cut every highlighted sentence in red. Replace every yellow sentence with two shorter ones. Remove every adverb it flags. Academic marks are not awarded for complexity \u2014 they are awarded for clarity of argument.",
+              "tip": "The single most common reason essays do not reach distinction is that the argument is buried in complex sentence structure. Hemingway Editor reveals this immediately. If your core claim is in a red sentence, your examiner has to work to find it. They will not."
+            },
+            {
+              "id": "s8",
+              "title": "Write your conclusion last \u2014 and make it argue, not summarise",
+              "content": "Ask Claude: 'Write a conclusion for this essay that does not summarise what I have already said. Instead: (1) state what my argument has proven, (2) address the counterargument I raised and explain why the evidence still supports my thesis, (3) state the broader implication \u2014 why does this matter beyond the essay question?' A conclusion that merely restates body paragraphs adds no marks. One that extends the argument does.",
+              "warning": "Never start a conclusion with 'In conclusion' or 'To summarise'. These phrases signal to examiners that nothing new is coming. Start with the most powerful sentence in your essay \u2014 the one that states what your argument has actually proven."
+            }
+          ],
+          "output": "A complete, tightly written essay with genuine argument structure, peer-reviewed evidence, and a conclusion that extends \u2014 not just summarises"
+        }
+      ],
+      "keyTakeaway": "The difference between a C and a distinction in essay writing is almost never the quality of the facts \u2014 it is the presence of a real argument. AI can help you structure that argument, find evidence for it, and tighten the language. The argument itself \u2014 the claim you are willing to defend and the reasoning that defends it \u2014 is yours alone. That is the part that gets marked."
+    },
+    {
+      "id": "college-application-essay",
+      "title": "Story -> Draft -> Personal Statement",
+      "tagline": "Write a college application essay that sounds like you \u2014 not like every other AI-assisted applicant \u2014 using a structured human reflection process and Claude as a critic",
+      "difficulty": "intermediate",
+      "duration": "3-4 hours",
+      "tools": [
+        "Claude",
+        "Hemingway Editor"
+      ],
+      "category": "Academic Writing",
+      "audience": [
+        "student"
+      ],
+      "prerequisites": [
+        "claude-basics"
+      ],
+      "whatYouBuild": "A personal statement that reveals something true about who you are \u2014 with a specific story, genuine voice, and a clear 'so what' that connects your experience to your future",
+      "realWorldUse": "Common App essay, UCAS personal statement, Oxford/Cambridge application, NMAT/LNAT writing component, scholarship applications",
+      "phases": [
+        {
+          "id": "phase-1",
+          "title": "Find the real story \u2014 before you touch AI",
+          "tool": "Claude",
+          "duration": "60 min",
+          "objective": "The biggest mistake in application essays is starting with the essay. Start with the experience. You cannot write a genuine personal statement by prompting an AI to generate one \u2014 but you can use Claude to excavate the specific, true story that only you could tell.",
+          "steps": [
+            {
+              "id": "s1",
+              "title": "Answer these 5 questions without editing yourself",
+              "content": "Before opening Claude, write freely for 10 minutes answering: (1) What is something you did that embarrassed you at the time but taught you something? (2) What is a problem you tried to solve \u2014 not for school, but because it actually bothered you? (3) When did you change your mind about something you were certain about? (4) What do you do when no one is watching or rewarding you? (5) What failure has shaped you more than any success? Write badly. Do not edit. The story is in the rawness.",
+              "tip": "Admissions readers at selective universities read thousands of essays about winning the debate competition, overcoming injury, or volunteering abroad. The essays they remember are the ones about small, specific, true moments \u2014 the conversation that changed something, the mistake that cost something, the ordinary thing that turned out to matter."
+            },
+            {
+              "id": "s2",
+              "title": "Use Claude to find which story has depth",
+              "content": "Paste all 5 answers into Claude. Ask: 'Which of these has the most potential for a personal statement? For each, tell me: what specific moment I could open with, what the so-what might be, and what this would reveal about how I think. Do not write the essay \u2014 just identify which story is most worth telling and why.' Let Claude be the reader, not the writer.",
+              "prompt": "Here are 5 raw reflections from a [year] student applying to [field/university]. Which has the most potential for a personal statement? For each: (1) What specific, sensory moment could open the essay, (2) What does this reveal about how this person thinks \u2014 not what they have done, (3) What is the risk \u2014 what would make this essay fail? Do not write any draft yet.",
+              "warning": "Do not ask Claude to write your personal statement. Admissions offices use AI detection and \u2014 more importantly \u2014 essays written by AI do not sound like you. An essay that sounds like everyone is worse than a mediocre essay that sounds like yourself."
+            }
+          ],
+          "output": "One identified story with a specific opening moment and a clear 'so what'"
+        },
+        {
+          "id": "phase-2",
+          "title": "Structure the narrative",
+          "tool": "Claude",
+          "duration": "45 min",
+          "objective": "A personal statement is not a chronology \u2014 it is a narrative with tension, reflection, and resolution. Use Claude to map the structure, then write the draft yourself.",
+          "steps": [
+            {
+              "id": "s3",
+              "title": "Map the three movements of your story",
+              "content": "Every strong personal statement has three movements: (1) the specific moment \u2014 what happened, in sensory detail, (2) the complication or realisation \u2014 what you did not know, what went wrong, what you had to rethink, (3) the so-what \u2014 what this reveals about how you will approach the next challenge. Ask Claude to map these three movements for your story \u2014 not to write them, but to name what should be in each.",
+              "prompt": "Here is my story: [paste your raw reflection]. Map it into 3 narrative movements: (1) the opening moment \u2014 what specific scene should I start with, what sensory detail should be present, (2) the complication \u2014 what is the tension, the thing I did not know, or what went wrong, (3) the so-what \u2014 what does this story reveal about how I think, not what I have achieved. Give me the map, not the draft."
+            },
+            {
+              "id": "s4",
+              "title": "Write the first draft yourself \u2014 all of it",
+              "content": "Write the full draft yourself, using your narrative map. Do not ask Claude to write any part of it. Aim for 650 words (Common App limit). Write the opening scene first \u2014 start mid-action, not with a description of yourself. Write badly if you have to. The goal is to get your story on the page in your own voice.",
+              "tip": "The single best opening line is one where something is already happening. Not 'I have always been passionate about science.' But: 'The centrifuge broke at 11pm, two days before the competition, and I was the only one who knew why.' Start in the middle of something."
+            }
+          ],
+          "output": "A complete first-draft personal statement in your own voice"
+        },
+        {
+          "id": "phase-3",
+          "title": "Revise for voice, not perfection",
+          "tool": "Hemingway Editor",
+          "duration": "60-90 min",
+          "objective": "Use Claude as a critical reader and Hemingway Editor as a style tool \u2014 but make every change yourself. The goal is for the final draft to sound like the clearest, most precise version of you.",
+          "steps": [
+            {
+              "id": "s5",
+              "title": "Get Claude's honest critique",
+              "content": "Paste your draft into Claude. Ask for critique, not polish: 'Read this personal statement critically. Tell me: (1) Where does it sound generic \u2014 like it could be anyone? (2) Where is it telling me about the applicant instead of showing me? (3) What is the strongest single sentence and why? (4) What should be cut entirely? Do not rewrite any part of it \u2014 just tell me what is not working and where the real essay is hiding.'",
+              "prompt": "Read this personal statement as a sceptical admissions reader who has read 500 essays today. Tell me: where does it sound like every other essay? What is the one moment where the real person appears? What claim is made but not earned with a specific detail? What would you cut? Do not rewrite \u2014 critique only."
+            },
+            {
+              "id": "s6",
+              "title": "Run it through Hemingway \u2014 then rewrite by hand",
+              "content": "Paste your essay into Hemingway Editor. Note every red and yellow sentence. Then close Hemingway and rewrite those sentences by hand \u2014 do not use the suggestions. The goal is simplicity in your own phrasing. If a sentence needs three attempts to simplify, that is the work. Every word in your final essay should feel chosen.",
+              "warning": "Do not use Claude to rewrite your sentences for you. Admissions readers are trained to spot the transition from student voice to AI voice \u2014 and it often happens at exactly the sentences where you got help with language. Simpler is better. Yours is better."
+            },
+            {
+              "id": "s7",
+              "title": "Read it aloud \u2014 the final test",
+              "content": "Read your final draft aloud, alone, once. If you stumble on a sentence, rewrite it. If a paragraph makes you cringe, cut it. If a line makes you feel something \u2014 keep it. The test for a personal statement is not whether it sounds impressive. It is whether it sounds like the most honest, precise version of yourself. That is what gets noticed.",
+              "tip": "Ask someone who knows you well \u2014 not a teacher, a friend or parent \u2014 to read it. Ask them one question only: 'Does this sound like me?' If they hesitate, something needs to change."
+            }
+          ],
+          "output": "A final personal statement in your own voice \u2014 specific, honest, and genuinely yours"
+        }
+      ],
+      "keyTakeaway": "The personal statement is one of the few parts of a college application that cannot be optimised \u2014 it can only be true or false. AI is useful for identifying which story to tell, mapping the structure, and giving you honest critique. The actual writing \u2014 every sentence, every word \u2014 must be yours. Not because AI cannot write it, but because the point of the essay is to find out if you can."
+    },
+    {
+      "id": "data-story-builder",
+      "title": "Raw Data -> Insight -> Story",
+      "tagline": "Turn a spreadsheet or dataset into a clear, compelling data story using Claude, Datawrapper, and Canva AI",
+      "difficulty": "intermediate",
+      "duration": "60-90 min",
+      "tools": [
+        "Claude",
+        "Datawrapper",
+        "Canva AI"
+      ],
+      "category": "Research",
+      "audience": [
+        "student",
+        "teacher",
+        "curious"
+      ],
+      "prerequisites": [
+        "claude-basics"
+      ],
+      "whatYouBuild": "A data-backed narrative with one clear insight, one publication-quality chart, and a one-page visual summary \u2014 suitable for a school project, report, or journalism piece",
+      "realWorldUse": "Economics/Geography data analysis, school newspaper, science fair, social science Internal Assessment (IB), policy memos, journalism projects",
+      "phases": [
+        {
+          "id": "phase-1",
+          "title": "Find the insight hiding in your data",
+          "tool": "Claude",
+          "duration": "20 min",
+          "objective": "Before you chart anything, use Claude to identify what your data actually shows \u2014 because the most common mistake in data analysis is charting the data you have instead of the insight the data contains.",
+          "steps": [
+            {
+              "id": "s1",
+              "title": "Describe your dataset to Claude",
+              "content": "You do not need to upload the actual data. Describe it: what is each row, what are the columns, what time period does it cover, where did it come from. Then ask Claude: 'If this data were a story, what are the 3 most interesting things it could show? What comparisons would be most revealing? What would surprise someone who thought they already understood this topic?'",
+              "prompt": "My dataset: [describe rows, columns, source, time period]. Without seeing the actual numbers, what are the 3 most analytically interesting questions this data could answer? What comparison or trend would be most unexpected? What would a journalist lead with versus what would an academic focus on?"
+            },
+            {
+              "id": "s2",
+              "title": "Find one insight \u2014 not five",
+              "content": "The most common mistake in student data projects is trying to show everything. Data stories that show one thing well are more persuasive than data dashboards that show everything weakly. Ask Claude: 'Which of these potential insights has the most narrative power? Which can be stated in one sentence that a non-expert would find genuinely surprising?' That sentence is your data story.",
+              "tip": "Your insight sentence should have the structure: '[Unexpected finding] \u2014 which suggests [implication].' For example: 'Countries with higher income inequality have lower social mobility, even when controlling for GDP \u2014 which suggests wealth redistribution policies matter more than growth rates for opportunity.' That is a story. A bar chart of GDP by country is not."
+            },
+            {
+              "id": "s3",
+              "title": "Identify what chart type tells your story honestly",
+              "content": "Ask Claude: 'My insight is [your sentence]. What chart type would show this most clearly and most honestly \u2014 without visually exaggerating or minimising the effect? What are the most common ways this type of data is unintentionally misleading in chart form?' The goal is a chart that makes your insight undeniable \u2014 not one that makes a small effect look large.",
+              "warning": "Truncated y-axes, cherry-picked time ranges, and inappropriate chart types are the three most common ways student data projects mislead readers \u2014 usually accidentally. Claude can flag all three before you build the chart."
+            }
+          ],
+          "output": "One clearly stated insight sentence and a specified chart type with honesty checks"
+        },
+        {
+          "id": "phase-2",
+          "title": "Build a publication-quality chart with Datawrapper",
+          "tool": "Datawrapper",
+          "duration": "20 min",
+          "objective": "Datawrapper produces charts that look like The Economist or BBC News \u2014 not like Excel. Use it to build one chart that makes your insight impossible to miss.",
+          "steps": [
+            {
+              "id": "s4",
+              "title": "Import your data and build the chart",
+              "content": "Open Datawrapper (datawrapper.de \u2014 free). Click 'Create new chart'. Paste your data directly into the spreadsheet view or upload your CSV. Select the chart type Claude recommended. In under 2 minutes you have a rough chart.",
+              "tip": "Datawrapper's annotation tools let you highlight specific data points, add explanatory notes directly on the chart, and draw the reader's eye to the most important element. These are the features that separate informational charts from persuasive ones."
+            },
+            {
+              "id": "s5",
+              "title": "Add the headline and annotation that makes the insight explicit",
+              "content": "Your chart headline should be the insight, not the description. Not 'GDP by country, 2020'. But: 'Countries with higher inequality had lower social mobility in every region.' Add one annotation arrow pointing to the data point that most powerfully illustrates the insight. The reader should understand your conclusion before they read the axis labels.",
+              "tip": "If your chart requires someone to study it for 30 seconds to understand what it is showing, it will be ignored. The best charts make their point in under 5 seconds. Title and annotation do that work."
+            }
+          ],
+          "output": "An embeddable, publication-quality chart with annotation \u2014 exportable as PNG or live link"
+        },
+        {
+          "id": "phase-3",
+          "title": "Build the one-page data story in Canva AI",
+          "tool": "Canva AI",
+          "duration": "20-30 min",
+          "objective": "Wrap your chart in a one-page visual summary: the insight headline, the chart, 2-3 supporting facts, the source attribution, and a 'so what' conclusion. This is the deliverable \u2014 not just the chart.",
+          "steps": [
+            {
+              "id": "s6",
+              "title": "Use Canva's infographic template",
+              "content": "Open Canva. Search 'data report infographic'. Choose a single-column layout with a large header area. Replace the header with your insight sentence (large, bold). Insert your Datawrapper chart as an image. Add 2-3 supporting statistics as pull-quote boxes below the chart. Add your data source and methodology note at the bottom.",
+              "warning": "Never use a Canva AI-generated infographic without fact-checking every number it auto-populates. Canva AI sometimes pulls in illustrative placeholder data that looks real. Every number on your final infographic must come from your verified dataset."
+            },
+            {
+              "id": "s7",
+              "title": "Write the 'so what' conclusion",
+              "content": "Ask Claude: 'Based on this insight \u2014 [your sentence] \u2014 write a 2-sentence so-what for a [your audience] audience. It should answer: what should someone do differently, think differently, or investigate further because of this finding?' This is the final panel of your infographic. Data without implication is information. Data with implication is a story.",
+              "prompt": "My data insight: [your insight sentence]. My audience: [students / policymakers / general public / examiner]. Write a 2-sentence so-what: what should this audience think, do, or investigate differently because of this finding? Be specific \u2014 not 'more research is needed' but what specific kind of research, or what specific action."
+            }
+          ],
+          "output": "A one-page data story infographic: insight headline, chart, supporting statistics, source attribution, and so-what conclusion"
+        }
+      ],
+      "keyTakeaway": "Data only becomes evidence when it answers a question. The question that most students skip \u2014 'what is the most surprising thing this data shows?' \u2014 is the one that makes a project remarkable. AI helps you ask that question more rigorously. The chart and infographic are just the packaging. The insight is the point."
+    },
+    {
+      "id": "interview-prep-system",
+      "title": "Job / University Interview Preparation System",
+      "tagline": "Prepare for any interview in 3 hours using Claude as your interviewer, coach, and feedback engine",
+      "difficulty": "intermediate",
+      "duration": "2-3 hours",
+      "tools": [
+        "Claude",
+        "Notion AI"
+      ],
+      "category": "Career",
+      "audience": [
+        "student",
+        "curious"
+      ],
+      "prerequisites": [
+        "claude-basics"
+      ],
+      "whatYouBuild": "A personalised interview preparation system: researched company/university context, 20 practice questions with your answers, feedback-iterated best versions of each answer, and a preparation brief you can review the night before",
+      "realWorldUse": "University interviews (Oxford/Cambridge/IIT/IIM), job interviews, internship applications, scholarship interviews, consulting case prep, medical school interviews",
+      "phases": [
+        {
+          "id": "phase-1",
+          "title": "Build your intelligence file on the interviewer",
+          "tool": "Claude",
+          "duration": "30-45 min",
+          "objective": "Most candidates walk into interviews having read the About Us page. The ones who get offers have read everything \u2014 the recent strategy shifts, the public statements of the people interviewing them, the questions their role is supposed to answer. Use Claude to build that intelligence file in under an hour.",
+          "steps": [
+            {
+              "id": "s1",
+              "title": "Research the organisation deeply",
+              "content": "Give Claude the name of the organisation and role. Ask: 'What are the 5 most important things happening at this organisation right now \u2014 strategy shifts, challenges, recent news, stated priorities? What questions does someone in [role] need to answer for the organisation to succeed? What does a candidate who really understands this organisation know that most candidates do not?' Claude's knowledge has a cutoff \u2014 always supplement with a current web search for the last 6 months.",
+              "prompt": "I am interviewing for [role] at [organisation]. Give me: (1) The 5 most important strategic or operational priorities for this organisation right now, (2) The 3 biggest challenges someone in this role will face, (3) What a candidate would say that would immediately signal they truly understand the organisation \u2014 not just what is on the website, (4) What question will almost certainly be asked that most candidates answer badly.",
+              "tip": "For university interviews (Oxford, Cambridge, IITs), the 'organisation' is the department and the interviewer's research area. Ask Claude to summarise the research interests of your specific interviewer if their name is listed. Interviewers notice when you have engaged with their actual work."
+            },
+            {
+              "id": "s2",
+              "title": "Map your experience to their priorities",
+              "content": "Give Claude a short summary of your experience, achievements, and interests. Ask: 'Map my background to the priorities you identified. For each of the 5 priorities, what experience or skill do I have that is most relevant? Where are the gaps \u2014 where will I be asked a question I cannot yet answer well?' This gap analysis is your revision list.",
+              "tip": "The goal is not to have a perfect answer to every question. It is to know in advance which questions will be hard for you and have a plan for those \u2014 even if that plan is: I do not have experience with X, but here is how I have approached similar challenges."
+            }
+          ],
+          "output": "An intelligence file: 5 organisational priorities, 3 role challenges, your experience mapped to each, and a gap list"
+        },
+        {
+          "id": "phase-2",
+          "title": "Run a mock interview with Claude",
+          "tool": "Claude",
+          "duration": "60-90 min",
+          "objective": "Do a full mock interview with Claude as the interviewer \u2014 answer in real time, then get structured feedback. Repeat the weakest answers until they are strong.",
+          "steps": [
+            {
+              "id": "s3",
+              "title": "Set Claude up as a rigorous interviewer",
+              "content": "Give Claude your full context \u2014 the role, the organisation, your intelligence file, and your background. Tell it: 'Conduct a 20-question mock interview for this role. Ask one question at a time. Wait for my full answer before asking the next question. After each answer, give me: (1) what worked, (2) what was weak or missing, (3) the specific element that would make this answer excellent. Do not go easy on me \u2014 interview as if you are the actual interviewer.'",
+              "prompt": "You are interviewing me for [role] at [organisation]. Here is context: [paste your intelligence file and background]. Conduct a rigorous mock interview: one question at a time, wait for my answer, then give structured feedback (what worked / what was weak / what would make it excellent). Start with the question most candidates answer badly for this type of role.",
+              "warning": "Do not ask Claude to tell you good answers before you have attempted your own. Memorising Claude's version of a good answer is not preparation \u2014 it is scripting. Scripted answers are detected immediately by experienced interviewers. The practice is in generating your own answer under pressure, then improving it."
+            },
+            {
+              "id": "s4",
+              "title": "Repeat your 5 weakest answers",
+              "content": "After the full 20-question mock, ask Claude: 'Which 5 of my answers were weakest? Re-ask me those 5 questions now, in random order.' Answer again \u2014 differently. Ask for feedback again. The goal is not to polish one perfect answer \u2014 it is to develop the ability to answer well under different phrasings and follow-up questions.",
+              "tip": "Strong interviewees are strong because they have thought deeply about their own experiences \u2014 not because they have memorised answers. The repetition here builds the muscle of accessing the right story under pressure, not reciting a script."
+            }
+          ],
+          "output": "20 practised answers with structured feedback and 5 improved second attempts"
+        },
+        {
+          "id": "phase-3",
+          "title": "Build your preparation brief in Notion AI",
+          "tool": "Notion AI",
+          "duration": "30 min",
+          "objective": "Consolidate everything into one brief you can review for 20 minutes the night before \u2014 not to memorise, but to prime. The brief is what holds your preparation together.",
+          "steps": [
+            {
+              "id": "s5",
+              "title": "Create the preparation brief structure",
+              "content": "Open a new Notion page. Use Notion AI to help format it. The brief should contain: (1) Organisation intelligence \u2014 5 priorities in 3 bullets each, (2) Your 3 strongest stories \u2014 specific experiences you can reference for any question about challenge, failure, or achievement, (3) Your gap answers \u2014 the 3 questions that were hardest and the best version of your answer, (4) 3 questions to ask them \u2014 questions that signal you have done deep research, (5) Logistics \u2014 time, location, format, interviewer names.",
+              "tip": "Your 3 questions for the interviewer are as important as your answers. 'What does success look like in the first 6 months?' is fine. 'I read your research on [specific paper/project] \u2014 how does that connect to the work this role would focus on?' is remarkable. That question signals preparation that most candidates do not do."
+            },
+            {
+              "id": "s6",
+              "title": "Write your opening and closing statements",
+              "content": "The 'tell me about yourself' opener and the closing 'is there anything else you would like to add' are the two questions almost everyone answers weakly. Ask Claude to help you draft both \u2014 your opener should be 90 seconds, chronologically backwards (most recent first), ending with why this specific role at this specific organisation. Your closer should reference one thing from the conversation that reinforced your interest.",
+              "warning": "Do not end the interview with 'No, I think I have covered everything.' That closer signals low motivation. Your final statement should reference something specific from your conversation and confirm your genuine interest. 'The discussion about [specific topic] made me even more confident this is the right fit \u2014 thank you.' That is a closing."
+            }
+          ],
+          "output": "A one-page preparation brief, a tested opener, and a flexible closer \u2014 ready for the night before"
+        }
+      ],
+      "keyTakeaway": "Interview preparation is not about having perfect answers. It is about having thought deeply enough about your own experiences that you can access the right story under pressure. AI speeds up the research and the feedback loop. The preparation itself \u2014 the reflection on what you have done, why it mattered, and what it means for what you want to do next \u2014 is the work only you can do."
+    },
+    {
+      "id": "learn-any-skill",
+      "title": "Learn Any Skill Faster: The 20-Hour Method",
+      "tagline": "Go from zero to functional in any skill using Claude as your curriculum designer, coach, and feedback engine",
+      "difficulty": "beginner",
+      "duration": "Ongoing \u2014 first session 60 min",
+      "tools": [
+        "Claude",
+        "YouTube",
+        "Anki / Quizlet AI"
+      ],
+      "category": "Self-Learning",
+      "audience": [
+        "student",
+        "curious"
+      ],
+      "prerequisites": [],
+      "whatYouBuild": "A personalised 20-hour learning curriculum for any skill \u2014 with a structured syllabus, daily practice plan, a way to measure progress, and a feedback loop that accelerates improvement",
+      "realWorldUse": "Learning to code, a new language, music, design, public speaking, investing, cooking \u2014 any skill where you have started and stopped before",
+      "phases": [
+        {
+          "id": "phase-1",
+          "title": "Define what good enough actually means for you",
+          "tool": "Claude",
+          "duration": "20 min",
+          "objective": "Most people fail to learn new skills not because they lack discipline \u2014 but because they have no clear picture of what success looks like. Use Claude to define the exact competence level you are targeting and build a curriculum that gets you there, not to expert level.",
+          "steps": [
+            {
+              "id": "s1",
+              "title": "Define your functional threshold",
+              "content": "Tell Claude the skill and ask: 'What is the minimum viable competence for someone who wants to [your specific goal]? Not expert level \u2014 the level where this skill becomes genuinely useful for my purpose. What can they do at that level that they cannot do now?' Then ask: 'What percentage of the skill's total depth does that threshold represent?' The answer is usually 20-30%. You do not need all of it.",
+              "prompt": "Skill: [e.g. Python / Spanish / guitar / financial modelling]. My goal: [e.g. automate my school data / hold a 15-minute conversation / play 10 songs I like / read a company's balance sheet]. What is the minimum competence level I need for this specific goal? What can I do at that level, precisely? What are the 5 most important sub-skills that get me there fastest?",
+              "tip": "The 20-hour rule applies here: most skills become functionally useful with 20 focused, structured hours \u2014 not the 10,000 hours required for mastery. The curriculum you build in this workflow is for that 20-hour zone."
+            },
+            {
+              "id": "s2",
+              "title": "Build a 20-hour structured curriculum",
+              "content": "Ask Claude: 'Design a 20-hour curriculum to reach this threshold, broken into 4 phases of 5 hours each. For each phase: what is the specific competence gained, what is the single most important free resource, and what is the daily practice that builds the skill \u2014 not just the knowledge.' The distinction between knowledge and practice is critical. You cannot watch your way to a skill.",
+              "prompt": "Design a 20-hour curriculum to reach [your threshold] for [skill]. Break it into 4 phases of 5 hours. For each phase: (1) The exact competence I will have at the end, (2) The single best free resource (YouTube channel/video, free course, specific article), (3) The specific daily practice \u2014 what do I actually DO for 30 minutes each day in this phase, (4) How I know I have completed the phase \u2014 a test I can do myself.",
+              "warning": "A curriculum that is only videos and reading is not a learning curriculum \u2014 it is a content consumption plan. Every phase must have a doing component. For language: speaking. For coding: building. For music: playing. The doing is the learning."
+            }
+          ],
+          "output": "A 20-hour, 4-phase personalised curriculum with daily practices and phase-completion tests"
+        },
+        {
+          "id": "phase-2",
+          "title": "Build your daily practice and feedback system",
+          "tool": "Claude",
+          "duration": "20 min setup, then ongoing",
+          "objective": "A curriculum is only as good as the daily practice system. Use Claude to design a feedback loop that catches your specific mistakes \u2014 not generic beginner mistakes.",
+          "steps": [
+            {
+              "id": "s3",
+              "title": "Practice \u2014 then bring your output to Claude for feedback",
+              "content": "After each practice session (30 minutes of doing the skill), bring your output to Claude. For code: paste what you wrote. For language: write a paragraph in the target language. For music theory: write your answers to exercises. Ask Claude: 'Here is my output: [paste]. What am I doing wrong that I do not know I am doing wrong? What is the single most important thing to fix first?' One fix per session. Not five.",
+              "tip": "The reason most self-taught learners plateau is that they keep practising without feedback \u2014 they reinforce their mistakes instead of correcting them. Claude gives you instant feedback without the scheduling friction of a human teacher. Use it after every single practice session."
+            },
+            {
+              "id": "s4",
+              "title": "Build your error flashcard deck",
+              "content": "Every time Claude identifies a recurring error in your practice, add it to an Anki or Quizlet deck as a flashcard: front = the mistake pattern, back = the correct pattern with an example. Review this deck for 5 minutes before every practice session. After 20 hours, this deck is a personalised map of exactly how you think about the skill and where your gaps are \u2014 more valuable than any generic course.",
+              "tip": "The best flashcard front is a question that tests recognition of a mistake: 'I wrote [wrong pattern] \u2014 what is wrong with this?' Not a definition. Mistakes are sticky. They are the things that keep appearing in your practice."
+            }
+          ],
+          "output": "A daily practice and feedback routine that catches your specific errors and builds a personalised error-correction deck"
+        },
+        {
+          "id": "phase-3",
+          "title": "Measure progress and adapt the curriculum",
+          "tool": "Claude",
+          "duration": "10 min per week",
+          "objective": "Every 5 hours (one phase), test yourself against the phase-completion test you defined and ask Claude to adapt the next phase based on where you actually are \u2014 not where the generic curriculum assumed you would be.",
+          "steps": [
+            {
+              "id": "s5",
+              "title": "Run the phase-completion test",
+              "content": "At the end of each 5-hour phase, complete the test you defined. Bring the results to Claude: 'Here is my phase completion test and my result: [paste]. Am I ready to move to the next phase? What is the one thing I should spend 2 more hours on before moving on?' You may need 6 or 7 hours for one phase. That is not failure \u2014 that is accurate calibration.",
+              "warning": "The most common mistake in self-directed learning is advancing too fast. It feels like progress. It is not. If you cannot pass your own phase test, you are building on a shaky foundation \u2014 and the next phase will be harder not because the content is harder, but because you are not actually ready."
+            },
+            {
+              "id": "s6",
+              "title": "Adapt the next phase based on your actual gaps",
+              "content": "Ask Claude: 'Based on my phase test results and these specific errors from my error deck, what should I change about the next phase of my curriculum? What should I spend more time on than originally planned? What can I safely skip?' Adaptive curricula beat fixed curricula because they respond to who you actually are \u2014 not who the average learner is.",
+              "tip": "The final measure of the 20-hour method is not a test score \u2014 it is functional use. After 20 hours: code something that solves a real problem. Have a real conversation. Play a full song for someone. The functional use is the test. If you can do it, the learning worked."
+            }
+          ],
+          "output": "A completed 20-hour learning sprint with measurable competence at the threshold you defined at the start"
+        }
+      ],
+      "keyTakeaway": "The reason most self-learning attempts fail is not lack of time or motivation \u2014 it is the absence of a feedback loop. You can watch 100 hours of guitar tutorials and not improve as much as 20 hours of playing with someone correcting your finger position after every chord. AI gives you that feedback loop on demand, for any skill. The learning itself is still yours \u2014 AI just makes the feedback immediate and specific."
+    },
+    {
+      "id": "career-pivot-research",
+      "title": "Career Pivot Research System",
+      "tagline": "Use Claude, Perplexity, and Notion to research and plan a career change with evidence \u2014 not just instinct",
+      "difficulty": "intermediate",
+      "duration": "3-4 hours",
+      "tools": [
+        "Claude",
+        "Perplexity",
+        "Notion AI"
+      ],
+      "category": "Career",
+      "audience": [
+        "curious",
+        "student"
+      ],
+      "prerequisites": [
+        "claude-basics"
+      ],
+      "whatYouBuild": "A full career pivot research document: the target role landscape, transferable skills gap analysis, a realistic 90-day transition plan, and the 5 people you need to talk to",
+      "realWorldUse": "Switching careers after engineering/medicine/law, transitioning from student to professional, pivoting within a field (e.g. journalism to content strategy, teacher to instructional designer), international career transitions",
+      "phases": [
+        {
+          "id": "phase-1",
+          "title": "Understand the real landscape of the target field",
+          "tool": "Perplexity",
+          "duration": "45-60 min",
+          "objective": "Most people research careers by reading job descriptions and Wikipedia. The actual career landscape \u2014 what the work actually involves, what the field is moving toward, where the opportunities are, and what hiring managers actually care about \u2014 lives in industry reports, practitioner communities, and job market data. Use Perplexity to find that.",
+          "steps": [
+            {
+              "id": "s1",
+              "title": "Research the field from a practitioner's view",
+              "content": "Search Perplexity for: '[target field] career path reality', '[target role] day in the life practitioner', '[target industry] hiring trends', '[target role] skills most valued by employers'. The goal is not a summary of what the role involves \u2014 it is the on-the-ground reality that does not appear in job descriptions. What do practitioners complain about? What skills are actually scarce? What path do people actually take into this field?",
+              "prompt": "What is the realistic day-to-day work of a [target role] in [industry]? What do people in this role say they wish they had known before entering it? What skills do hiring managers say are actually hard to find in candidates \u2014 not the ones listed in job postings, but the ones that differentiate strong candidates? What is the career path beyond entry level?",
+              "tip": "Search for the gap between job description language and practitioner language. Job postings say 'strong communication skills'. Practitioners say 'you need to write a clear recommendation memo that a non-expert executive will act on in 5 minutes.' Those are different skills. Practitioner language tells you what to actually develop."
+            },
+            {
+              "id": "s2",
+              "title": "Map the job market honestly",
+              "content": "Ask Perplexity: 'What is the realistic job market for [target role] in [your location/market]? What is the entry-level salary range? What is the average time to first hire for career changers? What are the most common reasons career changers fail to break into this field?' Honest market data before you invest time and energy in a transition is not pessimism \u2014 it is due diligence.",
+              "warning": "Salary data from job postings is optimistic. Industry salary surveys are closer to accurate. Location matters enormously. Ask for the 25th percentile salary, not the median \u2014 that is what you are likely to start at as a career changer, not the figure used to attract candidates."
+            }
+          ],
+          "output": "A realistic picture of the target field: actual work, real skill requirements, honest job market data"
+        },
+        {
+          "id": "phase-2",
+          "title": "Run your skills gap analysis with Claude",
+          "tool": "Claude",
+          "duration": "45-60 min",
+          "objective": "The key mistake in career pivots is treating transferable skills as either a magic bridge (everything applies) or a complete deficit (nothing is relevant). The truth is almost always in between \u2014 and only a rigorous gap analysis tells you which parts of your background to amplify and which gaps to close.",
+          "steps": [
+            {
+              "id": "s3",
+              "title": "List every skill and experience you have",
+              "content": "Give Claude a full inventory of your skills, experiences, and achievements \u2014 go beyond your CV. Include things you have done outside formal work: projects, volunteer work, things you have taught yourself, problems you have solved informally. Ask Claude to categorise them: which are directly relevant, which are transferable with framing, and which are not relevant at all.",
+              "prompt": "Here is my full background: [paste everything \u2014 education, work, projects, skills, informal experience]. Here is my target role: [target role and industry]. Categorise every item as: (1) Directly relevant \u2014 hiring managers will value this immediately, (2) Transferable \u2014 relevant with correct framing, tell me exactly how to frame it, (3) Not relevant \u2014 honest assessment. Then: what are the 3 most significant gaps? For each gap, what is the fastest credible way to close it?"
+            },
+            {
+              "id": "s4",
+              "title": "Build your narrative bridge",
+              "content": "The career pivot narrative is the story you tell in cover letters and interviews that connects your past to your target. Ask Claude: 'Write a 3-sentence career pivot narrative for my application to [target role]. It should: acknowledge the career change honestly, connect the most relevant experience from my background, and explain the specific value I bring that a direct-path candidate might not have.' The unique value angle is key \u2014 what do you know from your previous field that is genuinely useful in the new one?",
+              "tip": "Career changers have one advantage direct-path candidates do not: genuine perspective from outside the field. A former teacher entering instructional design sees learning gaps that lifetime designers miss. A former engineer entering product management understands technical constraints that PMs without engineering backgrounds mishandle. That outside perspective \u2014 framed correctly \u2014 is not a weakness. It is a differentiator."
+            }
+          ],
+          "output": "A full skills gap analysis with direct/transferable/irrelevant categorisation, top 3 gaps with closure plans, and a career pivot narrative"
+        },
+        {
+          "id": "phase-3",
+          "title": "Build the 90-day transition plan",
+          "tool": "Notion AI",
+          "duration": "30-45 min",
+          "objective": "A career pivot without a concrete timeline stays in the planning stage indefinitely. Use Notion AI to build a 90-day plan with weekly actions \u2014 credential-building, network-building, and application activities that move in parallel.",
+          "steps": [
+            {
+              "id": "s5",
+              "title": "Design the 90-day sprint",
+              "content": "Ask Claude: 'Given my gap analysis, design a 90-day transition plan with weekly actions. Week 1-4: foundation (closing the most critical gaps), Week 5-8: proof (building portfolio or credential evidence), Week 9-12: launch (active outreach and applications). For each week, give me 3 specific, completable actions \u2014 not vague goals like learn Python, but specific outcomes like: complete the first 3 modules of Python for Data Analysis on Kaggle and apply it to one dataset relevant to the target field.'",
+              "tip": "The 90-day plan works because it creates parallel tracks. You do not finish learning before you start networking. You do not finish networking before you start applying. All three happen simultaneously \u2014 at different intensities across the 12 weeks."
+            },
+            {
+              "id": "s6",
+              "title": "Identify the 5 people you need to talk to",
+              "content": "No research substitutes for conversations with people doing the job you want. Ask Claude: 'Based on my target role and gap analysis, what are the 5 types of people I most need to talk to? Not famous people \u2014 accessible people: someone 2-3 years into the role I want, someone who made a similar career pivot, someone who currently hires for this role, someone in the field with a background similar to mine, someone who tried this pivot and did not succeed.' For each type, ask Claude to draft a 3-line cold outreach message.",
+              "prompt": "For a career pivot from [current field] to [target field]: write a 3-line LinkedIn outreach message for someone 2-3 years into [target role]. It should: mention one specific thing about their work (not generic flattery), explain my situation honestly in one sentence, and ask one specific question \u2014 not 'can I pick your brain' but a question specific enough that it takes 3 minutes to answer. Do not use the phrase 'I would love to chat.'"
+            }
+          ],
+          "output": "A 90-day transition plan with weekly actions across three parallel tracks, and 5 outreach messages ready to personalise and send"
+        }
+      ],
+      "keyTakeaway": "Career pivots fail most often not because the person lacks the ability to do the new job, but because they made the decision without enough evidence \u2014 about the actual work, the real job market, their transferable value, or the fastest path in. AI accelerates the research phase from weeks to hours. The transition itself \u2014 closing the gaps, building the evidence, making the connections \u2014 is still a human project. But it is a much better-planned one."
     }
   ]
 }
