@@ -14,7 +14,7 @@ import {
   Hash, Play, Menu, Award} from 'lucide-react'
 import { cn, Button, Badge, ProgressBar, TypingDots, Kbd, Divider, EmptyState } from './ui'
 import { useAuth, supabase, useProgress, useBookmarks, getOnboardingProfile,
-         saveOnboardingProfile, resetOnboarding, supabase } from './auth'
+         saveOnboardingProfile, resetOnboarding } from './auth'
 import { useBadges, BadgeNotificationManager, checkAndAward, BADGES } from './badges'
 import { buildSearchIndex, search as searchIndex, isIndexReady } from './search'
 import type { SearchResult } from './search'
