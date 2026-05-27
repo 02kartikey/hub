@@ -137,7 +137,7 @@ function JoinClassroomWidget() {
       const json = await res.json()
       if (res.ok) {
         setStatus('success')
-        setMessage(json.alreadyJoined ? 'You're already in this classroom.' : 'You've joined the classroom! Your teacher can now assign you work.')
+        setMessage(json.alreadyJoined ? 'Youre already in this classroom.' : 'Youve joined the classroom! Your teacher can now assign you work.')
         setHasClass(true)
       } else {
         setStatus('error')
