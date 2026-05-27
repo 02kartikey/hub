@@ -51,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const loadProfile = useCallback(async (u: User) => {
+    const meta = u.user_metadata ?? {}
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -58,10 +59,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', u.id)
         .single()
       if (error) throw error
-      setProfile(data ?? null)
+      // If DB row exists but role is null, fall back to user_metadata
+      setProfile({
+        full_name:  data?.full_name  ?? meta.full_name  ?? null,
+        avatar_url: data?.avatar_url ?? meta.avatar_url ?? null,
+        role:       data?.role       ?? meta.role        ?? 'student',
+      })
     } catch {
       // Profiles table may not exist yet — fall back to user metadata
-      const meta = u.user_metadata ?? {}
       setProfile({
         full_name:  meta.full_name  ?? null,
         avatar_url: meta.avatar_url ?? null,
@@ -115,21 +120,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateRole = async (role: string) => {
     if (!user) return { error: new Error('Not signed in') }
-    try {
-      // 1. Try to update profiles table
-      const { error: dbErr } = await supabase
-        .from('profiles')
-        .upsert({ id: user.id, role }, { onConflict: 'id' })
-      if (dbErr) throw dbErr
 
-      // 2. Update local state immediately
-      setProfile(prev => prev ? { ...prev, role } : { full_name: null, avatar_url: null, role })
-      return { error: null }
-    } catch (e) {
-      // Even if DB fails, update local state so the UI reflects the change
-      setProfile(prev => prev ? { ...prev, role } : { full_name: null, avatar_url: null, role })
-      return { error: e instanceof Error ? e : new Error('Update failed') }
-    }
+    // 1. Always update user_metadata first — this is the reliable fallback
+    //    that loadProfile reads when the profiles table is unavailable.
+    const { error: metaErr } = await supabase.auth.updateUser({ data: { role } })
+
+    // 2. Also try to persist to profiles table (best-effort)
+    const { error: dbErr } = await supabase
+      .from('profiles')
+      .upsert({ id: user.id, role }, { onConflict: 'id' })
+
+    // 3. Update local state immediately so the UI reflects the change
+    setProfile(prev => prev ? { ...prev, role } : { full_name: null, avatar_url: null, role })
+
+    // Surface the first real error (metadata update is more critical)
+    return { error: metaErr ?? dbErr ?? null }
   }
 
   return (
