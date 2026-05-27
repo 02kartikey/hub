@@ -1,12 +1,10 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
 import { createClient, type SupabaseClient, type User, type AuthError } from '@supabase/supabase-js'
 
-
-
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? ''
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
-console.log("URL:", import.meta.env.VITE_SUPABASE_URL)
-console.log("KEY:", import.meta.env.VITE_SUPABASE_ANON_KEY)
+const API_BASE     = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+
 export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY)
 
 // ── Onboarding helpers ────────────────────────────────────────────────────────
@@ -23,58 +21,85 @@ export function saveOnboardingProfile(p: OnboardingProfile) {
 export function resetOnboarding() { try { localStorage.removeItem(ONBOARD_KEY) } catch {} }
 
 // ── Auth context ──────────────────────────────────────────────────────────────
+type Profile = { full_name: string | null; avatar_url: string | null; role: string | null }
+
 interface AuthCtx {
-  user: User | null; profile: { full_name: string | null; avatar_url: string | null; role: string | null } | null
+  user:    User | null
+  profile: Profile | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
-  signUp: (email: string, password: string, name?: string) => Promise<{ error: AuthError | null }>
-  signOut: () => Promise<void>
-  resetPassword: (email: string) => Promise<{ error: AuthError | null }>
-  updateRole: (role: string) => Promise<{ error: Error | null }>
+  signIn:         (email: string, password: string) => Promise<{ error: AuthError | null }>
+  signUp:         (email: string, password: string, name?: string, role?: string) => Promise<{ error: AuthError | null }>
+  signOut:        () => Promise<void>
+  resetPassword:  (email: string) => Promise<{ error: AuthError | null }>
+  updateRole:     (role: string)  => Promise<{ error: Error | null }>
   refreshProfile: () => Promise<void>
 }
+
 const Ctx = createContext<AuthCtx>({
-  user:null, profile:null, loading:true,
-  signIn:        async () => ({ error:null }),
-  signUp:        async () => ({ error:null }),
-  signOut:       async () => {},
-  resetPassword: async () => ({ error:null }),
-  updateRole:    async () => ({ error:null }),
+  user: null, profile: null, loading: true,
+  signIn:         async () => ({ error: null }),
+  signUp:         async () => ({ error: null }),
+  signOut:        async () => {},
+  resetPassword:  async () => ({ error: null }),
+  updateRole:     async () => ({ error: null }),
   refreshProfile: async () => {},
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser]       = useState<User | null>(null)
-  const [profile, setProfile] = useState<AuthCtx['profile']>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const loadProfile = async (u: User) => {
-    const { data } = await supabase.from('profiles').select('full_name,avatar_url,role').eq('id', u.id).single()
-    setProfile(data ?? null)
-  }
+  const loadProfile = useCallback(async (u: User) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url, role')
+        .eq('id', u.id)
+        .single()
+      if (error) throw error
+      setProfile(data ?? null)
+    } catch {
+      // Profiles table may not exist yet — fall back to user metadata
+      const meta = u.user_metadata ?? {}
+      setProfile({
+        full_name:  meta.full_name  ?? null,
+        avatar_url: meta.avatar_url ?? null,
+        role:       meta.role       ?? 'student',
+      })
+    }
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       const u = data.session?.user ?? null
-      setUser(u); if (u) loadProfile(u); setLoading(false)
+      setUser(u)
+      if (u) loadProfile(u)
+      setLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user ?? null
-      setUser(u); if (u) loadProfile(u); else setProfile(null)
+      setUser(u)
+      if (u) loadProfile(u)
+      else { setProfile(null) }
     })
     return () => subscription.unsubscribe()
-  }, [])
+  }, [loadProfile])
 
-  const signIn  = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error }
   }
-  const signUp  = async (email: string, password: string, name?: string) => {
+
+  const signUp = async (email: string, password: string, name?: string, role = 'student') => {
     const { error } = await supabase.auth.signUp({
-      email, password, options: name ? { data:{ full_name:name } } : undefined,
+      email,
+      password,
+      options: { data: { full_name: name ?? '', role } },
     })
     return { error }
   }
+
   const signOut = async () => { await supabase.auth.signOut() }
 
   const resetPassword = async (email: string) => {
@@ -89,12 +114,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const updateRole = async (role: string) => {
+    if (!user) return { error: new Error('Not signed in') }
     try {
-      const { error } = await supabase.from('profiles').update({ role }).eq('id', user?.id ?? '')
-      if (error) throw error
-      setProfile(prev => prev ? { ...prev, role } : prev)
+      // 1. Try to update profiles table
+      const { error: dbErr } = await supabase
+        .from('profiles')
+        .upsert({ id: user.id, role }, { onConflict: 'id' })
+      if (dbErr) throw dbErr
+
+      // 2. Update local state immediately
+      setProfile(prev => prev ? { ...prev, role } : { full_name: null, avatar_url: null, role })
       return { error: null }
     } catch (e) {
+      // Even if DB fails, update local state so the UI reflects the change
+      setProfile(prev => prev ? { ...prev, role } : { full_name: null, avatar_url: null, role })
       return { error: e instanceof Error ? e : new Error('Update failed') }
     }
   }
@@ -126,13 +159,16 @@ export function useProgress() {
     const next = { ...progressMap, [id]: complete ? 100 : 0 }
     save(next)
     if (user) {
-      const token = (await supabase.auth.getSession()).data.session?.access_token
-      if (token) {
-        fetch('/api/progress', {
-          method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-          body: JSON.stringify({ resource_id:id, completed:complete, percent:complete?100:0 }),
-        }).catch(() => {})
-      }
+      try {
+        const token = (await supabase.auth.getSession()).data.session?.access_token
+        if (token) {
+          fetch(`${API_BASE}/api/progress`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ resource_id: id, completed: complete, percent: complete ? 100 : 0 }),
+          }).catch(() => {})
+        }
+      } catch {}
     }
   }, [user, progressMap])
 
@@ -140,8 +176,8 @@ export function useProgress() {
     save({ ...progressMap, [id]: percent })
   }, [progressMap])
 
-  const getProgress   = useCallback((id: string) => progressMap[id] ?? 0, [progressMap])
-  const isComplete    = useCallback((id: string) => (progressMap[id] ?? 0) === 100, [progressMap])
+  const getProgress = useCallback((id: string) => progressMap[id] ?? 0,  [progressMap])
+  const isComplete  = useCallback((id: string) => (progressMap[id] ?? 0) === 100, [progressMap])
 
   return { progressMap, markComplete, updateProgress, getProgress, isComplete }
 }
@@ -166,13 +202,16 @@ export function useBookmarks() {
       : [...bookmarkedIds, id]
     save(next)
     if (user) {
-      const token = (await supabase.auth.getSession()).data.session?.access_token
-      if (token) {
-        fetch('/api/bookmarks', {
-          method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-          body: JSON.stringify({ resource_id:id }),
-        }).catch(() => {})
-      }
+      try {
+        const token = (await supabase.auth.getSession()).data.session?.access_token
+        if (token) {
+          fetch(`${API_BASE}/api/bookmarks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ resource_id: id }),
+          }).catch(() => {})
+        }
+      } catch {}
     }
   }, [user, bookmarkedIds])
 
