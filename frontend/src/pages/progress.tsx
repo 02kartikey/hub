@@ -19,13 +19,7 @@ import type { Resource, LearningPath, ClassroomActivity, DeepExercise, Message }
 import type { PathQuiz, QuizQuestion } from '../api'
 import { useAuth, useProgress, useBookmarks, getOnboardingProfile, supabase } from '../auth'
 import { checkAndAward, awardBadge, useBadges, BadgeCard, BADGES, getEarnedBadges, BadgesPage } from '../badges'
-import {
-  useFetch,
-  PageLoader,
-  PageError,
-  SectionHeading,
-  PageHeader,
-} from './shared'
+import { useFetch, PageLoader, PageError } from './shared'
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PROGRESS PAGE
@@ -473,8 +467,9 @@ function StudentProfile({ student, assignments, onBack }: {
 }
 
 // ── Assign modal ──────────────────────────────────────────────────────────────
-function AssignModal({ resources, onClose, onAssign }: {
+function AssignModal({ resources, paths, onClose, onAssign }: {
   resources: Resource[]
+  paths: LearningPath[]
   onClose: () => void
   onAssign: (item: AssignableItem, dueDate: string, note: string) => Promise<void>
 }) {
@@ -487,19 +482,46 @@ function AssignModal({ resources, onClose, onAssign }: {
   const [success, setSuccess]   = useState(false)
 
   const exercises = useRef<AssignableItem[]>([
-    { id: 'hallucination-hunt', type: 'exercise', title: 'The Hallucination Hunt', meta: 'Hallucination · 25 min' },
-    { id: 'sycophancy-mirror',  type: 'exercise', title: 'The Sycophancy Mirror', meta: 'Sycophancy · 20 min' },
-    { id: 'bias-probe',         type: 'exercise', title: 'Bias Probe', meta: 'Training data bias · 30 min' },
-    { id: 'prompt-injection',   type: 'exercise', title: 'Prompt Injection', meta: 'AI safety · 25 min' },
-    { id: 'few-shot-power',     type: 'exercise', title: 'Few-Shot Power', meta: 'Prompting · 20 min' },
+    { id: 'hallucination-hunt', type: 'exercise', title: 'The Hallucination Hunt',  meta: 'Hallucination · 25 min' },
+    { id: 'sycophancy-mirror',  type: 'exercise', title: 'The Sycophancy Mirror',   meta: 'Sycophancy · 20 min' },
+    { id: 'bias-probe',         type: 'exercise', title: 'Bias Probe',              meta: 'Training data bias · 30 min' },
+    { id: 'prompt-injection',   type: 'exercise', title: 'Prompt Injection',        meta: 'AI safety · 25 min' },
+    { id: 'few-shot-power',     type: 'exercise', title: 'Few-Shot Power',          meta: 'Prompting · 20 min' },
+    { id: 'knowledge-cutoff',   type: 'exercise', title: 'Knowledge Cutoff',        meta: 'Training data cutoff · 20 min' },
+    { id: 'reasoning-limits',   type: 'exercise', title: 'Reasoning Limits',        meta: 'Logical reasoning · 25 min' },
+    { id: 'token-prediction',   type: 'exercise', title: 'Token Prediction',        meta: 'How LLMs work · 20 min' },
   ]).current
 
-  const resourceItems: AssignableItem[] = resources.slice(0, 30).map(r => ({
+  // Quizzes treated as assessments
+  const quizItems = useRef<AssignableItem[]>([
+    { id: 'ai-foundations',     type: 'activity', title: 'AI Foundations Quiz',          meta: 'Assessment · 10 questions' },
+    { id: 'prompting-basics',   type: 'activity', title: 'Prompting Basics Assessment',  meta: 'Assessment · 8 questions' },
+    { id: 'ai-ethics-check',    type: 'activity', title: 'AI Ethics Check',             meta: 'Assessment · 12 questions' },
+    { id: 'hallucination-quiz', type: 'activity', title: 'Hallucination & Bias Quiz',   meta: 'Assessment · 10 questions' },
+  ]).current
+
+  const pathItems: AssignableItem[] = paths.slice(0, 20).map(p => ({
+    id: p.id, type: 'path' as const, title: p.title,
+    meta: `${p.resourceIds?.length ?? 0} resources · ${p.difficulty ?? 'beginner'}`
+  }))
+
+  const resourceItems: AssignableItem[] = resources.slice(0, 40).map(r => ({
     id: r.id, type: 'resource' as const, title: r.title,
     meta: `${r.type} · ${r.difficulty}`
   }))
 
-  const items = tab === 'resource' ? resourceItems : exercises
+  const TABS: { id: AssignableType; label: string; emoji: string }[] = [
+    { id: 'resource', label: 'Resource',    emoji: '📚' },
+    { id: 'exercise', label: 'Playground',  emoji: '🧪' },
+    { id: 'path',     label: 'Learning path', emoji: '🗺️' },
+    { id: 'activity', label: 'Assessment',  emoji: '📝' },
+  ]
+
+  const items =
+    tab === 'resource' ? resourceItems :
+    tab === 'exercise' ? exercises :
+    tab === 'path'     ? pathItems :
+                         quizItems
   const filtered = items.filter(i => i.title.toLowerCase().includes(search.toLowerCase()))
 
   const handleAssign = async () => {
@@ -523,13 +545,13 @@ function AssignModal({ resources, onClose, onAssign }: {
         </div>
 
         {/* Type tabs */}
-        <div className="flex border-b border-zinc-100">
-          {(['resource', 'exercise'] as AssignableType[]).map(t => (
-            <button key={t} onClick={() => { setTab(t); setSelected(null); setSearch('') }}
-              className={cn('flex-1 py-2.5 text-xs font-semibold capitalize transition-colors',
-                tab === t ? 'text-[#5855D6] border-b-2 border-[#5855D6]' : 'text-zinc-400 hover:text-zinc-600'
+        <div className="flex border-b border-zinc-100 overflow-x-auto">
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => { setTab(t.id); setSelected(null); setSearch('') }}
+              className={cn('flex-1 py-2.5 text-xs font-semibold transition-colors whitespace-nowrap px-2',
+                tab === t.id ? 'text-[#5855D6] border-b-2 border-[#5855D6]' : 'text-zinc-400 hover:text-zinc-600'
               )}>
-              {t === 'resource' ? '📚 Resource' : '🧪 Playground exercise'}
+              {t.emoji} {t.label}
             </button>
           ))}
         </div>
