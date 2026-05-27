@@ -7,7 +7,8 @@
  * Supabase persistence when the user is signed in.
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { CheckCircle2, X, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { CheckCircle2, X } from 'lucide-react'
 import { cn } from './ui'
 
 // ── Badge definitions ─────────────────────────────────────────────────────────

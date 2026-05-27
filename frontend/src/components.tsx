@@ -13,7 +13,7 @@ import {
   MessageCircle, Minimize2, ArrowUpRight, Layers, Target, Zap, BookMarked,
   Hash, Play, Menu, Award} from 'lucide-react'
 import { cn, Button, Badge, ProgressBar, TypingDots, Kbd, Divider, EmptyState } from './ui'
-import { useAuth, useProgress, useBookmarks, getOnboardingProfile,
+import { useAuth, supabase, useProgress, useBookmarks, getOnboardingProfile,
          saveOnboardingProfile, resetOnboarding, supabase } from './auth'
 import { useBadges, BadgeNotificationManager, checkAndAward, BADGES } from './badges'
 import { buildSearchIndex, search as searchIndex, isIndexReady } from './search'
@@ -136,9 +136,7 @@ function AssignmentNavCount() {
     let cancelled = false
     const load = async () => {
       try {
-        // supabase is imported from auth at the top of this file
-        const mod = await import('./auth') as any
-        const { data: { session } } = await mod.supabase.auth.getSession()
+        const { data: { session } } = await supabase.auth.getSession()
         if (!session || cancelled) return
         const res = await fetch('/api/classroom/my-assignments', {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
