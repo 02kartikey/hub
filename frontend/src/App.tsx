@@ -17,7 +17,11 @@ import {
 function RootRoute() {
   const { user, loading } = useAuth()
   if (loading) return null
-  if (!user) return <Navigate to="/try" replace/>
+  if (!user) {
+    // First-time visitor → guided onboarding. Already visited → skip straight to content.
+    const hasVisited = localStorage.getItem('aihub_signup_role') || localStorage.getItem('aihub_try_done')
+    return <Navigate to={hasVisited ? '/browse' : '/try'} replace/>
+  }
   return <HomePage/>
 }
 
