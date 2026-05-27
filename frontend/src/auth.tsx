@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
 import { createClient, type SupabaseClient, type User, type AuthError } from '@supabase/supabase-js'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? ''
@@ -50,28 +50,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Track whether the profiles table is reachable.
+  // Set to true on first 500 so we stop spamming Supabase with broken queries.
+  const dbBroken = useRef(false)
+  // Last time we fetched profile from DB — throttle focus-triggered refetches to 60s
+  const lastFetch = useRef(0)
+
   const loadProfile = useCallback(async (u: User) => {
     const meta = u.user_metadata ?? {}
+    const metaProfile = {
+      full_name:  meta.full_name  ?? null,
+      avatar_url: meta.avatar_url ?? null,
+      role:       meta.role       ?? 'student',
+    }
+
+    // If the DB is known-broken, just use metadata immediately — no network call
+    if (dbBroken.current) { setProfile(metaProfile); return }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('full_name, avatar_url, role')
         .eq('id', u.id)
         .single()
-      if (error) throw error
-      // If DB row exists but role is null, fall back to user_metadata
+
+      if (error) {
+        // 500 = table missing / RLS broken — mark as broken, stop future calls
+        if ((error as any).code === '500' || (error as any).status === 500
+            || error.message?.includes('relation') || error.message?.includes('does not exist')) {
+          dbBroken.current = true
+        }
+        throw error
+      }
+
+      lastFetch.current = Date.now()
       setProfile({
         full_name:  data?.full_name  ?? meta.full_name  ?? null,
         avatar_url: data?.avatar_url ?? meta.avatar_url ?? null,
         role:       data?.role       ?? meta.role        ?? 'student',
       })
     } catch {
-      // Profiles table may not exist yet — fall back to user metadata
-      setProfile({
-        full_name:  meta.full_name  ?? null,
-        avatar_url: meta.avatar_url ?? null,
-        role:       meta.role       ?? 'student',
-      })
+      setProfile(metaProfile)
     }
   }, [])
 
@@ -115,8 +134,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .subscribe()
 
     // ── Focus fallback: re-fetch profile when user switches back to the tab ──
-    // Catches cases where Realtime isn't enabled or the WS dropped.
-    const onFocus = () => loadProfile(user)
+    // Throttled to once per 60s and skipped if the DB is known-broken.
+    const onFocus = () => {
+      if (dbBroken.current) return            // DB is broken — metadata already set
+      if (Date.now() - lastFetch.current < 60_000) return  // too soon
+      loadProfile(user)
+    }
     window.addEventListener('focus', onFocus)
 
     return () => {
@@ -155,19 +178,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateRole = async (role: string) => {
     if (!user) return { error: new Error('Not signed in') }
 
-    // 1. Always update user_metadata first — this is the reliable fallback
-    //    that loadProfile reads when the profiles table is unavailable.
+    // 1. Always update user_metadata — works even without a profiles table
     const { error: metaErr } = await supabase.auth.updateUser({ data: { role } })
 
-    // 2. Also try to persist to profiles table (best-effort)
-    const { error: dbErr } = await supabase
-      .from('profiles')
-      .upsert({ id: user.id, role }, { onConflict: 'id' })
+    // 2. Only try profiles table if it's known to be working
+    let dbErr = null
+    if (!dbBroken.current) {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({ id: user.id, role }, { onConflict: 'id' })
+      if (error) {
+        dbErr = error
+        if ((error as any).status === 500 || error.message?.includes('relation')) {
+          dbBroken.current = true
+        }
+      }
+    }
 
-    // 3. Update local state immediately so the UI reflects the change
+    // 3. Update local state immediately
     setProfile(prev => prev ? { ...prev, role } : { full_name: null, avatar_url: null, role })
 
-    // Surface the first real error (metadata update is more critical)
     return { error: metaErr ?? dbErr ?? null }
   }
 
