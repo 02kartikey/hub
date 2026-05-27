@@ -90,6 +90,110 @@ function ProgressStatBar({ progressMap, paths }: { progressMap: Record<string,nu
 }
 
 
+
+// ── Join classroom widget — student only ──────────────────────────────────────
+function JoinClassroomWidget() {
+  const { user, profile } = useAuth()
+  const [code, setCode]         = useState('')
+  const [status, setStatus]     = useState<'idle'|'loading'|'success'|'error'>('idle')
+  const [message, setMessage]   = useState('')
+  const [hasClass, setHasClass] = useState<boolean | null>(null)
+
+  // Check if already in a classroom
+  useEffect(() => {
+    if (!user || profile?.role === 'teacher') return
+    const check = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const res = await fetch('/api/classroom/my-assignments', {
+          headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}` }
+        })
+        if (res.ok) {
+          const { data } = await res.json()
+          // If they have any assignments, they're in a class
+          setHasClass(Array.isArray(data) && data.length > 0)
+        } else {
+          setHasClass(false)
+        }
+      } catch { setHasClass(false) }
+    }
+    check()
+  }, [user, profile])
+
+  if (!user || profile?.role === 'teacher') return null
+  if (hasClass === null) return null   // still loading
+  if (hasClass === true) return null   // already in a class, assignments widget handles this
+
+  const handleJoin = async () => {
+    if (code.trim().length < 4) return
+    setStatus('loading')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/classroom/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
+        body: JSON.stringify({ code: code.trim().toUpperCase() })
+      })
+      const json = await res.json()
+      if (res.ok) {
+        setStatus('success')
+        setMessage(json.alreadyJoined ? 'You're already in this classroom.' : 'You've joined the classroom! Your teacher can now assign you work.')
+        setHasClass(true)
+      } else {
+        setStatus('error')
+        setMessage(json.detail ?? 'Code not found. Double-check with your teacher.')
+      }
+    } catch {
+      setStatus('error')
+      setMessage('Something went wrong. Try again.')
+    }
+  }
+
+  if (status === 'success') return (
+    <div className="flex items-start gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl mb-6">
+      <CheckCircle2 size={18} className="text-emerald-500 flex-shrink-0 mt-0.5"/>
+      <div>
+        <p className="text-sm font-bold text-emerald-800">Joined!</p>
+        <p className="text-xs text-emerald-700 mt-0.5">{message}</p>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="p-4 bg-white border border-zinc-200 rounded-2xl mb-6">
+      <p className="text-sm font-bold text-zinc-900 mb-0.5">Join your classroom</p>
+      <p className="text-xs text-zinc-400 mb-3">
+        Ask your teacher for the 6-character class code.
+      </p>
+      <div className="flex gap-2">
+        <input
+          value={code}
+          onChange={e => { setCode(e.target.value.toUpperCase().slice(0, 6)); setStatus('idle') }}
+          placeholder="e.g. AB3X9K"
+          maxLength={6}
+          className="flex-1 px-3 py-2.5 border border-zinc-200 rounded-xl text-sm font-mono font-bold tracking-widest text-zinc-900 uppercase placeholder:normal-case placeholder:font-normal placeholder:tracking-normal focus:outline-none focus:border-[#5855D6] focus:ring-1 focus:ring-[#5855D6]"
+        />
+        <button
+          onClick={handleJoin}
+          disabled={code.trim().length < 4 || status === 'loading'}
+          className={cn(
+            'px-4 py-2.5 rounded-xl text-sm font-bold transition-all',
+            code.trim().length >= 4
+              ? 'bg-[#5855D6] text-white hover:bg-[#4744C8]'
+              : 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+          )}>
+          {status === 'loading' ? '…' : 'Join'}
+        </button>
+      </div>
+      {status === 'error' && (
+        <p className="text-xs text-red-600 mt-2 flex items-center gap-1.5">
+          <AlertCircle size={12}/> {message}
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ── Student assignments widget ────────────────────────────────────────────────
 interface StudentAssignment {
   id: string; title: string; content_type: string
@@ -271,6 +375,7 @@ export function HomePage() {
   return (
     <div className="px-4 lg:px-8 py-6 max-w-6xl mx-auto">
       <OSHero name={userName ?? undefined}/>
+      <JoinClassroomWidget/>
       <MyAssignmentsWidget/>
       <ProgressStatBar progressMap={progressMap} paths={paths}/>
       <DailyFocus progressMap={progressMap} paths={paths} resources={allResources}/>
