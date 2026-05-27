@@ -21,8 +21,6 @@ import { useAuth, useProgress, useBookmarks, getOnboardingProfile, supabase } fr
 import { checkAndAward, awardBadge, useBadges, BadgeCard, BADGES, getEarnedBadges, BadgesPage } from '../badges'
 import { useFetch, PageLoader, PageError } from './shared'
 
-  )
-}
 
 // ── Main dashboard ────────────────────────────────────────────────────────────
 export function TeacherClassroomDashboard() {
