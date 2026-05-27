@@ -333,9 +333,10 @@ export function WorkflowsPage() {
   const { profile } = useAuth()
 
   useEffect(() => {
-    fetch('/workflows.json')
+    const base = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+    fetch(`${base}/api/workflows`)
       .then(r => r.json())
-      .then(d => { setWorkflows(d.workflows ?? []); setLoading(false) })
+      .then(d => { setWorkflows(d.data ?? []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
 

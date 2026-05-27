@@ -13,7 +13,7 @@ import {
   StageChat, StageProgress, DeepAnalysis, OnboardingModal,
   OnboardingFlow, ResourceAssistant, SmartThumbnail, ResourceBanner,
   ToolLettermark, SpotlightTour, CONCEPT_TOPICS} from '../components'
-import { api } from '../api'
+import { api, API_BASE } from '../api'
 import type { Assignment, StudentRow, Classroom } from '../api'
 import type { Resource, LearningPath, ClassroomActivity, DeepExercise, Message } from '../types'
 import type { PathQuiz, QuizQuestion } from '../api'
@@ -105,7 +105,7 @@ function JoinClassroomWidget() {
     const check = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        const res = await fetch('/api/classroom/my-assignments', {
+        const res = await fetch(`${API_BASE}/api/classroom/my-assignments`, {
           headers: { 'Authorization': `Bearer ${session?.access_token ?? ''}` }
         })
         if (res.ok) {
@@ -129,7 +129,7 @@ function JoinClassroomWidget() {
     setStatus('loading')
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch('/api/classroom/join', {
+      const res = await fetch(`${API_BASE}/api/classroom/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
         body: JSON.stringify({ code: code.trim().toUpperCase() })
@@ -213,7 +213,7 @@ function MyAssignmentsWidget() {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         const token = session?.access_token ?? ''
-        const res = await fetch('/api/classroom/my-assignments', {
+        const res = await fetch(`${API_BASE}/api/classroom/my-assignments`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
         if (res.ok) {
@@ -231,7 +231,7 @@ function MyAssignmentsWidget() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token ?? ''
-      await fetch(`/api/classroom/assignments/${assignmentId}/complete`, {
+      await fetch(`${API_BASE}/api/classroom/assignments/${assignmentId}/complete`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       })

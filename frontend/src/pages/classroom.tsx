@@ -13,7 +13,7 @@ import {
   StageChat, StageProgress, DeepAnalysis, OnboardingModal,
   OnboardingFlow, ResourceAssistant, SmartThumbnail, ResourceBanner,
   ToolLettermark, SpotlightTour, CONCEPT_TOPICS} from '../components'
-import { api } from '../api'
+import { api, API_BASE } from '../api'
 import type { Assignment, StudentRow, Classroom } from '../api'
 import type { Resource, LearningPath, ClassroomActivity, DeepExercise, Message } from '../types'
 import type { PathQuiz, QuizQuestion } from '../api'
@@ -405,7 +405,7 @@ function TeacherClassroomDashboardInner() {
     if (!user) return
     setLoading(true)
     try {
-      const res = await fetch('/api/classroom', {
+      const res = await fetch(`${API_BASE}/api/classroom`, {
         headers: { 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token ?? ''}` }
       })
       if (!res.ok) throw new Error(`${res.status}`)
@@ -414,7 +414,7 @@ function TeacherClassroomDashboardInner() {
       setStudents(studs ?? [])
 
       // Load assignments separately
-      const aRes = await fetch('/api/classroom/assignments', {
+      const aRes = await fetch(`${API_BASE}/api/classroom/assignments`, {
         headers: { 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token ?? ''}` }
       })
       if (aRes.ok) {
@@ -432,11 +432,11 @@ function TeacherClassroomDashboardInner() {
 
   // Load assignable resources once
   useEffect(() => {
-    fetch('/api/resources?limit=80')
+    fetch(`${API_BASE}/api/resources?limit=80`)
       .then(r => r.json())
       .then(d => setResources(d.data ?? []))
       .catch(() => {})
-    fetch('/api/paths')
+    fetch(`${API_BASE}/api/paths`)
       .then(r => r.json())
       .then(d => setPaths(d.data ?? []))
       .catch(() => {})
@@ -445,7 +445,7 @@ function TeacherClassroomDashboardInner() {
   const handleAssign = async (item: AssignableItem, dueDate: string, note: string) => {
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token ?? ''
-      const res = await fetch('/api/classroom/assignments', {
+      const res = await fetch(`${API_BASE}/api/classroom/assignments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
@@ -467,7 +467,7 @@ function TeacherClassroomDashboardInner() {
   const deleteAssignment = async (id: string) => {
     try {
       const token = (await supabase.auth.getSession()).data.session?.access_token ?? ''
-      await fetch(`/api/classroom/assignments/${id}`, {
+      await fetch(`${API_BASE}/api/classroom/assignments/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       })
