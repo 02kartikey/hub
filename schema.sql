@@ -17,6 +17,7 @@ create table if not exists public.profiles (
 );
 alter table public.profiles enable row level security;
 create policy "Users can read own profile"   on public.profiles for select using (auth.uid() = id);
+create policy "Users can insert own profile" on public.profiles for insert with check (auth.uid() = id);
 create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
 
 -- auto-create profile on signup
@@ -214,3 +215,21 @@ create index if not exists idx_assignments_classroom on public.assignments(class
 create index if not exists idx_assignments_teacher   on public.assignments(teacher_id);
 create index if not exists idx_ac_assignment         on public.assignment_completions(assignment_id);
 create index if not exists idx_ac_student            on public.assignment_completions(student_id);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- REALTIME — enable live profile/role updates
+-- Without REPLICA IDENTITY FULL, UPDATE events don't include the changed row
+-- content, so the frontend Realtime subscription can't read the new role.
+-- ─────────────────────────────────────────────────────────────────────────────
+alter table public.profiles replica identity full;
+
+-- Add profiles to the Supabase Realtime publication so changes are broadcast
+-- (Supabase creates this publication automatically; this makes profiles part of it)
+do $$ begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'profiles'
+  ) then
+    alter publication supabase_realtime add table public.profiles;
+  end if;
+end $$;
