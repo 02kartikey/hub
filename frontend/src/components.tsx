@@ -126,6 +126,41 @@ function BadgeNavCount() {
     window.addEventListener('storage', handler)
     return () => window.removeEventListener('storage', handler)
   }, [])
+
+// Shows pending assignment count in sidebar for students
+function AssignmentNavCount() {
+  const { user } = useAuth()
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    const load = async () => {
+      try {
+        // supabase is imported from auth at the top of this file
+        const mod = await import('./auth') as any
+        const { data: { session } } = await mod.supabase.auth.getSession()
+        if (!session || cancelled) return
+        const res = await fetch('/api/classroom/my-assignments', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        })
+        if (res.ok && !cancelled) {
+          const { data } = await res.json()
+          setCount((data ?? []).filter((a: any) => !a.completed).length)
+        }
+      } catch {}
+    }
+    load()
+    const interval = setInterval(load, 5 * 60 * 1000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [user])
+  if (count === 0) return null
+  return (
+    <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-[#5855D6] px-1 text-[10px] font-bold text-white">
+      {count > 9 ? '9+' : count}
+    </span>
+  )
+}
+
   if (count === 0) return null
   return (
     <span className="flex-shrink-0 text-white font-bold rounded-full flex items-center justify-center"
@@ -199,6 +234,8 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                     (item.href !== '/' && !item.href.includes('?') && pathname.startsWith(item.href))
                   const tourId = item.href.replace('/', '').replace('/', '-') || 'home'
                   const isBadges = item.href === '/badges'
+                  const isHome   = item.href === '/'
+                  const isStudent = profile?.role !== 'teacher'
                   return (
                     <Link key={item.href} to={item.href} data-tour={tourId} className={cn(
                       'flex items-center gap-2.5 px-2.5 py-[7px] rounded-[8px] transition-all duration-100 w-full',
@@ -209,6 +246,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                       <span className={cn('flex-shrink-0 w-[15px] h-[15px] flex items-center justify-center', active ? 'text-[#5855D6]' : 'text-zinc-400')}>{item.icon}</span>
                       <span className="flex-1">{item.label}</span>
                       {isBadges && <BadgeNavCount/>}
+                      {isHome && isStudent && <AssignmentNavCount/>}
                     </Link>
                   )
                 })}
@@ -2193,8 +2231,8 @@ export function SpotlightTour({ onDone }: { onDone: () => void }) {
   )
 }
 
+
 export function OnboardingFlow({ onComplete }: { onComplete: (p: OnboardingProfile) => void }) {
-  // Pre-fill role from signup selection — avoids asking twice
   const signupRole = ((): OnboardRole | null => {
     try {
       const v = localStorage.getItem('aihub_signup_role')
@@ -2202,327 +2240,318 @@ export function OnboardingFlow({ onComplete }: { onComplete: (p: OnboardingProfi
     } catch { return null }
   })()
 
-  const [step, setStep] = useState<'role'|'board'|'goals'>(signupRole ? 'board' : 'role')
-  const [role, setRole] = useState<OnboardRole|null>(signupRole)
-  const [board, setBoard] = useState('')
-  const [goals, setGoals] = useState<string[]>([])
-  const [anim, setAnim] = useState(false)
-  const roleData = ROLES.find(r => r.id === role)
-
-  const go = useCallback((to: typeof step) => {
-    setAnim(true); setTimeout(() => { setStep(to); setAnim(false) }, 200)
-  }, [])
-
+  const [step, setStep]       = useState<0|1|2|3>(signupRole ? 1 : 0)
+  const [role, setRole]       = useState<OnboardRole|null>(signupRole)
+  const [ahaId, setAhaId]     = useState<string|null>(null)
+  const [goalIdx, setGoalIdx] = useState<number|null>(null)
+  const [transitioning, setTransitioning] = useState(false)
   const { user } = useAuth()
+
+  // Advance with opacity transition — matches reference exactly
+  const advance = useCallback((n: 0|1|2|3) => {
+    setTransitioning(true)
+    setTimeout(() => { setStep(n); setTransitioning(false) }, 200)
+  }, [])
 
   const done = useCallback(async () => {
     if (!role) return
-    const p: OnboardingProfile = { role, board: board || undefined, goals, completed: true, completedAt: new Date().toISOString() }
+    const allGoals: Record<string, string[]> = {
+      teacher:  ['Design AI-proof assessments','Teach AI literacy without being an expert','Integrate AI into my classroom ethically','Track what my students actually understand'],
+      student:  ['Prepare for CBSE Code 417 or IGCSE Topic 6','Understand how AI actually works','Use AI tools without being misled','Build skills beyond my textbook'],
+      curious:  ['Understand what AI can and cannot do','Learn to fact-check AI outputs','Understand AI ethics and real impact','Think critically about technology'],
+    }
+    const goals = allGoals[role] ?? []
+    const selectedGoal = goalIdx !== null ? goals[goalIdx] : undefined
+    const p: OnboardingProfile = {
+      role,
+      board: undefined,
+      goals: selectedGoal ? [selectedGoal] : [],
+      completed: true,
+      completedAt: new Date().toISOString(),
+    }
     saveOnboardingProfile(p)
     if (user) {
       try { await supabase.from('profiles').update({ role }).eq('id', user.id) } catch {}
     }
-    const onboardBadges = checkAndAward({ progressMap: {}, pathsCompleted: 0, onboarded: true })
-    if (onboardBadges.length) window.dispatchEvent(new CustomEvent('aihub:badges', { detail: onboardBadges }))
+    const badges = checkAndAward({ progressMap: {}, pathsCompleted: 0, onboarded: true })
+    if (badges.length) window.dispatchEvent(new CustomEvent('aihub:badges', { detail: badges }))
     onComplete(p)
-  }, [role, board, goals, onComplete, user])
+  }, [role, goalIdx, onComplete, user])
 
-  const stepNum = step === 'role' ? 1 : step === 'board' ? 2 : 3
+  const AHA_MOMENTS = [
+    { id: 'hallucination', icon: '🤥', label: 'AI confidently gave me wrong information',       concept: 'Hallucination',      exercise: 'hallucination-hunt' },
+    { id: 'sycophancy',    icon: '🪞', label: 'AI agreed with me even when I was wrong',        concept: 'Sycophancy',         exercise: 'sycophancy-mirror'  },
+    { id: 'prompt',        icon: '🎛️', label: 'Small wording changes gave completely different answers', concept: 'Prompt sensitivity', exercise: 'few-shot-power'  },
+    { id: 'bias',          icon: '⚖️', label: 'AI responses felt biased or one-sided',          concept: 'Bias',               exercise: 'bias-probe'         },
+  ]
+
+  const GOALS_BY_ROLE: Record<string, string[]> = {
+    teacher:  ['Design AI-proof assessments','Teach AI literacy without being an expert','Integrate AI into my classroom ethically','Track what my students actually understand'],
+    student:  ['Prepare for CBSE Code 417 or IGCSE Topic 6','Understand how AI actually works','Use AI tools without being misled','Build skills beyond my textbook'],
+    curious:  ['Understand what AI can and cannot do','Learn to fact-check AI outputs','Understand AI ethics and real impact','Think critically about technology'],
+  }
+
+  const START_BY_ROLE_GOAL: Record<string, { path: string; resource: string; why: string; time: string; exerciseId: string }> = {
+    'teacher-0': { path: 'AI for Educators',    resource: 'Designing AI-Resistant Assessments', why: 'The question every teacher has right now. 12 concrete structures that work alongside AI — not against it.', time: '15 min', exerciseId: 'sycophancy-mirror'  },
+    'teacher-1': { path: 'AI for Educators',    resource: 'AI Literacy for Educators',          why: "You don't need to be technical. This shows you how to teach AI concepts clearly at any age, without jargon.", time: '20 min', exerciseId: 'hallucination-hunt' },
+    'teacher-2': { path: 'AI Ethics',           resource: 'AI Ethics in the Classroom',         why: 'Practical framework for helping students use AI responsibly — discussion prompts, case studies, assessment ideas.', time: '18 min', exerciseId: 'bias-probe'         },
+    'teacher-3': { path: 'AI for Educators',    resource: 'Student Progress with AI Tools',     why: 'How to distinguish genuine understanding from AI-assisted completion — with real rubric examples.', time: '12 min', exerciseId: 'sycophancy-mirror'  },
+    'student-0': { path: 'CBSE AI Code 417',    resource: 'CBSE AI Code 417 — Complete Guide',  why: 'Unit-by-unit breakdown of what appears on the exam, with the conceptual depth the paper tests — not just definitions.', time: '25 min', exerciseId: 'hallucination-hunt' },
+    'student-1': { path: 'AI Fundamentals',     resource: 'How LLMs Actually Work',             why: 'The single most important 22 minutes you can spend. This video gives you the mental model that makes everything click.', time: '22 min', exerciseId: 'token-prediction'   },
+    'student-2': { path: 'AI Fundamentals',     resource: 'Using AI Without Being Misled',      why: 'Practical techniques for getting useful AI output while protecting yourself from hallucination, sycophancy, and bias.', time: '15 min', exerciseId: 'sycophancy-mirror'  },
+    'student-3': { path: 'AI Fundamentals',     resource: 'AI Literacy: Beyond the Textbook',   why: 'Real concepts, real failure modes, real critical thinking — what your textbook covers in a paragraph, explained properly.', time: '30 min', exerciseId: 'reasoning-limits'   },
+    'curious-0': { path: 'AI Limits',           resource: 'What AI Cannot Do — A Practical Guide', why: 'The most useful thing to understand about AI is its limits. This is that guide.', time: '18 min', exerciseId: 'hallucination-hunt' },
+    'curious-1': { path: 'Critical Thinking',   resource: 'How to Fact-Check AI Outputs',       why: 'A systematic method — not just "check other sources", but a real workflow you can apply every time.', time: '12 min', exerciseId: 'hallucination-hunt' },
+    'curious-2': { path: 'AI Ethics',           resource: 'AI Ethics: Real Implications',       why: 'Not philosophy — practical consequences of AI bias and misuse, with case studies you can discuss.', time: '20 min', exerciseId: 'bias-probe'         },
+    'curious-3': { path: 'AI Fundamentals',     resource: 'Thinking Clearly About AI',          why: 'The mental models that separate people who understand AI from people who just use it.', time: '15 min', exerciseId: 'few-shot-power'     },
+  }
+
+  const roleData = ROLES.find(r => r.id === role)
+  const goals    = role ? GOALS_BY_ROLE[role] ?? [] : []
+  const ahaObj   = AHA_MOMENTS.find(a => a.id === ahaId)
+  const startKey = `${role}-${goalIdx}`
+  const startRec = START_BY_ROLE_GOAL[startKey] ?? START_BY_ROLE_GOAL['student-1']
+
+  // Role-specific colors matching reference exactly
+  const ROLE_COLORS: Record<string, string> = {
+    teacher:  '#065F46',
+    student:  '#5855D6',
+    curious:  '#7C3AED',
+  }
+  const selectedRoleColor = role ? ROLE_COLORS[role] : '#5855D6'
 
   return (
-    <div className={cn('transition-opacity duration-200', anim ? 'opacity-0' : 'opacity-100')}>
+    <div style={{ opacity: transitioning ? 0 : 1, transition: 'opacity 0.2s' }}>
 
-      {/* Step progress bar */}
-      <div className="flex items-center gap-1.5 mb-6">
-        {[1, 2, 3].map(i => (
-          <div key={i} className={cn(
-            'h-1.5 rounded-full transition-all duration-500',
-            i <= stepNum ? 'bg-[#5855D6]' : 'bg-zinc-100',
-            i === stepNum ? 'flex-1' : 'w-6'
-          )}/>
+      {/* Progress dots — exact match to reference */}
+      <div className="flex items-center gap-1.5 mb-6 justify-center">
+        {[0,1,2,3].map(i => (
+          <div key={i} style={{
+            height: 8,
+            borderRadius: 99,
+            background: i < step ? '#10B981' : i === step ? '#5855D6' : '#EFEFEF',
+            width: i === step ? 24 : 8,
+            transition: 'all 0.3s',
+          }}/>
         ))}
       </div>
 
-      {/* ── Step 1: Role ─────────────────────────────────────────────────────── */}
-      {step === 'role' && (
+      {/* ── Step 0: Role ─────────────────────────────────────────────────── */}
+      {step === 0 && (
         <div>
           <h2 className="text-2xl font-extrabold text-zinc-900 mb-1.5 tracking-tight">Who are you?</h2>
-          <p className="text-sm text-zinc-400 mb-6 leading-relaxed">This shapes your entire experience. You can change it any time.</p>
-          <div className="space-y-2.5 mb-7">
-            {ROLES.map(r => (
+          <p className="text-sm text-zinc-400 mb-6 leading-relaxed">
+            This isn't just personalisation — it changes what you see, how the AI tutor talks, and where you start.
+          </p>
+          <div className="flex flex-col gap-2.5 mb-6">
+            {[
+              { id: 'student' as OnboardRole,  icon: '📚', label: 'Student',             sub: 'I study AI as part of a curriculum or want to go beyond textbooks',    color: '#5855D6' },
+              { id: 'teacher' as OnboardRole,  icon: '🎓', label: 'Teacher',             sub: 'I teach or want to integrate AI literacy into my classroom',            color: '#065F46' },
+              { id: 'curious' as OnboardRole,  icon: '🔬', label: 'Researcher / Builder',sub: 'I use AI professionally and want to understand it more deeply',          color: '#7C3AED' },
+            ].map(r => (
               <button key={r.id} onClick={() => setRole(r.id)}
-                className={cn(
-                  'w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all duration-150',
-                  role === r.id
-                    ? 'border-accent-500 bg-gradient-to-r from-accent-600 to-violet-600 shadow-lg'
-                    : 'border-zinc-200 bg-white hover:border-[#C0BFEF] hover:shadow-card'
-                )}>
-                <div className={cn(
-                  'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all',
-                  role === r.id ? 'bg-white/20 text-white' : `bg-gradient-to-br ${r.color} text-white`
-                )}>
-                  {r.icon}
-                </div>
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px',
+                  borderRadius: 14, textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s',
+                  border: `2px solid ${role === r.id ? r.color : '#E5E5E7'}`,
+                  background: role === r.id ? `${r.color}12` : 'white',
+                }}>
+                <span style={{ fontSize: 28 }}>{r.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <p className={cn('text-base font-bold mb-0.5 leading-snug', role === r.id ? 'text-white' : 'text-zinc-900')}>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: role === r.id ? r.color : '#0A0A0B', marginBottom: 2 }}>
                     {r.label}
                   </p>
-                  <p className={cn('text-xs leading-relaxed', role === r.id ? 'text-white/65' : 'text-zinc-500')}>
-                    {r.sub}
+                  <p style={{ fontSize: 12, color: '#9999A8', lineHeight: 1.4 }}>{r.sub}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+          <button disabled={!role} onClick={() => advance(1)}
+            style={{
+              width: '100%', padding: '13px', borderRadius: 12, border: 'none',
+              background: role ? '#0A0A0B' : '#E5E5E7',
+              color: 'white', fontSize: 14, fontWeight: 700,
+              cursor: role ? 'pointer' : 'default',
+            }}>
+            Continue →
+          </button>
+        </div>
+      )}
+
+      {/* ── Step 1: Aha moment ───────────────────────────────────────────── */}
+      {step === 1 && (
+        <div>
+          <button onClick={() => advance(0)}
+            className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 mb-5 flex items-center gap-1">
+            ← Back
+          </button>
+          <h2 className="text-2xl font-bold text-zinc-900 mb-1.5 tracking-tight">Your first 5 minutes</h2>
+          <p className="text-sm text-zinc-400 mb-3 leading-relaxed">
+            Let's get you to your first real insight right now. Pick one thing AI got wrong about you.
+          </p>
+          <p className="text-sm text-zinc-600 mb-5 leading-relaxed">
+            We'll start with the concept behind what you picked — not abstract theory, but the actual mechanism that caused it.
+          </p>
+          <div className="flex flex-col gap-2 mb-4">
+            {AHA_MOMENTS.map(a => (
+              <button key={a.id} onClick={() => setAhaId(a.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
+                  borderRadius: 12, textAlign: 'left', cursor: 'pointer',
+                  border: `2px solid ${ahaId === a.id ? '#5855D6' : '#E5E5E7'}`,
+                  background: ahaId === a.id ? '#EEEEFF' : 'white',
+                }}>
+                <span style={{ fontSize: 22, flexShrink: 0 }}>{a.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p style={{ fontSize: 13, fontWeight: 600, color: ahaId === a.id ? '#5855D6' : '#0A0A0B' }}>
+                    {a.label}
                   </p>
+                  <p style={{ fontSize: 11, color: '#9999A8', marginTop: 2 }}>Concept: {a.concept}</p>
                 </div>
-                <div className={cn('w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all',
-                  role === r.id ? 'border-white bg-white/20' : 'border-zinc-300')}>
-                  {role === r.id && <Check size={11} className="text-white" strokeWidth={3}/>}
-                </div>
+                {ahaId === a.id && (
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, color: '#5855D6',
+                    background: 'white', border: '1px solid #C0BFEF',
+                    padding: '2px 8px', borderRadius: 99, flexShrink: 0,
+                  }}>
+                    Starting here
+                  </span>
+                )}
               </button>
             ))}
           </div>
-          <button disabled={!role} onClick={() => go(role === 'teacher' || role === 'student' ? 'board' : 'goals')}
-            className={cn('w-full py-3.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2',
-              role
-                ? 'bg-gradient-to-r from-accent-600 to-violet-600 text-white hover:from-accent-700 hover:to-violet-700 shadow-sm'
-                : 'bg-zinc-100 text-zinc-300 cursor-not-allowed')}>
-            Continue <ArrowRight size={15}/>
+
+          {ahaId && (
+            <div style={{ marginTop: 8, marginBottom: 12, padding: '12px 16px', background: '#EEEEFF', borderRadius: 12, fontSize: 13, color: '#5855D6' }}>
+              📍 Your first exercise will demonstrate exactly how <strong>{ahaObj?.concept}</strong> works — from the inside.
+            </div>
+          )}
+
+          <button disabled={!ahaId} onClick={() => advance(2)}
+            style={{
+              width: '100%', padding: '13px', borderRadius: 12, border: 'none',
+              background: ahaId ? '#0A0A0B' : '#E5E5E7',
+              color: 'white', fontSize: 14, fontWeight: 700,
+              cursor: ahaId ? 'pointer' : 'default', marginTop: 4,
+            }}>
+            Continue →
           </button>
         </div>
       )}
 
-      {/* ── Step 2: Board ────────────────────────────────────────────────────── */}
-      {step === 'board' && roleData && (
+      {/* ── Step 2: Goal ─────────────────────────────────────────────────── */}
+      {step === 2 && (
         <div>
-          <button onClick={() => go('role')} className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 mb-5 flex items-center gap-1">← Back</button>
-          <h2 className="text-2xl font-bold text-zinc-900 mb-1 tracking-tight">Your curriculum?</h2>
-          <p className="text-sm text-zinc-500 mb-7">We map every resource and path to your board.</p>
-          <div className="space-y-2 mb-7">
-            {BOARDS.map(b => (
-              <button key={b} onClick={() => setBoard(b)}
-                className={cn('w-full flex items-center justify-between px-5 py-4 rounded-xl border-2 text-left transition-all',
-                  board === b ? 'border-ink-900 bg-ink-900 text-white' : 'border-zinc-200 bg-white hover:border-ink-400 text-zinc-700')}>
-                <span className="text-sm font-semibold">{b}</span>
-                {board === b && <Check size={15}/>}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-3">
-            <button onClick={() => go('goals')} className="px-4 py-3.5 text-sm text-zinc-500 hover:text-zinc-700 font-semibold">Skip</button>
-            <button disabled={!board} onClick={() => go('goals')}
-              className={cn('flex-1 py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all',
-                board ? 'bg-ink-900 text-white hover:bg-ink-800' : 'bg-zinc-100 text-zinc-400 cursor-not-allowed')}>
-              Continue <ArrowRight size={15}/>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Step 3: Goals ────────────────────────────────────────────────────── */}
-      {step === 'goals' && roleData && (
-        <div>
-          <button onClick={() => go(role === 'curious' ? 'role' : 'board')} className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 mb-5 flex items-center gap-1">← Back</button>
-          <h2 className="text-2xl font-bold text-zinc-900 mb-1 tracking-tight">What's your focus?</h2>
-          <p className="text-sm text-zinc-500 mb-7">Pick as many as you want. We'll start you there.</p>
-          <div className="space-y-2 mb-7">
-            {roleData.goals.map(g => {
-              const sel = goals.includes(g)
-              return (
-                <button key={g} onClick={() => setGoals(p => sel ? p.filter(x => x !== g) : [...p, g])}
-                  className={cn('w-full flex items-center gap-3 px-5 py-3.5 rounded-xl border-2 text-left transition-all',
-                    sel ? 'border-ink-900 bg-zinc-50' : 'border-zinc-200 bg-white hover:border-ink-400')}>
-                  <div className={cn('w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all',
-                    sel ? 'border-ink-900 bg-ink-900' : 'border-zinc-300')}>
-                    {sel && <Check size={12} className="text-white" strokeWidth={3}/>}
-                  </div>
-                  <span className={cn('text-sm', sel ? 'font-semibold text-zinc-900' : 'text-zinc-700')}>{g}</span>
-                </button>
-              )
-            })}
-          </div>
-          <div className="flex gap-3">
-            <button onClick={done} className="px-4 py-3.5 text-sm text-zinc-500 hover:text-zinc-700 font-semibold">Skip</button>
-            <button onClick={done}
-              className="flex-1 py-3.5 bg-ink-900 text-white rounded-xl text-sm font-bold hover:bg-ink-800 flex items-center justify-center gap-2 transition-all">
-              {goals.length > 0 ? 'Launch my OS' : 'Continue'} <ArrowRight size={15}/>
-            </button>
-          </div>
-        </div>
-      )}
-
-
-    </div>
-  )
-}
-
-// ── First Light: role + goal aware guided moment ──────────────────────────────
-const FIRST_LIGHT_CONFIG: Record<string, {
-  headline: string; sub: string
-  insight: string; insightLabel: string
-  prompt: string; resourceHref: string; resourceLabel: string
-}> = {
-  teacher: {
-    headline: "See how AI misleads — then teach it better.",
-    sub: "Before you can teach AI literacy, you need to feel what AI confusion actually looks like. One prompt. 30 seconds.",
-    insightLabel: "Why this matters for your class",
-    insight: "Students trust AI without questioning it. Once you've seen a hallucination first-hand, you'll know exactly what to warn them about — and how to design lessons around it.",
-    prompt: "Who won the 1987 World Chess Championship match between Garry Kasparov and Bobby Fischer? Describe the key games and final result.",
-    resourceHref: "/playground/hallucination-hunt",
-    resourceLabel: "Hallucination Hunt exercise →",
-  },
-  student: {
-    headline: "Watch AI confidently make something up.",
-    sub: "This is the most important thing to understand before you use AI for anything important. One prompt. See it happen live.",
-    insightLabel: "What you're about to see",
-    insight: "AI doesn't know when it doesn't know. It fills gaps with confident-sounding fiction. After this, you'll always double-check AI claims — and that makes you smarter than most adults.",
-    prompt: "Who won the 1987 World Chess Championship match between Garry Kasparov and Bobby Fischer? Describe the key games and final result.",
-    resourceHref: "/playground/hallucination-hunt",
-    resourceLabel: "Try the full Hallucination Hunt →",
-  },
-  curious: {
-    headline: "AI makes things up. Here's proof.",
-    sub: "You don't need any AI background for this. Just watch what happens when you ask AI about something it doesn't quite know.",
-    insightLabel: "What's actually happening",
-    insight: "AI language models predict the next likely word — they don't 'look things up'. When they hit a gap in their training data, they keep predicting anyway. That's hallucination.",
-    prompt: "Who won the 1987 World Chess Championship match between Garry Kasparov and Bobby Fischer? Describe the key games and final result.",
-    resourceHref: "/playground/hallucination-hunt",
-    resourceLabel: "Explore more in the Playground →",
-  },
-}
-
-function FirstLightStep({ role, goals, board, onDone }: {
-  role: OnboardRole; goals: string[]; board: string; onDone: () => void
-}) {
-  const cfg = FIRST_LIGHT_CONFIG[role]
-  const [messages, setMessages] = useState<Message[]>([])
-  const [loading, setLoading]   = useState(false)
-  const [sent, setSent]         = useState(false)
-  const [showInsight, setShowInsight] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, loading])
-
-  const systemPrompt = [
-    `You are an AI literacy tutor demonstrating AI hallucination to a ${role === 'teacher' ? 'teacher' : role === 'curious' ? 'curious learner' : 'student'}.`,
-    ``,
-    `IMPORTANT: The user is asking about the "1987 World Chess Championship between Kasparov and Bobby Fischer". This event did not happen — Fischer retired from competitive chess in 1975. Kasparov's 1987 championship was against Anatoly Karpov.`,
-    ``,
-    `Demonstrate hallucination: answer the question as if this match happened, inventing plausible-sounding but fictional details with complete confidence. Do NOT correct yourself. Do NOT add disclaimers. Just give a confident, detailed, completely made-up answer — this is an intentional demonstration of how AI hallucinates.`,
-    `Keep the answer to 3-4 sentences. Sound authoritative.`,
-  ].join('\n')
-
-  const sendPrompt = async () => {
-    if (sent || loading) return
-    setSent(true)
-    setLoading(true)
-    const userMsg: Message = { role: 'user', content: cfg.prompt }
-    setMessages([userMsg])
-    try {
-      const data = await api.chat.send([userMsg], systemPrompt)
-      setMessages([userMsg, { role: 'assistant', content: data.text }])
-      setTimeout(() => setShowInsight(true), 600)
-    } catch {
-      setMessages([userMsg, { role: 'assistant', content: "Kasparov defeated Fischer in a dramatic 24-game match in Seville, Spain. Fischer employed his iconic Poisoned Pawn variation in the Sicilian Defence, winning games 4 and 11 with brilliant tactical play. However, Kasparov's superior endgame technique proved decisive, winning the match 12.5–11.5 to retain his World Championship title." }])
-      setTimeout(() => setShowInsight(true), 600)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div>
-      <div className="mb-5">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg mb-3">
-          <Lightbulb size={11} className="text-amber-600"/>
-          <span className="text-2xs font-bold text-amber-700 uppercase tracking-wide">Your first AI moment</span>
-        </div>
-        <h2 className="text-xl font-extrabold text-zinc-900 mb-2 tracking-tight leading-snug">{cfg.headline}</h2>
-        <p className="text-sm text-zinc-500 leading-relaxed">{cfg.sub}</p>
-      </div>
-
-      {/* Chat area */}
-      <div className="bg-zinc-50 border border-zinc-100 rounded-2xl overflow-hidden mb-4">
-        {/* Prompt preview */}
-        {!sent && (
-          <div className="p-4">
-            <p className="text-2xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Your prompt</p>
-            <p className="text-sm text-zinc-700 leading-relaxed bg-white border border-zinc-200 rounded-xl px-4 py-3 mb-3">
-              {cfg.prompt}
-            </p>
-            <button onClick={sendPrompt}
-              className="w-full py-2.5 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors flex items-center justify-center gap-2">
-              <Send size={13}/> Send this prompt
-            </button>
-          </div>
-        )}
-
-        {/* Chat thread */}
-        {messages.length > 0 && (
-          <div className="p-4 space-y-3" ref={bottomRef}>
-            {messages.map((msg, i) => (
-              <div key={i} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
-                <div className={cn(
-                  'max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
-                  msg.role === 'user'
-                    ? 'bg-ink-900 text-white rounded-br-sm'
-                    : 'bg-white border border-zinc-200 text-zinc-800 rounded-bl-sm'
-                )}>
-                  {msg.role === 'assistant' && (
-                    <p className="text-2xs font-bold text-[#5855D6] mb-1.5 uppercase tracking-wide">AI response</p>
+          <button onClick={() => advance(1)}
+            className="text-xs font-semibold text-zinc-400 hover:text-zinc-700 mb-5 flex items-center gap-1">
+            ← Back
+          </button>
+          <h2 className="text-2xl font-bold text-zinc-900 mb-1.5 tracking-tight">What do you actually want?</h2>
+          <p className="text-sm text-zinc-400 mb-6 leading-relaxed">
+            Not vague goals. Pick the one outcome that would make this worth your time.
+          </p>
+          <div className="flex flex-col gap-2 mb-4">
+            {goals.map((g, i) => (
+              <button key={i} onClick={() => setGoalIdx(i)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px',
+                  borderRadius: 12, textAlign: 'left', cursor: 'pointer',
+                  border: `2px solid ${goalIdx === i ? '#0A0A0B' : '#E5E5E7'}`,
+                  background: goalIdx === i ? '#0A0A0B' : 'white',
+                }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                  border: `2px solid ${goalIdx === i ? 'white' : '#E5E5E7'}`,
+                  background: goalIdx === i ? 'white' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {goalIdx === i && (
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#0A0A0B' }}/>
                   )}
-                  {msg.content}
                 </div>
-              </div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: goalIdx === i ? 'white' : '#0A0A0B' }}>
+                  {g}
+                </span>
+              </button>
             ))}
-            {loading && (
-              <div className="flex justify-start">
-                <div className="bg-white border border-zinc-200 rounded-2xl rounded-bl-sm px-4 py-3">
-                  <TypingDots/>
-                </div>
-              </div>
-            )}
           </div>
-        )}
-      </div>
-
-      {/* Insight reveal — appears after AI responds */}
-      {showInsight && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl animate-fade-in">
-          <p className="text-2xs font-bold text-red-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-            <AlertCircle size={11}/> {cfg.insightLabel}
-          </p>
-          <p className="text-sm text-red-900 leading-relaxed mb-3">{cfg.insight}</p>
-          <p className="text-xs font-semibold text-red-700">
-            ⚠️ That match never happened. Fischer retired in 1975. The 1987 championship was Kasparov vs Karpov — but the AI answered with total confidence.
-          </p>
-        </div>
-      )}
-
-      {/* CTA */}
-      {showInsight && (
-        <div className="space-y-2.5 animate-fade-in">
-          <button onClick={onDone}
-            className="w-full py-3.5 bg-ink-900 text-white text-sm font-bold rounded-xl hover:bg-ink-800 transition-all flex items-center justify-center gap-2">
-            I'm ready — take me to my dashboard <ArrowRight size={15}/>
+          <button disabled={goalIdx === null} onClick={() => advance(3)}
+            style={{
+              width: '100%', padding: '13px', borderRadius: 12, border: 'none',
+              background: goalIdx !== null ? '#0A0A0B' : '#E5E5E7',
+              color: 'white', fontSize: 14, fontWeight: 700,
+              cursor: goalIdx !== null ? 'pointer' : 'default', marginTop: 8,
+            }}>
+            Build my start →
           </button>
-          <Link to={cfg.resourceHref} onClick={onDone}
-            className="w-full py-3 text-center text-xs font-semibold text-[#5855D6] hover:text-[#4744C8] transition-colors block">
-            {cfg.resourceLabel}
-          </Link>
         </div>
       )}
 
-      {/* Skip — always visible */}
-      {!showInsight && sent && !loading && (
-        <button onClick={onDone}
-          className="w-full text-center text-xs text-zinc-400 hover:text-zinc-600 transition-colors py-2">
-          Skip intro → go to dashboard
-        </button>
-      )}
-      {!sent && (
-        <button onClick={onDone}
-          className="w-full text-center text-xs text-zinc-400 hover:text-zinc-600 transition-colors py-2 mt-1">
-          Skip → I'll explore on my own
-        </button>
+      {/* ── Step 3: Personalised start ───────────────────────────────────── */}
+      {step === 3 && role && startRec && (
+        <div>
+          <h2 className="text-2xl font-bold text-zinc-900 mb-1.5 tracking-tight">Your personalised start</h2>
+          <p className="text-sm text-zinc-400 mb-5 leading-relaxed">
+            Based on who you are, we've built you a path. Here's the first step.
+          </p>
+
+          {/* Dark resource card — matches reference exactly */}
+          <div style={{
+            background: 'linear-gradient(135deg, #0A0A0B, #1A1840)',
+            borderRadius: 16, padding: '20px', marginBottom: 14,
+            border: '1px solid transparent',
+          }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 12 }}>
+              {roleData?.label ?? role} · {goalIdx !== null ? goals[goalIdx] : ''}
+            </p>
+            <p style={{ fontSize: 16, fontWeight: 700, color: 'white', marginBottom: 6, lineHeight: 1.4 }}>
+              {startRec.resource}
+            </p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 14, lineHeight: 1.6 }}>
+              {startRec.why}
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.1)' }}>
+                ⏱ {startRec.time}
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6, color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.1)' }}>
+                {startRec.path}
+              </span>
+            </div>
+          </div>
+
+          {/* Playground exercise card */}
+          {ahaObj && (
+            <div style={{ background: '#FFFBEB', border: '1px solid #FED7AA', borderRadius: 14, padding: '16px 18px', marginBottom: 14 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: '#92400E', marginBottom: 6 }}>
+                First exercise: {ahaObj.concept}
+              </p>
+              <p style={{ fontSize: 13, color: '#9A3412', lineHeight: 1.6 }}>
+                After your first resource, we'll put you in the Playground to directly observe{' '}
+                {ahaObj.concept.toLowerCase()} in action. You'll interact with the AI and see exactly why it happens.
+              </p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2">
+            <button onClick={done}
+              style={{
+                padding: '14px', borderRadius: 12, border: 'none',
+                background: '#5855D6', color: 'white',
+                fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              }}>
+              Start: {startRec.resource.length > 36 ? startRec.resource.slice(0,34)+'…' : startRec.resource} →
+            </button>
+            <button onClick={() => advance(0)}
+              style={{
+                padding: '11px', borderRadius: 12,
+                border: '1px solid #E5E5E7', background: 'white',
+                color: '#5C5C6B', fontSize: 13, cursor: 'pointer',
+              }}>
+              Change my answers
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )
