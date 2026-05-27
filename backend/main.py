@@ -300,3 +300,186 @@ async def submit_quiz(body: QuizSubmission, req: Request):
             pass  # Don't fail submission if DB write fails
     return {"ok": True, "passed": passed, "score": score, "results": results,
             "passingScore": q["passingScore"], "total": len(q["questions"]), "correct": correct}
+
+# ── Classroom ───────────────────────────────────────────────────────────────────
+import uuid as _uuid
+import random, string
+
+def _gen_code() -> str:
+    chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    return ''.join(random.choices(chars, k=6))
+
+@app.get("/api/classroom")
+async def get_classroom(req: Request, user_id: str = Depends(get_current_user)):
+    """Get or create the teacher's classroom + list of students with progress."""
+    # Fetch or create classroom
+    res = sb.client.table("classrooms").select("*").eq("teacher_id", user_id).limit(1).execute()
+    classroom = res.data[0] if res.data else None
+
+    if not classroom:
+        code = _gen_code()
+        # Retry on code collision
+        for _ in range(5):
+            ins = sb.client.table("classrooms").insert({
+                "id": str(_uuid.uuid4()),
+                "teacher_id": user_id,
+                "code": code,
+                "name": "My Classroom",
+            }).execute()
+            if ins.data:
+                classroom = ins.data[0]
+                break
+            code = _gen_code()
+
+    if not classroom:
+        raise HTTPException(500, "Could not create classroom")
+
+    # Members
+    members_res = sb.client.table("classroom_members") \
+        .select("student_id, joined_at") \
+        .eq("classroom_id", classroom["id"]).execute()
+    members = members_res.data or []
+
+    students = []
+    for m in members:
+        sid = m["student_id"]
+        # Profile
+        prof_res = sb.client.table("profiles").select("full_name, email").eq("id", sid).limit(1).execute()
+        prof = prof_res.data[0] if prof_res.data else {}
+        # Resource progress
+        prog_res = sb.client.table("resource_progress").select("completed").eq("user_id", sid).execute()
+        prog = prog_res.data or []
+        done = sum(1 for p in prog if p.get("completed"))
+        # Quiz scores
+        quiz_res = sb.client.table("quiz_results").select("score").eq("user_id", sid).execute()
+        quizzes = quiz_res.data or []
+        avg_quiz = round(sum(q["score"] for q in quizzes) / len(quizzes)) if quizzes else None
+
+        students.append({
+            "id": sid,
+            "name": prof.get("full_name") or "Student",
+            "email": prof.get("email") or "",
+            "joinedAt": m["joined_at"],
+            "started": len(prog),
+            "completed": done,
+            "rate": round((done / len(prog)) * 100) if prog else 0,
+            "streak": 0,
+            "quizScore": avg_quiz,
+            "pathProgress": {},
+        })
+
+    return {"classroom": classroom, "students": students}
+
+class AssignmentCreate(BaseModel):
+    content_type: str   # resource | exercise | path | activity
+    content_id: str
+    title: str
+    note: str | None = None
+    due_date: str | None = None
+
+@app.get("/api/classroom/assignments")
+async def list_assignments(req: Request, user_id: str = Depends(get_current_user)):
+    cls_res = sb.client.table("classrooms").select("id").eq("teacher_id", user_id).limit(1).execute()
+    if not cls_res.data:
+        return {"data": []}
+    classroom_id = cls_res.data[0]["id"]
+
+    # Count students for completion percentage
+    members_res = sb.client.table("classroom_members").select("student_id").eq("classroom_id", classroom_id).execute()
+    total_students = len(members_res.data or [])
+
+    asgn_res = sb.client.table("assignments").select("*").eq("classroom_id", classroom_id).order("created_at", desc=True).execute()
+    assignments = asgn_res.data or []
+
+    # Add completedCount to each
+    result = []
+    for a in assignments:
+        comp_res = sb.client.table("assignment_completions").select("id").eq("assignment_id", a["id"]).execute()
+        result.append({**a, "completedCount": len(comp_res.data or []), "totalStudents": total_students})
+
+    return {"data": result}
+
+@app.post("/api/classroom/assignments")
+async def create_assignment(body: AssignmentCreate, req: Request, user_id: str = Depends(get_current_user)):
+    cls_res = sb.client.table("classrooms").select("id").eq("teacher_id", user_id).limit(1).execute()
+    if not cls_res.data:
+        raise HTTPException(404, "No classroom found for this teacher")
+    classroom_id = cls_res.data[0]["id"]
+
+    ins = sb.client.table("assignments").insert({
+        "id": str(_uuid.uuid4()),
+        "classroom_id": classroom_id,
+        "teacher_id": user_id,
+        "content_type": body.content_type,
+        "content_id": body.content_id,
+        "title": body.title,
+        "note": body.note,
+        "due_date": body.due_date,
+    }).execute()
+
+    if not ins.data:
+        raise HTTPException(500, "Failed to create assignment")
+
+    return {"assignment": ins.data[0]}
+
+@app.delete("/api/classroom/assignments/{assignment_id}")
+async def delete_assignment(assignment_id: str, user_id: str = Depends(get_current_user)):
+    # Verify ownership
+    asgn_res = sb.client.table("assignments").select("teacher_id").eq("id", assignment_id).limit(1).execute()
+    if not asgn_res.data or asgn_res.data[0]["teacher_id"] != user_id:
+        raise HTTPException(403, "Not your assignment")
+    sb.client.table("assignments").delete().eq("id", assignment_id).execute()
+    return {"ok": True}
+
+# ── Student-facing: my assignments ─────────────────────────────────────────────
+@app.get("/api/classroom/my-assignments")
+async def my_assignments(req: Request, user_id: str = Depends(get_current_user)):
+    # Find classrooms this student belongs to
+    mem_res = sb.client.table("classroom_members").select("classroom_id").eq("student_id", user_id).execute()
+    classroom_ids = [m["classroom_id"] for m in (mem_res.data or [])]
+    if not classroom_ids:
+        return {"data": []}
+
+    all_assignments = []
+    for cid in classroom_ids:
+        asgn_res = sb.client.table("assignments").select("*").eq("classroom_id", cid).execute()
+        for a in (asgn_res.data or []):
+            comp_res = sb.client.table("assignment_completions") \
+                .select("id").eq("assignment_id", a["id"]).eq("student_id", user_id).execute()
+            all_assignments.append({**a, "completed": bool(comp_res.data)})
+
+    return {"data": all_assignments}
+
+@app.post("/api/classroom/assignments/{assignment_id}/complete")
+async def complete_assignment(assignment_id: str, user_id: str = Depends(get_current_user)):
+    sb.client.table("assignment_completions").upsert({
+        "id": str(_uuid.uuid4()),
+        "assignment_id": assignment_id,
+        "student_id": user_id,
+    }, on_conflict="assignment_id,student_id").execute()
+    return {"ok": True}
+
+# ── Classroom join (student joins with code) ────────────────────────────────────
+class JoinRequest(BaseModel):
+    code: str
+
+@app.post("/api/classroom/join")
+async def join_classroom(body: JoinRequest, user_id: str = Depends(get_current_user)):
+    cls_res = sb.client.table("classrooms").select("*").eq("code", body.code.upper()).limit(1).execute()
+    if not cls_res.data:
+        raise HTTPException(404, f"No classroom found with code '{body.code.upper()}'")
+    classroom = cls_res.data[0]
+
+    # Check not already a member
+    mem_res = sb.client.table("classroom_members") \
+        .select("id").eq("classroom_id", classroom["id"]).eq("student_id", user_id).limit(1).execute()
+    if mem_res.data:
+        return {"ok": True, "classroom": classroom, "alreadyJoined": True}
+
+    sb.client.table("classroom_members").insert({
+        "id": str(_uuid.uuid4()),
+        "classroom_id": classroom["id"],
+        "student_id": user_id,
+    }).execute()
+
+    return {"ok": True, "classroom": classroom, "alreadyJoined": False}
