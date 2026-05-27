@@ -72,3 +72,13 @@ def get_current_user(authorization: str = Header(default="")):
     if not uid:
         raise HTTPException(401, "Invalid token")
     return uid
+
+    async def upsert_quiz_result(self, user_id: str, path_id: str, score: int, passed: bool):
+        self.client.table("quiz_results").upsert({
+            "user_id": user_id,
+            "path_id": path_id,
+            "score": score,
+            "passed": passed,
+            "taken_at": "now()",
+        }, on_conflict="user_id,path_id").execute()
+
