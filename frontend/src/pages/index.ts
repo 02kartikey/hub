@@ -5,7 +5,7 @@
 
 export { HomePage, DashboardPage }              from './home'
 export { BrowsePage, ContentPage, PathPage }    from './content'
-export { PlaygroundPage, PlaygroundExercisePage } from './playground'
+export { PlaygroundPage, PlaygroundExercisePage, ConceptLearnPage } from './playground'
 export {
   ActivitiesPage, ActivityDetailPage,
   AssessmentPage, QuizPage,
