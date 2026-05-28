@@ -25,13 +25,16 @@ DATA = Path(__file__).parent.parent / "data"
 _c: dict[str, Any] = {}
 
 def _load():
-    for name in ("resources","paths","activities","deep-exercises","tools","quizzes"):
+    for name in ("resources","paths","activities","deep-exercises","tools","quizzes","workflows"):
         fp = DATA / f"{name}.json"
         if fp.exists():
             with open(fp, encoding="utf-8") as f:
                 _c[name] = json.load(f)
+    wf_data = _c.get("workflows",{})
+    wf_list = wf_data.get("workflows",[]) if isinstance(wf_data,dict) else []
     print(f"[content] {len(_c.get('resources',[]))} resources | {len(_c.get('paths',[]))} paths | "
-          f"{len(_c.get('activities',[]))} activities | {len(_c.get('deep-exercises',[]))} exercises")
+          f"{len(_c.get('activities',[]))} activities | {len(_c.get('deep-exercises',[]))} exercises | "
+          f"{len(wf_list)} workflows")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -278,6 +281,28 @@ async def submit_quiz(body: QuizSubmission, req: Request):
             pass  # Don't fail submission if DB write fails
     return {"ok": True, "passed": passed, "score": score, "results": results,
             "passingScore": q["passingScore"], "total": len(q["questions"]), "correct": correct}
+
+
+# ── Workflows ────────────────────────────────────────────────────────────────
+
+@app.get("/api/workflows")
+async def list_workflows(category: str | None = None, audience: str | None = None):
+    data  = _c.get("workflows", {})
+    items = data.get("workflows", []) if isinstance(data, dict) else []
+    if category:
+        items = [w for w in items if w.get("category") == category]
+    if audience:
+        items = [w for w in items if audience in (w.get("audience") or [])]
+    return {"data": items, "total": len(items)}
+
+@app.get("/api/workflows/{wid}")
+async def get_workflow(wid: str):
+    data  = _c.get("workflows", {})
+    items = data.get("workflows", []) if isinstance(data, dict) else []
+    w = next((w for w in items if w["id"] == wid), None)
+    if not w:
+        raise HTTPException(404, f"Workflow '{wid}' not found")
+    return w
 
 # ── Classroom ───────────────────────────────────────────────────────────────────
 import uuid as _uuid
