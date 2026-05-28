@@ -10,7 +10,7 @@ import {
   CurriculumPage, SeminarsPage,
   WorkflowsPage, ToolsPage, ToolDetailPage,
   TeacherPage, DashboardPage, ProgressPage, ChatPage,
-  TeacherClassroomDashboard,
+  TeacherClassroomDashboard, MyClassroomPage,
   LoginPage, SignupPage, ForgotPasswordPage, SettingsPage, NotFoundPage, TryPage,
 } from './pages'
 
@@ -68,6 +68,7 @@ export default function App() {
             <Route path="/tools/:id"              element={<ToolDetailPage/>}/>
             <Route path="/teacher"                element={<TeacherPage/>}/>
             <Route path="/classroom"              element={<TeacherClassroomDashboard/>}/>
+            <Route path="/my-classroom"           element={<MyClassroomPage/>}/>
             <Route path="/dashboard"              element={<DashboardPage/>}/>
             <Route path="/my-paths"               element={<Navigate to="/curriculum" replace/>}/>
             <Route path="/saved"                  element={<Navigate to="/dashboard" replace/>}/>

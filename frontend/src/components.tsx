@@ -46,6 +46,7 @@ const NAV_BASE = [
     { label:'Tool guides', href:'/tools',       icon:<Wrench size={15}/> },
   ]},
   { group: 'My OS', items: [
+    { label:'My Classroom', href:'/my-classroom', icon:<Users size={15}/> },
     { label:'Progress',    href:'/progress',    icon:<BarChart2 size={15}/> },
     { label:'AI Chat',     href:'/chat',        icon:<MessageSquare size={15}/> },
     { label:'Badges',      href:'/badges',      icon:<Award size={15}/> },
@@ -614,9 +615,9 @@ function MobileBottomNav() {
     { href: '/browse',     icon: <Compass size={20}/>,         label: 'Browse'    },
     { href: '/playground', icon: <FlaskConical size={20}/>,    label: 'Play'      },
     { href: '/chat',       icon: <MessageSquare size={20}/>,   label: 'Chat'      },
-    { href: isTeacher ? '/classroom' : '/progress',
-      icon: isTeacher ? <Users size={20}/> : <BarChart2 size={20}/>,
-      label: isTeacher ? 'Class' : 'Progress' },
+    { href: isTeacher ? '/classroom' : '/my-classroom',
+      icon: <Users size={20}/>,
+      label: 'Class' },
   ]
 
   return (
