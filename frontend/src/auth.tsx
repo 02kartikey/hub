@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
 import { createClient, type SupabaseClient, type User, type AuthError } from '@supabase/supabase-js'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? ''
@@ -45,16 +45,16 @@ const Ctx = createContext<AuthCtx>({
   refreshProfile: async () => {},
 })
 
+// Module-level flags — survive AuthProvider remounts caused by auth state changes.
+// dbBroken: once the profiles table returns 500, stop all future DB calls this session.
+// lastFetch: throttle focus-triggered refetches to once per 60 s.
+let _dbBroken  = false
+let _lastFetch  = 0
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser]       = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-
-  // Track whether the profiles table is reachable.
-  // Set to true on first 500 so we stop spamming Supabase with broken queries.
-  const dbBroken = useRef(false)
-  // Last time we fetched profile from DB — throttle focus-triggered refetches to 60s
-  const lastFetch = useRef(0)
 
   const loadProfile = useCallback(async (u: User) => {
     const meta = u.user_metadata ?? {}
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // If the DB is known-broken, just use metadata immediately — no network call
-    if (dbBroken.current) { setProfile(metaProfile); return }
+    if (_dbBroken) { setProfile(metaProfile); return }
 
     try {
       const { data, error } = await supabase
@@ -78,12 +78,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // 500 = table missing / RLS broken — mark as broken, stop future calls
         if ((error as any).code === '500' || (error as any).status === 500
             || error.message?.includes('relation') || error.message?.includes('does not exist')) {
-          dbBroken.current = true
+          _dbBroken = true
         }
         throw error
       }
 
-      lastFetch.current = Date.now()
+      _lastFetch = Date.now()
       setProfile({
         full_name:  data?.full_name  ?? meta.full_name  ?? null,
         avatar_url: data?.avatar_url ?? meta.avatar_url ?? null,
@@ -136,8 +136,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // ── Focus fallback: re-fetch profile when user switches back to the tab ──
     // Throttled to once per 60s and skipped if the DB is known-broken.
     const onFocus = () => {
-      if (dbBroken.current) return            // DB is broken — metadata already set
-      if (Date.now() - lastFetch.current < 60_000) return  // too soon
+      if (_dbBroken) return            // DB is broken — metadata already set
+      if (Date.now() - _lastFetch < 60_000) return  // too soon
       loadProfile(user)
     }
     window.addEventListener('focus', onFocus)
@@ -183,14 +183,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // 2. Only try profiles table if it's known to be working
     let dbErr = null
-    if (!dbBroken.current) {
+    if (!_dbBroken) {
       const { error } = await supabase
         .from('profiles')
         .upsert({ id: user.id, role }, { onConflict: 'id' })
       if (error) {
         dbErr = error
         if ((error as any).status === 500 || error.message?.includes('relation')) {
-          dbBroken.current = true
+          _dbBroken = true
         }
       }
     }
