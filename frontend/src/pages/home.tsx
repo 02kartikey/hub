@@ -99,9 +99,12 @@ function JoinClassroomWidget() {
   const [message, setMessage]   = useState('')
   const [hasClass, setHasClass] = useState<boolean | null>(null)
 
+  const hasFetchedJoin = useRef(false)
+
   // Check if already in a classroom
   useEffect(() => {
-    if (!user || profile?.role === 'teacher') return
+    if (!user || profile?.role === 'teacher' || hasFetchedJoin.current) return
+    hasFetchedJoin.current = true
     const check = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
@@ -208,9 +211,11 @@ function MyAssignmentsWidget() {
   const [assignments, setAssignments] = useState<StudentAssignment[]>([])
   const [loading, setLoading]         = useState(true)
   const [marking, setMarking]         = useState<string | null>(null)
+  const hasFetched = useRef(false)  // prevent re-fetch on every auth state event
 
   useEffect(() => {
-    if (!user) { setLoading(false); return }
+    if (!user || hasFetched.current) { if (!user) setLoading(false); return }
+    hasFetched.current = true
     const load = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
