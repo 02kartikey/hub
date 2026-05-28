@@ -10,11 +10,27 @@ from typing import Any
 
 import httpx
 from fastapi import Header, HTTPException
-import jwt as pyjwt
+from jose import jwt as jose_jwt
+from jose.exceptions import JWTError
 
 _SUPA_URL    = os.getenv("SUPABASE_URL", "")
 _SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-_JWT_SECRET  = os.getenv("SUPABASE_JWT_SECRET", "")
+
+# ── JWKS — fetched once at startup, cached for the process lifetime ───────────
+# Supabase uses ES256 (ECC P-256) asymmetric signing.
+# We verify tokens using the public key from the JWKS endpoint —
+# no SUPABASE_JWT_SECRET env var needed.
+_jwks: dict | None = None
+
+def _get_jwks() -> dict:
+    global _jwks
+    if _jwks is not None:
+        return _jwks
+    url = f"{_SUPA_URL}/auth/v1/.well-known/jwks.json"
+    r = httpx.get(url, timeout=5)
+    r.raise_for_status()
+    _jwks = r.json()
+    return _jwks
 
 _REST = f"{_SUPA_URL}/rest/v1"
 _SVC_HEADERS = {
@@ -132,13 +148,24 @@ class SupabaseClient:
 
     def verify_token(self, token: str) -> str | None:
         try:
-            data = pyjwt.decode(
-                token, _JWT_SECRET,
-                algorithms=["HS256"],
-                audience="authenticated",
+            jwks      = _get_jwks()
+            # Match the key by kid from the token header
+            headers   = jose_jwt.get_unverified_header(token)
+            kid       = headers.get("kid")
+            key       = next(
+                (k for k in jwks.get("keys", []) if k.get("kid") == kid),
+                jwks.get("keys", [None])[0],   # fallback to first key
             )
-            return data.get("sub")
-        except Exception:
+            if key is None:
+                return None
+            payload = jose_jwt.decode(
+                token, key,
+                algorithms=["ES256", "RS256"],  # ES256 for P-256, RS256 as fallback
+                audience="authenticated",
+                options={"verify_exp": True},
+            )
+            return payload.get("sub")
+        except (JWTError, Exception):
             return None
 
     # ── Async helpers used by non-classroom routes ─────────────────────────────
