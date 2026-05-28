@@ -434,3 +434,250 @@ export function HomePage() {
 // Alias — App.tsx routes /dashboard to DashboardPage
 export const DashboardPage = HomePage
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MY CLASSROOM PAGE — dedicated student view of their classroom + assignments
+// Route: /my-classroom
+// ══════════════════════════════════════════════════════════════════════════════
+
+export function MyClassroomPage() {
+  const { user, profile }   = useAuth()
+  const navigate            = useNavigate()
+  const [assignments, setAssignments] = useState<StudentAssignment[]>([])
+  const [loading, setLoading]         = useState(true)
+  const [marking, setMarking]         = useState<string | null>(null)
+  const [tab, setTab]                 = useState<'pending'|'done'>('pending')
+
+  useEffect(() => {
+    if (!user) { setLoading(false); return }
+    const load = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.access_token) { setLoading(false); return }
+        const res = await fetch(`${API_BASE}/api/classroom/my-assignments`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        })
+        if (res.ok) {
+          const { data } = await res.json()
+          setAssignments(data ?? [])
+        }
+      } catch {}
+      setLoading(false)
+    }
+    load()
+  }, [user])
+
+  const markDone = async (assignmentId: string) => {
+    setMarking(assignmentId)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+      await fetch(`${API_BASE}/api/classroom/assignments/${assignmentId}/complete`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      })
+      setAssignments(prev => prev.map(a => a.id === assignmentId ? { ...a, completed: true } : a))
+    } catch {}
+    setMarking(null)
+  }
+
+  const getHref = (a: StudentAssignment) => {
+    if (a.content_type === 'exercise') return `/playground/${a.content_id}/learn`
+    if (a.content_type === 'path')     return `/paths/${a.content_id}`
+    if (a.content_type === 'activity') return `/activities/${a.content_id}`
+    return `/content/${a.content_id}`
+  }
+
+  const TYPE_META: Record<string, { icon: string; color: string; bg: string; label: string }> = {
+    resource: { icon: '📚', color: 'text-blue-700',   bg: 'bg-blue-50',   label: 'Resource'  },
+    exercise: { icon: '🧪', color: 'text-amber-700',  bg: 'bg-amber-50',  label: 'Exercise'  },
+    path:     { icon: '🗺️', color: 'text-violet-700', bg: 'bg-violet-50', label: 'Path'      },
+    activity: { icon: '📝', color: 'text-emerald-700',bg: 'bg-emerald-50',label: 'Activity'  },
+  }
+
+  const isOverdue = (due?: string) => due && new Date(due) < new Date()
+  const formatDue = (due: string) => {
+    const d    = new Date(due)
+    const diff = Math.ceil((d.getTime() - Date.now()) / 86_400_000)
+    if (diff < 0)  return { label: `${Math.abs(diff)}d overdue`, cls: 'text-red-600 font-bold bg-red-50 border-red-200' }
+    if (diff === 0) return { label: 'Due today',    cls: 'text-orange-600 font-bold bg-orange-50 border-orange-200' }
+    if (diff === 1) return { label: 'Due tomorrow', cls: 'text-amber-600 font-semibold bg-amber-50 border-amber-200' }
+    return { label: `Due ${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`, cls: 'text-zinc-500 bg-zinc-50 border-zinc-200' }
+  }
+
+  const pending   = assignments.filter(a => !a.completed)
+  const completed = assignments.filter(a =>  a.completed)
+  const shown     = tab === 'pending' ? pending : completed
+
+  // ── Not signed in ──
+  if (!user) return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+      <div className="text-4xl mb-4">🎓</div>
+      <h2 className="text-xl font-bold text-zinc-900 mb-2">Sign in to see your classroom</h2>
+      <p className="text-sm text-zinc-500 mb-6">Your teacher's assignments will appear here once you join a classroom.</p>
+      <Link to="/auth/login" className="px-5 py-2.5 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors">
+        Sign in
+      </Link>
+    </div>
+  )
+
+  // ── Teacher visiting this page ──
+  if (profile?.role === 'teacher') return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center max-w-sm mx-auto">
+      <div className="text-4xl mb-4">👩‍🏫</div>
+      <h2 className="text-xl font-bold text-zinc-900 mb-2">This is the student view</h2>
+      <p className="text-sm text-zinc-500 mb-6">As a teacher, manage your classroom from the Class tab.</p>
+      <Link to="/classroom" className="px-5 py-2.5 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors">
+        Go to my classroom
+      </Link>
+    </div>
+  )
+
+  return (
+    <div className="px-4 lg:px-8 py-6 max-w-3xl mx-auto">
+
+      {/* Header */}
+      <div className="mb-7">
+        <h1 className="text-2xl font-extrabold text-zinc-900 tracking-tight mb-1">My Classroom</h1>
+        <p className="text-sm text-zinc-500">Work assigned by your teacher. Complete each item and mark it done.</p>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-7 h-7 rounded-full border-2 border-[#5855D6] border-t-transparent animate-spin"/>
+        </div>
+      ) : assignments.length === 0 ? (
+        /* ── No classroom / no assignments ── */
+        <div className="text-center py-16 bg-white border border-zinc-200 rounded-2xl">
+          <div className="text-4xl mb-4">📬</div>
+          <h3 className="text-base font-bold text-zinc-900 mb-2">No assignments yet</h3>
+          <p className="text-sm text-zinc-500 mb-6 max-w-xs mx-auto">
+            Ask your teacher for the classroom join code, then enter it on your Home page to get started.
+          </p>
+          <Link to="/" className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#5855D6] text-white text-sm font-bold rounded-xl hover:bg-[#4744C8] transition-colors">
+            Go to Home
+          </Link>
+        </div>
+      ) : (
+        <>
+          {/* ── Stats bar ── */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {[
+              { label: 'Assigned', val: assignments.length, color: 'text-zinc-900' },
+              { label: 'Pending',  val: pending.length,     color: pending.length  > 0 ? 'text-[#5855D6]' : 'text-zinc-900' },
+              { label: 'Done',     val: completed.length,   color: completed.length > 0 ? 'text-emerald-600' : 'text-zinc-900' },
+            ].map(s => (
+              <div key={s.label} className="bg-white border border-zinc-200 rounded-xl px-4 py-3 text-center">
+                <p className={`text-2xl font-extrabold ${s.color}`}>{s.val}</p>
+                <p className="text-2xs text-zinc-400 font-medium mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* ── All-done celebration ── */}
+          {pending.length === 0 && completed.length > 0 && (
+            <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3">
+              <CheckCircle2 size={22} className="text-emerald-500 flex-shrink-0"/>
+              <div>
+                <p className="text-sm font-bold text-emerald-800">All done — great work! 🎉</p>
+                <p className="text-xs text-emerald-600">You've completed every assignment your teacher set.</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Tabs ── */}
+          <div className="flex gap-1 mb-4 bg-zinc-100 rounded-xl p-1">
+            {([['pending','Pending', pending.length], ['done','Completed', completed.length]] as const).map(([t, label, count]) => (
+              <button key={t} onClick={() => setTab(t)}
+                className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all',
+                  tab === t ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
+                {label}
+                <span className={cn('px-1.5 py-0.5 rounded-full text-2xs font-bold',
+                  tab === t ? (t === 'pending' ? 'bg-[#5855D6] text-white' : 'bg-emerald-500 text-white') : 'bg-zinc-200 text-zinc-500')}>
+                  {count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* ── Assignment cards ── */}
+          <div className="space-y-3">
+            {shown.length === 0 ? (
+              <div className="text-center py-10 text-sm text-zinc-400">
+                {tab === 'pending' ? 'Nothing pending — check the Done tab.' : 'Nothing completed yet.'}
+              </div>
+            ) : shown.map(a => {
+              const meta = TYPE_META[a.content_type] ?? TYPE_META.resource
+              const due  = a.due_date ? formatDue(a.due_date) : null
+              return (
+                <div key={a.id}
+                  className={cn(
+                    'bg-white border rounded-2xl overflow-hidden transition-all',
+                    a.completed ? 'border-zinc-100 opacity-75' : isOverdue(a.due_date) ? 'border-red-200' : 'border-zinc-200 hover:border-zinc-300 hover:shadow-sm'
+                  )}>
+
+                  {/* Type + due date strip */}
+                  <div className={cn('flex items-center justify-between px-4 py-2 border-b', meta.bg, 'border-zinc-100')}>
+                    <span className={cn('text-2xs font-bold flex items-center gap-1', meta.color)}>
+                      {meta.icon} {meta.label}
+                    </span>
+                    {due && (
+                      <span className={cn('text-2xs font-semibold px-2 py-0.5 rounded-full border', due.cls)}>
+                        {due.label}
+                      </span>
+                    )}
+                    {a.completed && (
+                      <span className="text-2xs font-bold text-emerald-600 flex items-center gap-1">
+                        <CheckCircle2 size={10}/> Done
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="px-4 py-4">
+                    <h3 className={cn('text-sm font-bold mb-1', a.completed ? 'text-zinc-400 line-through' : 'text-zinc-900')}>
+                      {a.title}
+                    </h3>
+
+                    {/* Teacher note */}
+                    {a.note && (
+                      <div className="flex items-start gap-2 mt-2 mb-3 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2.5">
+                        <span className="text-sm flex-shrink-0">💬</span>
+                        <div>
+                          <p className="text-2xs font-bold text-[#5855D6] mb-0.5">Teacher's note</p>
+                          <p className="text-xs text-zinc-700 leading-relaxed">{a.note}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    {!a.completed && (
+                      <div className="flex items-center gap-2 mt-3">
+                        <Link to={getHref(a)}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#5855D6] text-white text-xs font-bold rounded-xl hover:bg-[#4744C8] transition-colors">
+                          Open {meta.label} <ArrowRight size={12}/>
+                        </Link>
+                        <button
+                          onClick={() => markDone(a.id)}
+                          disabled={marking === a.id}
+                          className="flex items-center justify-center gap-1.5 px-4 py-2.5 border border-zinc-200 text-xs font-bold text-zinc-600 rounded-xl hover:bg-zinc-50 transition-colors disabled:opacity-50 flex-shrink-0">
+                          {marking === a.id ? '…' : <><Check size={12}/> Mark done</>}
+                        </button>
+                      </div>
+                    )}
+                    {a.completed && (
+                      <Link to={getHref(a)}
+                        className="mt-3 flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-600 transition-colors">
+                        Review again <ArrowRight size={11}/>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}

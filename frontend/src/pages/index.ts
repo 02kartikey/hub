@@ -3,7 +3,7 @@
  * Single re-export barrel so App.tsx imports from './pages' unchanged.
  */
 
-export { HomePage, DashboardPage }              from './home'
+export { HomePage, DashboardPage, MyClassroomPage }   from './home'
 export { BrowsePage, ContentPage, PathPage }    from './content'
 export { PlaygroundPage, PlaygroundExercisePage, ConceptLearnPage } from './playground'
 export {
@@ -14,7 +14,7 @@ export { CurriculumPage, SeminarsPage }         from './curriculum'
 export { WorkflowsPage, ToolsPage, ToolDetailPage } from './tools'
 export { TeacherPage }                          from './teacher-hub'
 export { ProgressPage }                         from './progress'
-export { TeacherClassroomDashboard }            from './classroom'
+export { TeacherClassroomDashboard }                            from './classroom'
 export { ChatPage }                             from './chat'
 export { TryPage }                              from './try'
 export {
