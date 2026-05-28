@@ -4,7 +4,7 @@ import { AuthProvider, useAuth } from './auth'
 import { AppShell, ErrorBoundary } from './components'
 import {
   HomePage, BrowsePage, ContentPage, PathPage,
-  PlaygroundPage, PlaygroundExercisePage,
+  PlaygroundPage, PlaygroundExercisePage, ConceptLearnPage,
   ActivitiesPage, ActivityDetailPage,
   AssessmentPage, QuizPage,
   CurriculumPage, SeminarsPage,
@@ -55,6 +55,7 @@ export default function App() {
             <Route path="/content/:id"            element={<ContentPage/>}/>
             <Route path="/paths/:id"              element={<PathPage/>}/>
             <Route path="/playground"             element={<PlaygroundPage/>}/>
+            <Route path="/playground/:id/learn"   element={<ConceptLearnPage/>}/>
             <Route path="/playground/:id"         element={<PlaygroundExercisePage/>}/>
             <Route path="/activities"             element={<ActivitiesPage/>}/>
             <Route path="/activities/:id"         element={<ActivityDetailPage/>}/>
